@@ -78,6 +78,7 @@ Read first:
 - docs/WORDPRESS_COMPATIBILITY.md
 
 Rules:
+- If your worktree is already dirty from an earlier slice, first inspect it and either finish/commit the coherent slice or write a precise handoff/blocker before starting unrelated work.
 - Keep the work mapped to the named milestone.
 - Make a small, reviewable change or produce a precise blocker/research artifact.
 - Add or update focused tests when changing implementation behavior.
