@@ -1,15 +1,15 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-25T23:50:39Z
+Last refreshed: 2026-05-25T23:53:41Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `cf327fc`
+- Report base HEAD: `0b9079c`
 - Dirty entries: `0`
-- tmux windows in `phpc-swarm`: `18`
-- Worker loops: `16`
+- tmux windows in `phpc-swarm`: `23`
+- Worker loops: `21`
 - Active `codex exec` processes: `30`
 - Active Codex slot cap: `30`
 - Active slot locks: `15`
