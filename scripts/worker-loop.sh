@@ -9,6 +9,9 @@ export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
 export CARGO_INCREMENTAL="${CARGO_INCREMENTAL:-0}"
 export RUST_TEST_THREADS="${RUST_TEST_THREADS:-1}"
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/home/ubuntu/phpc-targets/${lane_id}}"
+export CODEX_MODEL="${CODEX_MODEL:-gpt-5.5}"
+export CODEX_REASONING_EFFORT="${CODEX_REASONING_EFFORT:-low}"
+export CODEX_SERVICE_TIER="${CODEX_SERVICE_TIER:-fast}"
 
 mkdir -p "$CARGO_TARGET_DIR"
 mkdir -p "${worktree}/swarm/handoffs"
@@ -49,6 +52,9 @@ while true; do
   set +e
   codex exec \
     --cd "$worktree" \
+    --model "$CODEX_MODEL" \
+    -c "service_tier=\"${CODEX_SERVICE_TIER}\"" \
+    -c "model_reasoning_effort=\"${CODEX_REASONING_EFFORT}\"" \
     --dangerously-bypass-approvals-and-sandbox \
     "$(cat "$prompt_file")" 2>&1 | tee "$tmp_log"
   status="${PIPESTATUS[0]}"

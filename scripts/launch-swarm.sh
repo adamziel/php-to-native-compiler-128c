@@ -112,7 +112,11 @@ for lane in "${lanes[@]}"; do
   fi
   mkdir -p "${target_root}/${lane}"
   tmux new-window -t "$session" -n "$lane" -c "$worktree"
-  tmux send-keys -t "$session:$lane" "export CARGO_TARGET_DIR='${target_root}/${lane}' CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 SWARM_MAX_ACTIVE_CODEX='${max_active_codex}'; '$repo_root/scripts/worker-loop.sh' '$lane' '$worktree' '$prompt'" C-m
+  effort="low"
+  case "${lane%%-*}" in
+    ABI|LINK|SEM|SAPI) effort="medium" ;;
+  esac
+  tmux send-keys -t "$session:$lane" "export CARGO_TARGET_DIR='${target_root}/${lane}' CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 SWARM_MAX_ACTIVE_CODEX='${max_active_codex}' CODEX_SERVICE_TIER='fast' CODEX_MODEL='gpt-5.5' CODEX_REASONING_EFFORT='${effort}'; '$repo_root/scripts/worker-loop.sh' '$lane' '$worktree' '$prompt'" C-m
 done
 
 aud_prompt="$repo_root/swarm/worker-prompts/AUD-01.md"
@@ -140,7 +144,7 @@ else
   git -C "$aud_worktree" merge --ff-only main >/dev/null || true
 fi
 tmux new-window -t "$session" -n AUD-01 -c "$aud_worktree"
-tmux send-keys -t "$session:AUD-01" "export CARGO_TARGET_DIR='${target_root}/AUD-01' SWARM_MAX_ACTIVE_CODEX='${max_active_codex}'; '$repo_root/scripts/worker-loop.sh' AUD-01 '$aud_worktree' '$aud_prompt'" C-m
+tmux send-keys -t "$session:AUD-01" "export CARGO_TARGET_DIR='${target_root}/AUD-01' SWARM_MAX_ACTIVE_CODEX='${max_active_codex}' CODEX_SERVICE_TIER='fast' CODEX_MODEL='gpt-5.5' CODEX_REASONING_EFFORT='medium'; '$repo_root/scripts/worker-loop.sh' AUD-01 '$aud_worktree' '$aud_prompt'" C-m
 
 tmux new-window -t "$session" -n dashboard -c "$repo_root"
 tmux send-keys -t "$session:dashboard" "cd '$repo_root' && python3 -m http.server 8080 -d docs" C-m
