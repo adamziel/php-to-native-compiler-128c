@@ -46,7 +46,7 @@ tmp="$(mktemp)"
   echo
   echo "- Repository: \`adamziel/php-to-native-compiler-128c\`"
   echo "- Branch: \`${branch}\`"
-  echo "- HEAD: \`${head}\`"
+  echo "- Report base HEAD: \`${head}\`"
   echo "- Dirty entries: \`${dirty}\`"
   echo "- tmux windows in \`phpc-swarm\`: \`${windows}\`"
   echo "- Worker loops: \`${worker_loops}\`"
@@ -152,7 +152,7 @@ tmp="$(mktemp)"
       <thead><tr><th>Signal</th><th>Value</th></tr></thead>
       <tbody>
         <tr><td>Branch</td><td><code>${branch}</code></td></tr>
-        <tr><td>HEAD</td><td><code>${head}</code></td></tr>
+        <tr><td>Report base HEAD</td><td><code>${head}</code></td></tr>
         <tr><td>Main dirty entries</td><td><code>${dirty}</code></td></tr>
         <tr><td>Dirty lane worktrees preserved for review</td><td><code>${dirty_lanes}</code></td></tr>
         <tr><td>Active slot locks</td><td><code>${slot_locks}</code></td></tr>
