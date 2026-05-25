@@ -1,0 +1,13 @@
+[workspace]
+members = [
+    "crates/phpc",
+    "crates/phpc_core",
+    "crates/php_runtime",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/adamziel/php-to-native-compiler-128c"
+

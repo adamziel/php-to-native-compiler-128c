@@ -1,0 +1,20 @@
+{
+  "status": "not_pinned",
+  "wordpress": {
+    "path": null,
+    "source": null,
+    "version": null,
+    "commit_or_archive_hash": null
+  },
+  "entrypoints": [
+    "wp-settings.php",
+    "wp-blog-header.php",
+    "wp-cron.php",
+    "wp-admin/admin-ajax.php",
+    "xmlrpc.php"
+  ],
+  "results": {},
+  "blockers": ["WordPress source is not pinned"],
+  "last_run": null
+}
+

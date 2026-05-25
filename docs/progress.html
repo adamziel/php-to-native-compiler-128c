@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PHP-to-Native Compiler Swarm Progress</title>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; color: #17202a; background: #f6f7f9; }
+    header { padding: 28px 32px; background: #17202a; color: #fff; }
+    main { padding: 24px 32px; }
+    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 0; }
+    h2 { margin-top: 28px; font-size: 20px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d8dee6; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #e6ebf1; text-align: left; vertical-align: top; font-size: 14px; }
+    th { background: #edf1f5; font-weight: 650; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .metric { background: #fff; border: 1px solid #d8dee6; padding: 14px; border-radius: 6px; }
+    .metric strong { display: block; font-size: 22px; }
+    .bar { height: 8px; background: #e1e7ef; border-radius: 999px; overflow: hidden; }
+    .bar span { display: block; height: 100%; background: #2f7d5b; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PHP-to-Native Compiler Swarm Progress</h1>
+    <div>From-scratch bootstrap for <code>adamziel/php-to-native-compiler-128c</code>. Last updated 2026-05-25 23:00 UTC.</div>
+  </header>
+  <main>
+    <section class="grid">
+      <div class="metric"><span>Supervised agents target</span><strong>100 + auditor</strong></div>
+      <div class="metric"><span>Native executable support</span><strong>0%</strong></div>
+      <div class="metric"><span>PHP core denominator</span><strong>Not pinned</strong></div>
+      <div class="metric"><span>WordPress denominator</span><strong>Not pinned</strong></div>
+      <div class="metric"><span>Baseline tests</span><strong>Passing</strong></div>
+    </section>
+    <h2>Milestones</h2>
+    <table>
+      <thead><tr><th>Milestone</th><th>Progress</th><th>Denominator</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>M1 COW mechanisms</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>RPR, DMB, CCA, regression matrix</td><td>Not started</td></tr>
+        <tr><td>M2 runtime ABI</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>PHP value kinds and ownership semantics</td><td><code>phpc_echo</code> bootstrap only</td></tr>
+        <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>compile, link, run, compare</td><td>Not started</td></tr>
+        <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>interpreter-supported constructs</td><td>echo literal IR placeholder</td></tr>
+        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>pinned php-src .phpt inventory</td><td>Not pinned</td></tr>
+        <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>pinned WordPress entrypoints</td><td>Not pinned</td></tr>
+      </tbody>
+    </table>
+    <h2>Immediate Actions</h2>
+    <table>
+      <thead><tr><th>Action</th><th>Owner</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Finish toolchain bootstrap</td><td>Supervisor</td><td>Done</td></tr>
+        <tr><td>Launch tmux workers</td><td>Supervisor</td><td>Pending baseline commit</td></tr>
+        <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Queued</td></tr>
+        <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Queued</td></tr>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

@@ -1,0 +1,4 @@
+/target/
+/.tmp/
+*.log
+/swarm/worker-prompts/*.md

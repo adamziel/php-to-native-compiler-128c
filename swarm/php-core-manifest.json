@@ -1,0 +1,24 @@
+{
+  "status": "not_pinned",
+  "php_src": {
+    "path": null,
+    "source": null,
+    "commit": null,
+    "version": null
+  },
+  "denominator": {
+    "total_phpt": 0,
+    "mapped": 0,
+    "runnable": 0,
+    "skipped": 0,
+    "xfail": 0
+  },
+  "results": {
+    "system_php": {"pass": 0, "fail": 0},
+    "phpc_run": {"pass": 0, "fail": 0},
+    "native": {"pass": 0, "fail": 0}
+  },
+  "blockers": ["php-src source is not pinned"],
+  "last_run": null
+}
+
