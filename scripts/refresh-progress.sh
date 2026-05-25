@@ -34,6 +34,7 @@ fi
 state_files="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f 2>/dev/null | wc -l)"
 rate_limited="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f -exec grep -l '^rate_limited' {} + 2>/dev/null | wc -l)"
 active_cap="${SWARM_MAX_ACTIVE_CODEX:-50}"
+supervised_target="${SWARM_WORKER_COUNT:-50} workers + auditor"
 updated_display="$(date -u '+%Y-%m-%d %H:%M UTC')"
 updated_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
@@ -128,7 +129,7 @@ tmp="$(mktemp)"
   </header>
   <main>
     <section class="grid">
-      <div class="metric"><span>Supervised agents target</span><strong>100 + auditor</strong></div>
+      <div class="metric"><span>Supervised agents target</span><strong>${supervised_target}</strong></div>
       <div class="metric"><span>tmux windows</span><strong>${windows}</strong></div>
       <div class="metric"><span>Worker loops</span><strong>${worker_loops}</strong></div>
       <div class="metric"><span>Active codex exec</span><strong>${active_codex}</strong></div>
@@ -168,7 +169,7 @@ tmp="$(mktemp)"
     <table>
       <thead><tr><th>Action</th><th>Owner</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td>Keep 100-worker topology alive</td><td>Supervisor</td><td>Running in <code>phpc-swarm</code></td></tr>
+        <tr><td>Keep ${supervised_target} topology alive</td><td>Supervisor</td><td>Running in <code>phpc-swarm</code></td></tr>
         <tr><td>Publish progress to GitHub Pages</td><td>Pages reporter</td><td><code>${pages_reporter}</code></td></tr>
         <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Done: 19,346 .phpt files; runner queued</td></tr>
         <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Done: WordPress 7.0; bootstrap runner queued</td></tr>
