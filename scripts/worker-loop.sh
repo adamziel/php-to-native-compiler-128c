@@ -27,10 +27,12 @@ lane_num="$(printf '%s' "$lane_id" | cksum | awk '{print $1}')"
 
 acquire_slot() {
   local slot
+  acquired_slot=""
   while true; do
     for slot in $(seq 1 "$max_active"); do
       if mkdir "${slot_root}/${slot}.lock" 2>/dev/null; then
-        printf '%s\n' "$slot"
+        printf '%s\n' "$$" > "${slot_root}/${slot}.lock/owner.pid"
+        acquired_slot="$slot"
         return 0
       fi
     done
@@ -53,7 +55,8 @@ if [ "$initial_stagger_max" -gt 0 ]; then
 fi
 
 while true; do
-  slot="$(acquire_slot)"
+  acquire_slot
+  slot="$acquired_slot"
   tmp_log="$(mktemp)"
   date -u +"%Y-%m-%dT%H:%M:%SZ worker ${lane_id} starting slice in slot ${slot}" | tee -a "$log_file"
   set +e
