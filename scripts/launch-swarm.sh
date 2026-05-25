@@ -106,7 +106,7 @@ for lane in "${lanes[@]}"; do
   if [ ! -e "$worktree/.git" ]; then
     git -C "$repo_root" worktree add -B "lane/${lane}" "$worktree" HEAD >/dev/null
   else
-    git -C "$worktree" merge --ff-only "$repo_root" >/dev/null || true
+    git -C "$worktree" merge --ff-only main >/dev/null || true
   fi
   mkdir -p "${target_root}/${lane}"
   tmux new-window -t "$session" -n "$lane" -c "$worktree"
@@ -135,7 +135,7 @@ aud_worktree="${worktree_root}/AUD-01"
 if [ ! -e "$aud_worktree/.git" ]; then
   git -C "$repo_root" worktree add -B "lane/AUD-01" "$aud_worktree" HEAD >/dev/null
 else
-  git -C "$aud_worktree" merge --ff-only "$repo_root" >/dev/null || true
+  git -C "$aud_worktree" merge --ff-only main >/dev/null || true
 fi
 tmux new-window -t "$session" -n AUD-01 -c "$aud_worktree"
 tmux send-keys -t "$session:AUD-01" "export CARGO_TARGET_DIR='${target_root}/AUD-01'; '$repo_root/scripts/worker-loop.sh' AUD-01 '$aud_worktree' '$aud_prompt'" C-m
