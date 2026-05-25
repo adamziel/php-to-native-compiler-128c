@@ -57,6 +57,31 @@ ensure_reporter() {
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: started phpc-pages-reporter"
 }
 
+reap_nested_worker_loops() {
+  local pids
+  pids="$(
+    ps -eo pid=,ppid=,args= |
+      awk '/\/scripts\/worker-loop\.sh/ {
+        pid=$1
+        ppid=$2
+        proc[pid]=1
+        parent[pid]=ppid
+      }
+      END {
+        for (pid in proc) {
+          if (parent[pid] in proc) {
+            print pid
+          }
+        }
+      }'
+  )"
+  if [ -n "$pids" ]; then
+    # These are nested worker loops spawned under an existing lane loop, not tmux pane roots.
+    kill $pids 2>/dev/null || true
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: reaped nested worker loops: ${pids//$'\n'/ }"
+  fi
+}
+
 while true; do
   if ! tmux has-session -t "$session" 2>/dev/null; then
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: ${session} missing; launch-swarm.sh must be run by supervisor"
@@ -65,6 +90,7 @@ while true; do
   fi
 
   ensure_reporter
+  reap_nested_worker_loops
 
   missing=0
   for lane in "${lanes[@]}"; do
@@ -79,7 +105,7 @@ while true; do
   done
 
   windows="$(tmux list-windows -t "$session" 2>/dev/null | wc -l)"
-  loops="$(pgrep -fc '/scripts/worker-loop.sh' || true)"
+  loops="$(ps -eo args= | grep -F -c "bash ${repo_root}/scripts/worker-loop.sh" || true)"
   codex="$(pgrep -fc 'codex exec' || true)"
   slots="$(find /tmp/phpc-swarm-codex-slots -maxdepth 1 -type d -name '*.lock' 2>/dev/null | wc -l)"
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: windows=${windows} worker_loops=${loops} codex_exec=${codex} slot_locks=${slots} missing_windows=${missing}"
