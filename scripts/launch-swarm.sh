@@ -7,6 +7,7 @@ worktree_root="${WORKTREE_ROOT:-/home/ubuntu/phpc-worktrees}"
 target_root="${TARGET_ROOT:-/home/ubuntu/phpc-targets}"
 
 mkdir -p "$worktree_root" "$target_root" "$repo_root/swarm/worker-prompts" "$repo_root/swarm/handoffs"
+rm -rf "${SWARM_SLOT_ROOT:-/tmp/phpc-swarm-codex-slots}"
 
 if ! git -C "$repo_root" rev-parse --verify HEAD >/dev/null 2>&1; then
   echo "Repository needs an initial commit before launching worktrees." >&2
