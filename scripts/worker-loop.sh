@@ -16,10 +16,8 @@ while true; do
   date -u +"%Y-%m-%dT%H:%M:%SZ worker ${lane_id} starting slice" | tee -a "${worktree}/swarm/handoffs/${lane_id}.log"
   codex exec \
     --cd "$worktree" \
-    --sandbox danger-full-access \
-    --ask-for-approval never \
+    --dangerously-bypass-approvals-and-sandbox \
     "$(cat "$prompt_file")" || true
   date -u +"%Y-%m-%dT%H:%M:%SZ worker ${lane_id} slice ended" | tee -a "${worktree}/swarm/handoffs/${lane_id}.log"
   sleep 15
 done
-
