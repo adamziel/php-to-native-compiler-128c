@@ -1,10 +1,10 @@
 {
-  "status": "not_pinned",
+  "status": "pinned_inventory",
   "wordpress": {
-    "path": null,
-    "source": null,
-    "version": null,
-    "commit_or_archive_hash": null
+    "path": "/home/ubuntu/phpc-external/wordpress/wordpress",
+    "source": "https://downloads.wordpress.org/release/wordpress-7.0.zip",
+    "version": "7.0",
+    "commit_or_archive_hash": "sha256:b2b6827eb7b2b51f4610893e1a6ad02466e76fe0a307bd40ca2a8ba821c40d0b"
   },
   "entrypoints": [
     "wp-settings.php",
@@ -13,8 +13,13 @@
     "wp-admin/admin-ajax.php",
     "xmlrpc.php"
   ],
-  "results": {},
-  "blockers": ["WordPress source is not pinned"],
-  "last_run": null
+  "results": {
+    "inventory": {
+      "entrypoints_present": 5,
+      "entrypoints_missing": 0,
+      "status": "entrypoint files present; no compiler run yet"
+    }
+  },
+  "blockers": ["No WordPress bootstrap runner is implemented yet"],
+  "last_run": "2026-05-25T23:15:00Z"
 }
-

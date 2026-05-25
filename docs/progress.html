@@ -24,14 +24,14 @@
 <body>
   <header>
     <h1>PHP-to-Native Compiler Swarm Progress</h1>
-    <div>From-scratch bootstrap for <code>adamziel/php-to-native-compiler-128c</code>. Last updated 2026-05-25 23:03 UTC.</div>
+    <div>From-scratch bootstrap for <code>adamziel/php-to-native-compiler-128c</code>. Last updated 2026-05-25 23:15 UTC.</div>
   </header>
   <main>
     <section class="grid">
       <div class="metric"><span>Supervised agents target</span><strong>100 + auditor</strong></div>
       <div class="metric"><span>Native executable support</span><strong>0%</strong></div>
-      <div class="metric"><span>PHP core denominator</span><strong>Not pinned</strong></div>
-      <div class="metric"><span>WordPress denominator</span><strong>Not pinned</strong></div>
+      <div class="metric"><span>PHP core denominator</span><strong>19,346 .phpt</strong></div>
+      <div class="metric"><span>WordPress denominator</span><strong>7.0 pinned</strong></div>
       <div class="metric"><span>Baseline tests</span><strong>Passing</strong></div>
       <div class="metric"><span>tmux windows</span><strong>103</strong></div>
     </section>
@@ -43,8 +43,8 @@
         <tr><td>M2 runtime ABI</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>PHP value kinds and ownership semantics</td><td><code>phpc_echo</code> bootstrap only</td></tr>
         <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>compile, link, run, compare</td><td>Not started</td></tr>
         <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>interpreter-supported constructs</td><td>echo literal IR placeholder</td></tr>
-        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>pinned php-src .phpt inventory</td><td>Not pinned</td></tr>
-        <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>pinned WordPress entrypoints</td><td>Not pinned</td></tr>
+        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>PHP-8.3 branch, 19,346 .phpt files</td><td>Static inventory pinned; runner queued</td></tr>
+        <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress 7.0 entrypoints</td><td>Source pinned; entrypoints present; runner queued</td></tr>
       </tbody>
     </table>
     <h2>Immediate Actions</h2>
@@ -53,8 +53,8 @@
       <tbody>
         <tr><td>Finish toolchain bootstrap</td><td>Supervisor</td><td>Done</td></tr>
         <tr><td>Launch tmux workers</td><td>Supervisor</td><td>Running: 100 workers, auditor, supervisor, dashboard</td></tr>
-        <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Queued</td></tr>
-        <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Queued</td></tr>
+        <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Done: 19,346 .phpt files; runner queued</td></tr>
+        <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Done: WordPress 7.0; bootstrap runner queued</td></tr>
       </tbody>
     </table>
   </main>

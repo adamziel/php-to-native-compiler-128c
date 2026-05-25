@@ -1,6 +1,19 @@
 # WordPress Compatibility
 
-Current status: no WordPress source is pinned yet.
+Current status: WordPress 7.0 is pinned outside the repo at `/home/ubuntu/phpc-external/wordpress/wordpress`.
+
+Source archive:
+
+- `https://downloads.wordpress.org/release/wordpress-7.0.zip`
+- SHA-256: `b2b6827eb7b2b51f4610893e1a6ad02466e76fe0a307bd40ca2a8ba821c40d0b`
+
+Pinned entrypoints are present:
+
+- `wp-settings.php`
+- `wp-blog-header.php`
+- `wp-cron.php`
+- `wp-admin/admin-ajax.php`
+- `xmlrpc.php`
 
 The harness must keep WordPress source outside the repo unless a size/license/update policy is approved. Track:
 
@@ -10,4 +23,3 @@ The harness must keep WordPress source outside the repo unless a size/license/up
 - pass/fail;
 - minimized blockers;
 - mapped general compiler gap.
-

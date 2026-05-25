@@ -1,13 +1,13 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-25T23:03:10Z
+Last refreshed: 2026-05-25T23:14:42Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- HEAD: `599b6d9`
-- Dirty entries: `1`
+- HEAD: `0e9d440`
+- Dirty entries: `6`
 - tmux windows in `phpc-swarm`: `103`
 
 ## Milestone Estimates
@@ -18,8 +18,8 @@ Last refreshed: 2026-05-25T23:03:10Z
 | M2 runtime value ABI | value kinds and ownership semantics | 1% | Bootstrap echo helper |
 | M3 linked native execution | compile, link, run, compare | 0% | Queued |
 | M4 native lowering | interpreter-supported constructs lowered or rejected | 1% | Echo literal scaffold |
-| M5 PHP core .phpt harness | pinned php-src denominator | 0% | Queued |
-| M6 WordPress harness | pinned entrypoints/scenarios | 0% | Queued |
+| M5 PHP core .phpt harness | pinned php-src denominator | 1% | PHP-8.3 inventory pinned: 19,346 .phpt files; runner queued |
+| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; five entrypoints present; runner queued |
 | M7 object/SAPI/DB generality | required semantic families | 0% | Queued |
 | M8 performance after correctness | truthful native benchmarks | 0% | Deferred |
 
@@ -35,6 +35,6 @@ Last refreshed: 2026-05-25T23:03:10Z
 > | ID | Area | Blocker | Impact | Next Action |
 > | --- | --- | --- | --- | --- |
 > | B-001 | Tooling | Rust/Cargo/PHP/LLVM were missing at bootstrap | Resolved for baseline verification | Installed and verified versions on 2026-05-25 |
-> | B-002 | M5 | php-src is not pinned | No `.phpt` denominator | PHPT-01 pin source and inventory |
-> | B-003 | M6 | WordPress is not pinned | No WordPress denominator | WP-01 pin source outside repo |
+> | B-002 | M5 | php-src is pinned but no `.phpt` runner exists | Static denominator only | PHPT lanes implement parser/runner |
+> | B-003 | M6 | WordPress 7.0 is pinned but no bootstrap runner exists | Entry files inventoried only | WP lanes implement runner and classify first blocker |
 > | B-004 | M3 | No linked executable path | Native compiler cannot prove execution | LINK-01 implement minimal path |
