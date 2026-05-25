@@ -103,7 +103,7 @@ for lane in "${lanes[@]}"; do
   worktree="${worktree_root}/${lane}"
   prompt="$repo_root/swarm/worker-prompts/${lane}.md"
   make_prompt "$lane"
-  if [ ! -d "$worktree/.git" ]; then
+  if [ ! -e "$worktree/.git" ]; then
     git -C "$repo_root" worktree add -B "lane/${lane}" "$worktree" HEAD >/dev/null
   else
     git -C "$worktree" merge --ff-only "$repo_root" >/dev/null || true
@@ -132,7 +132,7 @@ Do not implement compiler features. Challenge quality and keep the roadmap hones
 PROMPT
 
 aud_worktree="${worktree_root}/AUD-01"
-if [ ! -d "$aud_worktree/.git" ]; then
+if [ ! -e "$aud_worktree/.git" ]; then
   git -C "$repo_root" worktree add -B "lane/AUD-01" "$aud_worktree" HEAD >/dev/null
 else
   git -C "$aud_worktree" merge --ff-only "$repo_root" >/dev/null || true
