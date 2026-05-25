@@ -9,15 +9,35 @@ branch="$(git branch --show-current 2>/dev/null || echo none)"
 dirty="$(git status --short 2>/dev/null | wc -l)"
 if tmux list-windows -t phpc-swarm >/dev/null 2>&1; then
   windows="$(tmux list-windows -t phpc-swarm | wc -l)"
+  pane_pids="$(
+    tmux list-panes -a -F '#{session_name} #{pane_pid}' 2>/dev/null |
+      awk '$1 == "phpc-swarm" { print $2 }' |
+      tr '\n' ' '
+  )"
+  worker_loops="$(
+    ps -eo pid=,ppid=,args= |
+      awk -v pane_pids="$pane_pids" '
+        BEGIN {
+          split(pane_pids, ids)
+          for (i in ids) {
+            if (ids[i] != "") {
+              pane[ids[i]] = 1
+            }
+          }
+        }
+        ($1 in pane || $2 in pane) && index($0, "bash /home/ubuntu/php-to-native-compiler-128c/scripts/worker-loop.sh") { count++ }
+        END { print count + 0 }
+      '
+  )"
 else
   windows="0"
+  worker_loops="0"
 fi
 if tmux has-session -t phpc-pages-reporter 2>/dev/null; then
   pages_reporter="running"
 else
   pages_reporter="not running"
 fi
-worker_loops="$(pgrep -fc '/scripts/worker-loop.sh' || true)"
 active_codex="$(pgrep -fc 'codex exec' || true)"
 slot_locks="$(find /tmp/phpc-swarm-codex-slots -maxdepth 1 -type d -name '*.lock' 2>/dev/null | wc -l)"
 dirty_lanes="0"
@@ -33,8 +53,8 @@ if [ -d /home/ubuntu/phpc-worktrees ]; then
 fi
 state_files="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f 2>/dev/null | wc -l)"
 rate_limited="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f -exec grep -l '^rate_limited' {} + 2>/dev/null | wc -l)"
-active_cap="${SWARM_MAX_ACTIVE_CODEX:-50}"
-supervised_target="${SWARM_WORKER_COUNT:-50} workers + auditor"
+active_cap="${SWARM_MAX_ACTIVE_CODEX:-30}"
+supervised_target="${SWARM_WORKER_COUNT:-30} workers + auditor"
 updated_display="$(date -u '+%Y-%m-%d %H:%M UTC')"
 updated_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

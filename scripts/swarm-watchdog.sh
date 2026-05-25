@@ -6,7 +6,7 @@ session="${SWARM_SESSION:-phpc-swarm}"
 worktree_root="${WORKTREE_ROOT:-/home/ubuntu/phpc-worktrees}"
 target_root="${TARGET_ROOT:-/home/ubuntu/phpc-targets}"
 interval="${SWARM_WATCHDOG_INTERVAL:-60}"
-max_active_codex="${SWARM_MAX_ACTIVE_CODEX:-50}"
+max_active_codex="${SWARM_MAX_ACTIVE_CODEX:-30}"
 initial_stagger_max="${SWARM_INITIAL_STAGGER_MAX:-0}"
 
 source "$repo_root/scripts/swarm-lanes.sh"

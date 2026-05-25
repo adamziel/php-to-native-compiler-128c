@@ -19,7 +19,7 @@ mkdir -p "${worktree}/swarm/handoffs"
 log_file="${worktree}/swarm/handoffs/${lane_id}.log"
 state_file="${worktree}/swarm/handoffs/${lane_id}.state"
 slot_root="${SWARM_SLOT_ROOT:-/tmp/phpc-swarm-codex-slots}"
-max_active="${SWARM_MAX_ACTIVE_CODEX:-50}"
+max_active="${SWARM_MAX_ACTIVE_CODEX:-30}"
 initial_stagger_max="${SWARM_INITIAL_STAGGER_MAX:-90}"
 mkdir -p "$slot_root"
 
