@@ -33,6 +33,7 @@ if [ -d /home/ubuntu/phpc-worktrees ]; then
 fi
 state_files="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f 2>/dev/null | wc -l)"
 rate_limited="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f -exec grep -l '^rate_limited' {} + 2>/dev/null | wc -l)"
+active_cap="${SWARM_MAX_ACTIVE_CODEX:-50}"
 updated_display="$(date -u '+%Y-%m-%d %H:%M UTC')"
 updated_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
@@ -51,6 +52,7 @@ tmp="$(mktemp)"
   echo "- tmux windows in \`phpc-swarm\`: \`${windows}\`"
   echo "- Worker loops: \`${worker_loops}\`"
   echo "- Active \`codex exec\` processes: \`${active_codex}\`"
+  echo "- Active Codex slot cap: \`${active_cap}\`"
   echo "- Active slot locks: \`${slot_locks}\`"
   echo "- Dirty lane worktrees preserved for review: \`${dirty_lanes}\`"
   echo "- Worker state files: \`${state_files}\`"
@@ -130,6 +132,7 @@ tmp="$(mktemp)"
       <div class="metric"><span>tmux windows</span><strong>${windows}</strong></div>
       <div class="metric"><span>Worker loops</span><strong>${worker_loops}</strong></div>
       <div class="metric"><span>Active codex exec</span><strong>${active_codex}</strong></div>
+      <div class="metric"><span>Active slot cap</span><strong>${active_cap}</strong></div>
       <div class="metric"><span>Retry states</span><strong>${rate_limited}</strong></div>
       <div class="metric"><span>Pages reporter</span><strong>${pages_reporter}</strong></div>
       <div class="metric"><span>PHP core denominator</span><strong>19,346 .phpt</strong></div>
@@ -155,6 +158,7 @@ tmp="$(mktemp)"
         <tr><td>Report base HEAD</td><td><code>${head}</code></td></tr>
         <tr><td>Main dirty entries</td><td><code>${dirty}</code></td></tr>
         <tr><td>Dirty lane worktrees preserved for review</td><td><code>${dirty_lanes}</code></td></tr>
+        <tr><td>Active Codex slot cap</td><td><code>${active_cap}</code></td></tr>
         <tr><td>Active slot locks</td><td><code>${slot_locks}</code></td></tr>
         <tr><td>Worker state files</td><td><code>${state_files}</code></td></tr>
         <tr><td>Expected backend retry/rate-limit states</td><td><code>${rate_limited}</code></td></tr>
