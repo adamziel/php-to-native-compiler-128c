@@ -1,6 +1,12 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
-    Echo(String),
+    Echo(Expression),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Expression {
+    StringLiteral(String),
+    IntegerLiteral(i64),
 }
 
 pub fn parse_php(source: &str) -> Result<Vec<Statement>, String> {
@@ -19,12 +25,12 @@ fn parse_statements(mut body: &str) -> Result<Vec<Statement>, String> {
             break;
         }
         if let Some(rest) = body.strip_prefix("echo") {
-            let (text, after_literal) = parse_string_literal(rest.trim_start())?;
-            let after_literal = after_literal.trim_start();
-            let Some(after_semicolon) = after_literal.strip_prefix(';') else {
-                return Err("expected semicolon after echo string literal".to_string());
+            let (expression, after_expression) = parse_echo_expression(rest.trim_start())?;
+            let after_expression = after_expression.trim_start();
+            let Some(after_semicolon) = after_expression.strip_prefix(';') else {
+                return Err("expected semicolon after echo expression".to_string());
             };
-            statements.push(Statement::Echo(text));
+            statements.push(Statement::Echo(expression));
             body = after_semicolon;
             continue;
         }
@@ -34,6 +40,27 @@ fn parse_statements(mut body: &str) -> Result<Vec<Statement>, String> {
         ));
     }
     Ok(statements)
+}
+
+fn parse_echo_expression(input: &str) -> Result<(Expression, &str), String> {
+    if input.starts_with('$') {
+        return Err(
+            "unsupported echo expression: variables require native symbol table lowering".to_string(),
+        );
+    }
+    if input.starts_with('"') || input.starts_with('\'') {
+        let (value, rest) = parse_string_literal(input)?;
+        return Ok((Expression::StringLiteral(value), rest));
+    }
+    if input
+        .chars()
+        .next()
+        .is_some_and(|ch| ch.is_ascii_digit())
+    {
+        let (value, rest) = parse_integer_literal(input)?;
+        return Ok((Expression::IntegerLiteral(value), rest));
+    }
+    Err("expected echo expression literal".to_string())
 }
 
 fn parse_string_literal(input: &str) -> Result<(String, &str), String> {
@@ -69,6 +96,18 @@ fn parse_string_literal(input: &str) -> Result<(String, &str), String> {
     Err("unterminated string literal".to_string())
 }
 
+fn parse_integer_literal(input: &str) -> Result<(i64, &str), String> {
+    let end = input
+        .char_indices()
+        .find_map(|(index, ch)| (!ch.is_ascii_digit()).then_some(index))
+        .unwrap_or(input.len());
+    let literal = &input[..end];
+    let value = literal
+        .parse::<i64>()
+        .map_err(|_| format!("integer literal out of range: {literal}"))?;
+    Ok((value, &input[end..]))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -77,8 +116,24 @@ mod tests {
     fn parses_echo() {
         assert_eq!(
             parse_php("<?php echo 'hello';").unwrap(),
-            vec![Statement::Echo("hello".to_string())]
+            vec![Statement::Echo(Expression::StringLiteral(
+                "hello".to_string()
+            ))]
         );
+    }
+
+    #[test]
+    fn parses_integer_echo() {
+        assert_eq!(
+            parse_php("<?php echo 12345;").unwrap(),
+            vec![Statement::Echo(Expression::IntegerLiteral(12345))]
+        );
+    }
+
+    #[test]
+    fn rejects_variable_echo_with_explicit_diagnostic() {
+        let err = parse_php("<?php echo $name;").unwrap_err();
+        assert!(err.contains("variables require native symbol table lowering"));
     }
 
     #[test]
@@ -86,4 +141,3 @@ mod tests {
         assert!(parse_php("echo 'hello';").is_err());
     }
 }
-
