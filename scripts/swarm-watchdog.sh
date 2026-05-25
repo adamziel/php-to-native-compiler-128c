@@ -55,9 +55,9 @@ lane_has_direct_loop() {
   if [ -z "$pane_pid" ]; then
     return 1
   fi
-  ps -eo ppid=,args= |
+  ps -eo pid=,ppid=,args= |
     awk -v pane_pid="$pane_pid" -v script="bash ${repo_root}/scripts/worker-loop.sh ${lane} " '
-      $1 == pane_pid && index($0, script) { found = 1 }
+      ($1 == pane_pid || $2 == pane_pid) && index($0, script) { found = 1 }
       END { exit found ? 0 : 1 }
     '
 }
@@ -69,7 +69,7 @@ direct_loop_count() {
       awk -v session="$session" '$1 == session { print $2 }' |
       tr '\n' ' '
   )"
-  ps -eo ppid=,args= |
+  ps -eo pid=,ppid=,args= |
     awk -v pane_pids="$pane_pids" -v script="bash ${repo_root}/scripts/worker-loop.sh" '
       BEGIN {
         split(pane_pids, ids)
@@ -79,7 +79,7 @@ direct_loop_count() {
           }
         }
       }
-      ($1 in pane) && index($0, script) { count++ }
+      ($1 in pane || $2 in pane) && index($0, script) { count++ }
       END { print count + 0 }
     '
 }
