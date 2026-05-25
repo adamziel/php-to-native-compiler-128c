@@ -20,6 +20,7 @@ log_file="${worktree}/swarm/handoffs/${lane_id}.log"
 state_file="${worktree}/swarm/handoffs/${lane_id}.state"
 slot_root="${SWARM_SLOT_ROOT:-/tmp/phpc-swarm-codex-slots}"
 max_active="${SWARM_MAX_ACTIVE_CODEX:-200}"
+initial_stagger_max="${SWARM_INITIAL_STAGGER_MAX:-90}"
 mkdir -p "$slot_root"
 
 lane_num="$(printf '%s' "$lane_id" | cksum | awk '{print $1}')"
@@ -45,6 +46,12 @@ release_slot() {
   fi
 }
 
+if [ "$initial_stagger_max" -gt 0 ]; then
+  initial_sleep=$((lane_num % initial_stagger_max))
+  date -u +"%Y-%m-%dT%H:%M:%SZ worker ${lane_id} initial stagger ${initial_sleep}s" | tee -a "$log_file"
+  sleep "$initial_sleep"
+fi
+
 while true; do
   slot="$(acquire_slot)"
   tmp_log="$(mktemp)"
@@ -61,9 +68,9 @@ while true; do
   set -e
   release_slot "$slot"
   cat "$tmp_log" >> "$log_file"
-  if grep -q "429 Too Many Requests" "$tmp_log"; then
-    cooldown=$((240 + lane_num % 180))
-    date -u +"%Y-%m-%dT%H:%M:%SZ worker ${lane_id} rate-limited; cooling down ${cooldown}s" | tee -a "$log_file"
+  if grep -Eq "429 Too Many Requests|ERROR: Reconnecting|exceeded retry limit" "$tmp_log"; then
+    cooldown=$((180 + lane_num % 240))
+    date -u +"%Y-%m-%dT%H:%M:%SZ worker ${lane_id} backend reconnect/rate-limit; cooling down ${cooldown}s" | tee -a "$log_file"
     printf 'rate_limited cooldown=%s last_status=%s updated=%s\n' "$cooldown" "$status" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$state_file"
     rm -f "$tmp_log"
     sleep "$cooldown"
