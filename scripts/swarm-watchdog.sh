@@ -48,6 +48,42 @@ respawn_lane() {
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: respawned ${lane}"
 }
 
+lane_has_direct_loop() {
+  local lane="$1"
+  local pane_pid
+  pane_pid="$(tmux list-panes -t "${session}:${lane}" -F '#{pane_pid}' 2>/dev/null | head -n 1 || true)"
+  if [ -z "$pane_pid" ]; then
+    return 1
+  fi
+  ps -eo ppid=,args= |
+    awk -v pane_pid="$pane_pid" -v script="bash ${repo_root}/scripts/worker-loop.sh ${lane} " '
+      $1 == pane_pid && index($0, script) { found = 1 }
+      END { exit found ? 0 : 1 }
+    '
+}
+
+direct_loop_count() {
+  local pane_pids
+  pane_pids="$(
+    tmux list-panes -a -F '#{session_name} #{pane_pid}' 2>/dev/null |
+      awk -v session="$session" '$1 == session { print $2 }' |
+      tr '\n' ' '
+  )"
+  ps -eo ppid=,args= |
+    awk -v pane_pids="$pane_pids" -v script="bash ${repo_root}/scripts/worker-loop.sh" '
+      BEGIN {
+        split(pane_pids, ids)
+        for (i in ids) {
+          if (ids[i] != "") {
+            pane[ids[i]] = 1
+          }
+        }
+      }
+      ($1 in pane) && index($0, script) { count++ }
+      END { print count + 0 }
+    '
+}
+
 ensure_reporter() {
   if tmux has-session -t phpc-pages-reporter 2>/dev/null; then
     return 0
@@ -99,13 +135,13 @@ while true; do
       missing=$((missing + 1))
       continue
     fi
-    if ! pgrep -f "worker-loop.sh ${lane} " >/dev/null 2>&1; then
+    if ! lane_has_direct_loop "$lane"; then
       respawn_lane "$lane"
     fi
   done
 
   windows="$(tmux list-windows -t "$session" 2>/dev/null | wc -l)"
-  loops="$(ps -eo args= | grep -F -c "bash ${repo_root}/scripts/worker-loop.sh" || true)"
+  loops="$(direct_loop_count)"
   codex="$(pgrep -fc 'codex exec' || true)"
   slots="$(find /tmp/phpc-swarm-codex-slots -maxdepth 1 -type d -name '*.lock' 2>/dev/null | wc -l)"
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: windows=${windows} worker_loops=${loops} codex_exec=${codex} slot_locks=${slots} missing_windows=${missing}"
