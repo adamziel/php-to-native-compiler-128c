@@ -105,6 +105,8 @@ for lane in "${lanes[@]}"; do
   make_prompt "$lane"
   if [ ! -d "$worktree/.git" ]; then
     git -C "$repo_root" worktree add -B "lane/${lane}" "$worktree" HEAD >/dev/null
+  else
+    git -C "$worktree" merge --ff-only "$repo_root" >/dev/null || true
   fi
   mkdir -p "${target_root}/${lane}"
   tmux new-window -t "$session" -n "$lane" -c "$worktree"
@@ -132,6 +134,8 @@ PROMPT
 aud_worktree="${worktree_root}/AUD-01"
 if [ ! -d "$aud_worktree/.git" ]; then
   git -C "$repo_root" worktree add -B "lane/AUD-01" "$aud_worktree" HEAD >/dev/null
+else
+  git -C "$aud_worktree" merge --ff-only "$repo_root" >/dev/null || true
 fi
 tmux new-window -t "$session" -n AUD-01 -c "$aud_worktree"
 tmux send-keys -t "$session:AUD-01" "export CARGO_TARGET_DIR='${target_root}/AUD-01'; '$repo_root/scripts/worker-loop.sh' AUD-01 '$aud_worktree' '$aud_prompt'" C-m
