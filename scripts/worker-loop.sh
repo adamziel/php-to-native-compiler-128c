@@ -16,7 +16,7 @@ mkdir -p "${worktree}/swarm/handoffs"
 log_file="${worktree}/swarm/handoffs/${lane_id}.log"
 state_file="${worktree}/swarm/handoffs/${lane_id}.state"
 slot_root="${SWARM_SLOT_ROOT:-/tmp/phpc-swarm-codex-slots}"
-max_active="${SWARM_MAX_ACTIVE_CODEX:-32}"
+max_active="${SWARM_MAX_ACTIVE_CODEX:-8}"
 mkdir -p "$slot_root"
 
 lane_num="$(printf '%s' "$lane_id" | cksum | awk '{print $1}')"
