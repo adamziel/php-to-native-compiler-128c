@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 session="${1:-phpc-swarm}"
 worktree_root="${WORKTREE_ROOT:-/home/ubuntu/phpc-worktrees}"
 target_root="${TARGET_ROOT:-/home/ubuntu/phpc-targets}"
-max_active_codex="${SWARM_MAX_ACTIVE_CODEX:-200}"
+max_active_codex="${SWARM_MAX_ACTIVE_CODEX:-50}"
 initial_stagger_max="${SWARM_INITIAL_STAGGER_MAX:-90}"
 
 mkdir -p "$worktree_root" "$target_root" "$repo_root/swarm/worker-prompts" "$repo_root/swarm/handoffs"
