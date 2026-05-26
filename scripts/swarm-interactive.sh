@@ -78,11 +78,10 @@ swarm_interactive_codex_count() {
 }
 
 swarm_codex_exec_count() {
-  ps -eo args= |
+  ps -eo comm=,args= |
     awk '
-      index($0, "codex exec") &&
-      index($0, "pgrep") == 0 &&
-      index($0, "awk") == 0 { count++ }
+      ($1 == "node" || $1 == "codex") &&
+      index($0, "codex exec") { count++ }
       END { print count + 0 }
     '
 }
