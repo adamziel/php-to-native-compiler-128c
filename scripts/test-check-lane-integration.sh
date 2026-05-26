@@ -71,3 +71,17 @@ printf '# handoff\n' > swarm/handoffs/review.md
 scripts/check-lane-integration.sh lane/review main > review.out
 grep -F "handoff: present swarm/handoffs/review.md" review.out >/dev/null
 grep -F "classification: review-required" review.out >/dev/null
+
+git switch -q -c lane/missing-handoff main
+printf 'missing handoff\n' > missing-handoff.txt
+git add missing-handoff.txt
+git commit -q -m missing-handoff
+
+if scripts/check-lane-integration.sh lane/missing-handoff main > missing-handoff.out 2> missing-handoff.err; then
+  echo "check-lane-integration.sh accepted a review lane without a handoff" >&2
+  cat missing-handoff.out >&2
+  cat missing-handoff.err >&2
+  exit 1
+fi
+grep -F "handoff: missing swarm/handoffs/missing-handoff.md" missing-handoff.out >/dev/null
+grep -F "classification: review-required-missing-handoff" missing-handoff.out >/dev/null

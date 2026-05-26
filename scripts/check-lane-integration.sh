@@ -112,4 +112,5 @@ if [[ -f "$handoff" ]]; then
 else
   echo "classification: review-required-missing-handoff"
   echo "action: require a lane handoff before merging unless this is a documented research-only artifact."
+  exit 1
 fi
