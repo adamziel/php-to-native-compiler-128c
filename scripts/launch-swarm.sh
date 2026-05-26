@@ -9,6 +9,7 @@ initial_stagger_max="${SWARM_INITIAL_STAGGER_MAX:-90}"
 launch_stagger_seconds="${SWARM_LAUNCH_STAGGER_SECONDS:-0}"
 start_watchdog_after_launch="${SWARM_START_WATCHDOG_AFTER_LAUNCH:-0}"
 include_auditor="${SWARM_INCLUDE_AUDITOR:-1}"
+auditor_first="${SWARM_AUDITOR_FIRST:-0}"
 
 source "$repo_root/scripts/swarm-lanes.sh"
 source "$repo_root/scripts/swarm-interactive.sh"
@@ -112,9 +113,45 @@ case "$include_auditor" in
   0|1) ;;
   *) echo "SWARM_INCLUDE_AUDITOR must be 0 or 1." >&2; exit 1 ;;
 esac
+case "$auditor_first" in
+  0|1) ;;
+  *) echo "SWARM_AUDITOR_FIRST must be 0 or 1." >&2; exit 1 ;;
+esac
 
 total_codex_sessions="$((${#lanes[@]} + include_auditor))"
 launched_codex_sessions="0"
+
+if [ "$include_auditor" = "1" ] && [ "$auditor_first" = "1" ]; then
+aud_prompt="$repo_root/swarm/worker-prompts/AUD-01.md"
+cat > "$aud_prompt" <<PROMPT
+You are AUD-01, the independent auditor for the PHP-to-native compiler swarm.
+
+Every cycle, inspect progress.md, docs/progress.html, swarm/queue.md, swarm/agents.md, swarm/handoffs, git status, and current evidence.
+
+Write swarm/audit.md with:
+- what is going right;
+- what is going wrong;
+- idle/stuck/duplicated/drifting lanes;
+- weak progress claims;
+- missing tests;
+- next integration target;
+- single best supervisor intervention.
+
+Do not implement compiler features. Challenge quality and keep the roadmap honest.
+PROMPT
+
+aud_worktree="${worktree_root}/AUD-01"
+if [ ! -e "$aud_worktree/.git" ]; then
+  git -C "$repo_root" worktree add -B "lane/AUD-01" "$aud_worktree" HEAD >/dev/null
+else
+  git -C "$aud_worktree" merge --ff-only main >/dev/null || true
+fi
+tmux new-window -t "=${session}" -n AUD-01 -c "$aud_worktree"
+tmux send-keys -t "=${session}:AUD-01" "$(swarm_codex_command "$repo_root" "$target_root" AUD-01 "$aud_worktree")" C-m
+swarm_paste_prompt "$session" AUD-01 "$aud_prompt" &
+launched_codex_sessions="$((launched_codex_sessions + 1))"
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) launch: started Codex session ${launched_codex_sessions}/${total_codex_sessions} (AUD-01)."
+fi
 
 for lane in "${lanes[@]}"; do
   worktree="${worktree_root}/${lane}"
@@ -134,7 +171,7 @@ for lane in "${lanes[@]}"; do
   stagger_before_next_codex_session "$launched_codex_sessions" "$total_codex_sessions"
 done
 
-if [ "$include_auditor" = "1" ]; then
+if [ "$include_auditor" = "1" ] && [ "$auditor_first" = "0" ]; then
 aud_prompt="$repo_root/swarm/worker-prompts/AUD-01.md"
 cat > "$aud_prompt" <<PROMPT
 You are AUD-01, the independent auditor for the PHP-to-native compiler swarm.
