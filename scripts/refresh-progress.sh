@@ -84,8 +84,27 @@ rate_limited="$(
   } | wc -l
 )"
 active_cap="interactive"
-supervised_target="${SWARM_WORKER_COUNT:-50} workers + auditor"
-launch_cadence="${SWARM_LAUNCH_STAGGER_SECONDS:-unknown}"
+launch_marker="$(
+  { grep -E '^=== supervised restart:' /tmp/phpc-swarm-launcher.log 2>/dev/null || true; } |
+    tail -n 1
+)"
+if [ -n "$launch_marker" ]; then
+  launch_worker_count="$(printf '%s\n' "$launch_marker" | sed -n 's/.*SWARM_WORKER_COUNT=\([0-9][0-9]*\).*/\1/p')"
+  launch_include_auditor="$(printf '%s\n' "$launch_marker" | sed -n 's/.*SWARM_INCLUDE_AUDITOR=\([01]\).*/\1/p')"
+  launch_cadence="$(printf '%s\n' "$launch_marker" | sed -n 's/.*SWARM_LAUNCH_STAGGER_SECONDS=\([0-9][0-9]*\).*/\1/p')"
+else
+  launch_worker_count="${SWARM_WORKER_COUNT:-50}"
+  launch_include_auditor="${SWARM_INCLUDE_AUDITOR:-1}"
+  launch_cadence="${SWARM_LAUNCH_STAGGER_SECONDS:-unknown}"
+fi
+launch_worker_count="${launch_worker_count:-${SWARM_WORKER_COUNT:-50}}"
+launch_include_auditor="${launch_include_auditor:-${SWARM_INCLUDE_AUDITOR:-1}}"
+launch_cadence="${launch_cadence:-${SWARM_LAUNCH_STAGGER_SECONDS:-unknown}}"
+if [ "$launch_include_auditor" = "1" ]; then
+  supervised_target="${launch_worker_count} workers + auditor"
+else
+  supervised_target="${launch_worker_count} workers"
+fi
 manifest_vars="$(
   python3 - <<'PY'
 import json
