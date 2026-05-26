@@ -1,16 +1,18 @@
-summary: Integrated a CI-facing status gate for progress and manifest accuracy. `scripts/refresh-progress.sh --check` now renders reports to temporary files and validates their shape without rewriting `progress.md` or `docs/progress.html`. `scripts/status-gate.sh` validates PHP core and WordPress manifest denominators and source metadata.
+summary: Integrated a fail-closed Pages reporter gate. `scripts/pages-reporter-loop.sh` now runs `scripts/status-gate.sh` after regenerating progress artifacts and before staging or committing them. Added `PAGES_REPORT_ONCE=1` test mode plus a focused failure-behavior test proving a broken manifest stops the reporter before `git commit`. Documented `scripts/status-gate.sh` as the canonical status gate in `swarm/test-matrix.md`.
 
 files changed:
-- `scripts/refresh-progress.sh`
-- `scripts/status-gate.sh`
+- `scripts/pages-reporter-loop.sh`
+- `scripts/test-pages-reporter-gate.sh`
 - `scripts/test-refresh-progress.sh`
 - `scripts/test-status-gate.sh`
+- `swarm/test-matrix.md`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
-- `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 scripts/refresh-progress.sh --check`
-- `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 scripts/test-refresh-progress.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/test-pages-reporter-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/test-status-gate.sh`
 - `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 scripts/status-gate.sh`
+- `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 scripts/test-refresh-progress.sh`
 - `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-status-gate scripts/test-status-gate.sh`
 - `git diff --check`
 
@@ -18,8 +20,8 @@ pass/fail state: pass
 
 blockers: none
 
-latest lane commit: `1c43159 Add status gate for manifest accuracy`
+latest lane commit: `f5dc051 Gate pages reporter before publish`
 
-integration note: Ported onto current `main` instead of cherry-picking because current `main` had newer staggered-launcher progress fields.
+integration note: Ported onto current `main` after the status-gate slice was already integrated and after newer manifest-sourced progress reporting landed.
 
-next suggested slice: Add `scripts/status-gate.sh` to the normal integration gate runner once the canonical CI entrypoint is selected.
+next suggested slice: Wire `scripts/status-gate.sh` into the supervisor's chosen CI or integration entrypoint once that runner is selected, keeping manifest denominator refresh work with INT-02.

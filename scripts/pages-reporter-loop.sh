@@ -12,6 +12,7 @@ while true; do
   echo "${started} pages reporter: refreshing progress artifacts"
 
   ./scripts/refresh-progress.sh
+  ./scripts/status-gate.sh
 
   if ! git diff --quiet -- progress.md docs/progress.html; then
     git add progress.md docs/progress.html
@@ -24,6 +25,10 @@ while true; do
   if command -v curl >/dev/null 2>&1; then
     code="$(curl -L -s -o /dev/null -w '%{http_code}' "$url" || true)"
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) pages reporter: ${url} -> HTTP ${code}"
+  fi
+
+  if [ "${PAGES_REPORT_ONCE:-0}" = "1" ]; then
+    exit 0
   fi
 
   sleep "$interval"
