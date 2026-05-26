@@ -10,4 +10,5 @@ scripts/verify-runtime-abi-docs.sh
 scripts/test-status-gate.sh
 scripts/test-runtime-abi-docs.sh
 scripts/test-refresh-progress-labels.sh
+cargo test
 git diff --check
