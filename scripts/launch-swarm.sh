@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 session="${1:-phpc-swarm}"
 worktree_root="${WORKTREE_ROOT:-/home/ubuntu/phpc-worktrees}"
 target_root="${TARGET_ROOT:-/home/ubuntu/phpc-targets}"
-max_active_codex="${SWARM_MAX_ACTIVE_CODEX:-30}"
+max_active_codex="${SWARM_MAX_ACTIVE_CODEX:-19}"
 initial_stagger_max="${SWARM_INITIAL_STAGGER_MAX:-90}"
 
 source "$repo_root/scripts/swarm-lanes.sh"

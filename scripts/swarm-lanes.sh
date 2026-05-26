@@ -39,6 +39,19 @@ swarm_default_30_lanes=(
   DOC-03
 )
 
+swarm_default_19_lanes=(
+  INT-01 INT-02
+  ABI-03 ABI-07
+  LINK-01 LINK-02 LINK-08
+  LOW-03 LOW-04 LOW-07
+  PHPT-01 PHPT-02 PHPT-03
+  WP-01 WP-12
+  SEM-02
+  SAPI-03
+  MINE-02
+  DOC-03
+)
+
 swarm_select_lanes() {
   if [ -n "${SWARM_LANES:-}" ]; then
     # shellcheck disable=SC2206
@@ -46,7 +59,7 @@ swarm_select_lanes() {
     return 0
   fi
 
-  local worker_count="${SWARM_WORKER_COUNT:-30}"
+  local worker_count="${SWARM_WORKER_COUNT:-19}"
   if [ "$worker_count" = "all" ]; then
     lanes=("${swarm_all_lanes[@]}")
     return 0
@@ -59,8 +72,19 @@ swarm_select_lanes() {
 
   if [ "$worker_count" -ge "${#swarm_all_lanes[@]}" ]; then
     lanes=("${swarm_all_lanes[@]}")
+  elif [ "$worker_count" -le "${#swarm_default_19_lanes[@]}" ]; then
+    lanes=("${swarm_default_19_lanes[@]:0:${worker_count}}")
   elif [ "$worker_count" -le "${#swarm_default_30_lanes[@]}" ]; then
-    lanes=("${swarm_default_30_lanes[@]:0:${worker_count}}")
+    lanes=("${swarm_default_19_lanes[@]}")
+    local lane
+    for lane in "${swarm_default_30_lanes[@]}"; do
+      if [ "${#lanes[@]}" -ge "$worker_count" ]; then
+        break
+      fi
+      if [[ " ${lanes[*]} " != *" ${lane} "* ]]; then
+        lanes+=("$lane")
+      fi
+    done
   elif [ "$worker_count" -le "${#swarm_default_50_lanes[@]}" ]; then
     lanes=("${swarm_default_30_lanes[@]}")
     local lane
