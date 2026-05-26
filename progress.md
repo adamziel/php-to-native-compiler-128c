@@ -20,7 +20,7 @@ Last refreshed: 2026-05-26T07:21:42Z
 - Dirty lane worktrees preserved for review: `1`
 - Worker state files: `101`
 - Expected backend retry/rate-limit states: `101`
-- GitHub Pages reporter: `not running`
+- GitHub Pages reporter: `running`
 
 ## Milestone Estimates
 
