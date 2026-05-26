@@ -1,31 +1,28 @@
 summary:
-- Started fresh from current `origin/main` on `lane/INT-03-fresh-0519`; previous INT-03 lane work was not merged or rebased.
-- Fixed a progress/test publication reliability issue in `scripts/test-runtime-abi-docs.sh`.
-- The runtime ABI docs test now captures expected-failure stdout/stderr under its per-run `mktemp -d` directory instead of fixed `/tmp/phpc-runtime-abi-docs-test.*` files.
-- Added an inline guard that fails if those capture paths ever move outside the per-run temp directory.
+- Improved coordination/test safety for the worker environment preflight tests.
+- `scripts/test-worker-env.sh` now places its synthetic worktree root and target root under the per-run `mktemp -d` directory instead of shared `/tmp/phpc-worktrees` and `/tmp/phpc-targets` paths.
+- The test still asserts lane-specific `CARGO_TARGET_DIR` diagnostics, worktree-local target rejection, branch checks, and clean-worktree checks, but no longer depends on or collides with global `/tmp` fixture state.
 - No compiler, runtime, parser, PHPT, or WordPress semantics changed.
 
 files changed:
-- `scripts/test-runtime-abi-docs.sh`
+- `scripts/test-worker-env.sh`
 - `swarm/handoffs/INT-03.md`
 
 tests run:
-- `scripts/test-runtime-abi-docs.sh` twice in parallel.
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-local-gate.sh`
-- `PHPC_REQUIRE_WORKER_ENV=1 PHPC_LANE_ID=INT-03 PHPC_EXPECT_BRANCH=lane/INT-03-fresh-0519 CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-worker-env.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 - `git diff --check`
 
 pass/fail state:
-- PASS: two concurrent `scripts/test-runtime-abi-docs.sh` runs completed without output-file collision.
-- PASS: local-gate fixture.
-- PASS: live INT-03 opt-in local gate, including full workspace `cargo test --locked` with 108 Rust tests passing.
+- PASS: focused worker-env fixture test.
+- PASS: local gate, including status/docs checks and full workspace `cargo test --locked` with 118 Rust tests passing.
 - PASS: `git diff --check`.
 
 blockers:
 - None for this coordination slice.
 
 latest commit if any:
-- Latest HEAD commit for this slice: `Isolate runtime ABI doc test output`.
+- Ported to `main` as `Isolate worker env test fixtures`.
 
 next suggested slice:
-- Audit other shell negative-fixture tests for fixed `/tmp` capture files or shared state that could make parallel gate runs flaky.
+- Audit remaining shell fixtures for hard-coded shared `/tmp` paths that can collide under parallel worker or local-gate runs.
