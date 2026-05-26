@@ -25,7 +25,7 @@ if tmux list-windows -t phpc-swarm >/dev/null 2>&1; then
             }
           }
         }
-        ($1 in pane || $2 in pane) && index($0, "bash /home/ubuntu/php-to-native-compiler-128c/scripts/worker-loop.sh") { count++ }
+        ($1 in pane || $2 in pane) && index($0, "codex") && index($0, "codex exec") == 0 { count++ }
         END { print count + 0 }
       '
   )"
@@ -53,8 +53,8 @@ if [ -d /home/ubuntu/phpc-worktrees ]; then
 fi
 state_files="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f 2>/dev/null | wc -l)"
 rate_limited="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f -exec grep -l '^rate_limited' {} + 2>/dev/null | wc -l)"
-active_cap="${SWARM_MAX_ACTIVE_CODEX:-19}"
-supervised_target="${SWARM_WORKER_COUNT:-19} workers + auditor"
+active_cap="interactive"
+supervised_target="${SWARM_WORKER_COUNT:-50} workers + auditor"
 updated_display="$(date -u '+%Y-%m-%d %H:%M UTC')"
 updated_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
@@ -71,7 +71,7 @@ tmp="$(mktemp)"
   echo "- Report base HEAD: \`${head}\`"
   echo "- Dirty entries: \`${dirty}\`"
   echo "- tmux windows in \`phpc-swarm\`: \`${windows}\`"
-  echo "- Worker loops: \`${worker_loops}\`"
+  echo "- Interactive Codex panes: \`${worker_loops}\`"
   echo "- Active \`codex exec\` processes: \`${active_codex}\`"
   echo "- Active Codex slot cap: \`${active_cap}\`"
   echo "- Active slot locks: \`${slot_locks}\`"
@@ -151,7 +151,7 @@ tmp="$(mktemp)"
     <section class="grid">
       <div class="metric"><span>Supervised agents target</span><strong>${supervised_target}</strong></div>
       <div class="metric"><span>tmux windows</span><strong>${windows}</strong></div>
-      <div class="metric"><span>Worker loops</span><strong>${worker_loops}</strong></div>
+      <div class="metric"><span>Interactive Codex panes</span><strong>${worker_loops}</strong></div>
       <div class="metric"><span>Active codex exec</span><strong>${active_codex}</strong></div>
       <div class="metric"><span>Active slot cap</span><strong>${active_cap}</strong></div>
       <div class="metric"><span>Retry states</span><strong>${rate_limited}</strong></div>

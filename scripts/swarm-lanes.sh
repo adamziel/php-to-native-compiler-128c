@@ -59,7 +59,7 @@ swarm_select_lanes() {
     return 0
   fi
 
-  local worker_count="${SWARM_WORKER_COUNT:-19}"
+  local worker_count="${SWARM_WORKER_COUNT:-50}"
   if [ "$worker_count" = "all" ]; then
     lanes=("${swarm_all_lanes[@]}")
     return 0
