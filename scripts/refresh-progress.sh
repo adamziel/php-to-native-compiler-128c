@@ -53,7 +53,11 @@ if [ -d /home/ubuntu/phpc-worktrees ]; then
   )"
 fi
 state_files="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f 2>/dev/null | wc -l)"
-rate_limited="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f -exec grep -l '^rate_limited' {} + 2>/dev/null | wc -l)"
+rate_limited="$(
+  {
+    find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f -exec grep -l '^rate_limited' {} + 2>/dev/null || true
+  } | wc -l
+)"
 active_cap="interactive"
 supervised_target="${SWARM_WORKER_COUNT:-50} workers + auditor"
 updated_display="$(date -u '+%Y-%m-%d %H:%M UTC')"

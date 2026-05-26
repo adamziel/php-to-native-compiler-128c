@@ -6,6 +6,8 @@ session="${1:-phpc-swarm}"
 worktree_root="${WORKTREE_ROOT:-/home/ubuntu/phpc-worktrees}"
 target_root="${TARGET_ROOT:-/home/ubuntu/phpc-targets}"
 initial_stagger_max="${SWARM_INITIAL_STAGGER_MAX:-90}"
+launch_stagger_seconds="${SWARM_LAUNCH_STAGGER_SECONDS:-0}"
+start_watchdog_after_launch="${SWARM_START_WATCHDOG_AFTER_LAUNCH:-0}"
 
 source "$repo_root/scripts/swarm-lanes.sh"
 source "$repo_root/scripts/swarm-interactive.sh"
@@ -25,6 +27,18 @@ fi
 
 tmux new-session -d -s "$session" -n supervisor -c "$repo_root"
 tmux send-keys -t "$session:supervisor" "cd '$repo_root' && watch -n 10 'date -u; git status --short --branch; tmux list-windows -t $session | tail -n +1 | wc -l; tail -n 20 progress.md'" C-m
+
+tmux new-window -t "$session" -n dashboard -c "$repo_root"
+tmux send-keys -t "$session:dashboard" "cd '$repo_root' && python3 -m http.server 8080 -d docs" C-m
+
+stagger_before_next_codex_session() {
+  local launched="$1"
+  local total="$2"
+  if [ "$launch_stagger_seconds" -gt 0 ] && [ "$launched" -lt "$total" ]; then
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) launch: waiting ${launch_stagger_seconds}s before starting Codex session $((launched + 1))/${total}."
+    sleep "$launch_stagger_seconds"
+  fi
+}
 
 make_prompt() {
   local lane="$1"
@@ -93,6 +107,9 @@ If the queue item is too broad, choose the smallest useful tested slice and reco
 PROMPT
 }
 
+total_codex_sessions="$((${#lanes[@]} + 1))"
+launched_codex_sessions="0"
+
 for lane in "${lanes[@]}"; do
   worktree="${worktree_root}/${lane}"
   prompt="$repo_root/swarm/worker-prompts/${lane}.md"
@@ -106,6 +123,9 @@ for lane in "${lanes[@]}"; do
   tmux new-window -t "$session" -n "$lane" -c "$worktree"
   tmux send-keys -t "$session:$lane" "$(swarm_codex_command "$repo_root" "$target_root" "$lane" "$worktree")" C-m
   swarm_paste_prompt "$session" "$lane" "$prompt" &
+  launched_codex_sessions="$((launched_codex_sessions + 1))"
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) launch: started Codex session ${launched_codex_sessions}/${total_codex_sessions} (${lane})."
+  stagger_before_next_codex_session "$launched_codex_sessions" "$total_codex_sessions"
 done
 
 aud_prompt="$repo_root/swarm/worker-prompts/AUD-01.md"
@@ -135,9 +155,15 @@ fi
 tmux new-window -t "$session" -n AUD-01 -c "$aud_worktree"
 tmux send-keys -t "$session:AUD-01" "$(swarm_codex_command "$repo_root" "$target_root" AUD-01 "$aud_worktree")" C-m
 swarm_paste_prompt "$session" AUD-01 "$aud_prompt" &
-
-tmux new-window -t "$session" -n dashboard -c "$repo_root"
-tmux send-keys -t "$session:dashboard" "cd '$repo_root' && python3 -m http.server 8080 -d docs" C-m
+launched_codex_sessions="$((launched_codex_sessions + 1))"
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) launch: started Codex session ${launched_codex_sessions}/${total_codex_sessions} (AUD-01)."
 
 wait
+if [ "$start_watchdog_after_launch" = "1" ]; then
+  if tmux has-session -t phpc-swarm-watchdog 2>/dev/null; then
+    tmux kill-session -t phpc-swarm-watchdog
+  fi
+  tmux new-session -d -s phpc-swarm-watchdog -n watchdog -c "$repo_root" \
+    "SWARM_WORKER_COUNT=${#lanes[@]} SWARM_INTERACTIVE_PROMPT_DELAY=${SWARM_INTERACTIVE_PROMPT_DELAY:-8} ./scripts/swarm-watchdog.sh ${session}"
+fi
 echo "Launched ${#lanes[@]} interactive workers plus auditor in tmux session ${session}."
