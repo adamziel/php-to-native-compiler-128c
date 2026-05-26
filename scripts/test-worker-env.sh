@@ -39,6 +39,16 @@ expect_failure() {
 }
 
 expect_failure \
+  "PHPC_WORKTREE_ROOT must be absolute: relative/INT-05" \
+  "a relative worktree root" \
+  env PHPC_WORKTREE_ROOT=relative/INT-05 CARGO_TARGET_DIR="$fixture_target_dir" scripts/verify-worker-env.sh
+
+expect_failure \
+  "PHPC_TARGET_ROOT must be absolute: relative-targets" \
+  "a relative target root" \
+  env PHPC_TARGET_ROOT=relative-targets CARGO_TARGET_DIR="$fixture_target_dir" scripts/verify-worker-env.sh
+
+expect_failure \
   "PHPC_ALLOW_WORKTREE_LANE_MISMATCH must be 0 or 1, got yes" \
   "a non-boolean worktree lane mismatch flag" \
   env PHPC_ALLOW_WORKTREE_LANE_MISMATCH=yes CARGO_TARGET_DIR="$fixture_target_dir" scripts/verify-worker-env.sh
@@ -109,9 +119,9 @@ expect_failure \
   env PHPC_ALLOW_WORKTREE_LANE_MISMATCH=1 PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR="$fixture_target_dir" PHPC_EXPECT_BRANCH=lane/not-current scripts/verify-worker-env.sh
 
 expect_failure \
-  "current branch must be lane/INT-05 for lane INT-05" \
+  "current branch must be lane/INT-05-not-current for lane INT-05" \
   "a valid expected lane branch that is not checked out" \
-  env PHPC_ALLOW_WORKTREE_LANE_MISMATCH=1 PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR="$fixture_target_dir" PHPC_EXPECT_BRANCH=lane/INT-05 scripts/verify-worker-env.sh
+  env PHPC_ALLOW_WORKTREE_LANE_MISMATCH=1 PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR="$fixture_target_dir" PHPC_EXPECT_BRANCH=lane/INT-05-not-current scripts/verify-worker-env.sh
 
 git init -q "$tmpdir/INT-05"
 git -C "$tmpdir/INT-05" config user.email test@example.invalid

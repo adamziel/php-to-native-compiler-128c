@@ -11,6 +11,22 @@ require_clean_worktree="${PHPC_REQUIRE_CLEAN_WORKTREE:-0}"
 allow_worktree_lane_mismatch="${PHPC_ALLOW_WORKTREE_LANE_MISMATCH:-0}"
 worktree_lane="$(basename "$worktree_root")"
 
+case "$worktree_root" in
+  /*) ;;
+  *)
+    echo "worker env error: PHPC_WORKTREE_ROOT must be absolute: $worktree_root" >&2
+    exit 1
+    ;;
+esac
+
+case "$target_root" in
+  /*) ;;
+  *)
+    echo "worker env error: PHPC_TARGET_ROOT must be absolute: $target_root" >&2
+    exit 1
+    ;;
+esac
+
 case "$allow_worktree_lane_mismatch" in
   0|1) ;;
   *)
