@@ -2,57 +2,42 @@
 
 ## Summary
 
-- Time: 2026-05-26T01:55:00Z.
-- Milestone: Coordination / tooling status accuracy.
-- Narrow denominator: `Q-003` bootstrap toolchain and workspace test verification.
-- Verified current `main` toolchain versions and full workspace test pass state after the latest PHPT and ABI integrations.
-- Updated status only; no reporter, ABI verifier, compiler, or WordPress behavior was changed.
-- Follow-up: ported the read-only lane review helper from `lane/INT-06` without replaying stale queue changes. The helper summarizes branch, HEAD, upstream, base, merge-base, ahead/behind counts, dirty entries, and untracked entries without mutating the inspected worktree.
+- Time: 2026-05-26T05:04:00Z.
+- Branch: `lane/INT-06-fresh-0504` from current `origin/main`.
+- Milestone: Integration / branch hygiene.
+- Narrow denominator: focused gate coverage for the read-only lane review helper.
+- Added `scripts/test-lane-review.sh` to verify `scripts/lane-review.sh --help`, read-only status preservation, required summary fields, zero divergence against `HEAD`, and the missing-base diagnostic.
+- Wired the test into `scripts/local-gate.sh`.
+- No compiler, runtime, parser, PHPT, or WordPress semantics changed.
 
 ## Files Changed
 
-- `swarm/queue.md`
-- `swarm/test-matrix.md`
+- `scripts/test-lane-review.sh`
+- `scripts/local-gate.sh`
 - `swarm/handoffs/INT-06.md`
-- `scripts/lane-review.sh`
 
 ## Tests Run
 
-- `cargo --version`
-  - Pass: `cargo 1.75.0`.
-- `rustc --version`
-  - Pass: `rustc 1.75.0`.
-- `php --version`
-  - Pass: `PHP 8.3.6 (cli)`.
-- `clang --version`
-  - Pass: `Ubuntu clang version 18.1.3`.
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-toolchain-status CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test`
-  - Pass on current `main`: 40 tests passed.
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-after-int05 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
-  - Pass on current `main`.
+- `scripts/test-lane-review.sh`
+  - Pass.
 - `git diff --check`
   - Pass.
-- `scripts/lane-review.sh --help`
-  - Pass: usage text printed.
-- `scripts/lane-review.sh --base origin/main`
-  - Pass: reported the current supervisor worktree without mutating it.
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-06 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
+  - Pass: status consistency, runtime ABI docs, launcher observability, lane-review gate, and `cargo test --locked` passed.
+  - Rust tests passed: 19 `php_runtime`, 11 CLI integration, 76 `phpc_core`, and doc tests.
 
 ## Pass/Fail State
 
-- Pass for the narrow Q-003 toolchain/workspace-test status decision.
-- Pass for `scripts/local-gate.sh` on current `main`.
-- Pass for `git diff --check`.
-- Pass for the read-only lane review helper port.
+- Pass for this integration-safety slice.
 
 ## Blockers
 
-- None for this status slice.
+- None.
 
 ## Latest Commit
 
-- Ported from `7882f0a Verify bootstrap toolchain status` with current-main test counts.
-- Follow-up helper port: `Add lane review helper`.
+- This commit: `Add lane review gate coverage`.
 
 ## Next Suggested Slice
 
-- Pick another unresolved queue/status item with current main evidence, avoiding generated reporter output and existing ABI verifier ownership. A useful follow-up is adding tests for `scripts/lane-review.sh` output on a temporary diverged worktree.
+- Extend `scripts/lane-review.sh` coverage with a temporary diverged repository fixture that proves non-zero ahead/behind reporting without depending on the live lane branch topology.
