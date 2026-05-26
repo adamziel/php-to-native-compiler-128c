@@ -51,6 +51,15 @@ if [[ "${#targets[@]}" -eq 0 ]]; then
   exit 2
 fi
 
+declare -A seen_targets=()
+for target in "${targets[@]}"; do
+  if [[ -n "${seen_targets[$target]:-}" ]]; then
+    echo "check-lanes-integration.sh: duplicate target: ${target}" >&2
+    exit 2
+  fi
+  seen_targets[$target]=1
+done
+
 status=0
 passed=0
 failed=0
