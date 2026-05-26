@@ -17,6 +17,13 @@ case "$CARGO_TARGET_DIR" in
     ;;
 esac
 
+case "$CARGO_TARGET_DIR" in
+  "$repo_root" | "$repo_root"/*)
+    echo "local-gate.sh requires CARGO_TARGET_DIR outside the repository, got $CARGO_TARGET_DIR" >&2
+    exit 2
+    ;;
+esac
+
 if [ "${PHPC_REQUIRE_WORKER_ENV:-0}" = "1" ]; then
   scripts/verify-worker-env.sh
 fi

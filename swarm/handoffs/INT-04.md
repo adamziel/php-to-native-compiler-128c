@@ -4,7 +4,7 @@
 
 Milestone: Integration / local test-gate isolation.
 
-Started a fresh slice from current `origin/main` on `lane/INT-04-fresh-0454`. Tightened `scripts/local-gate.sh` so it rejects relative `CARGO_TARGET_DIR` values before running any status checks, shell fixtures, or `cargo test`.
+Started a fresh slice from current `origin/main` on `lane/INT-04-fresh-0504`. Tightened `scripts/local-gate.sh` so it rejects a repository-local `CARGO_TARGET_DIR` before running status checks, shell fixtures, or `cargo test`, even when `PHPC_REQUIRE_WORKER_ENV` is not enabled.
 
 Narrow denominator: local coordination gate hygiene only. No compiler/runtime behavior, launcher behavior, or progress percentage changed.
 
@@ -22,9 +22,9 @@ Narrow denominator: local coordination gate hygiene only. No compiler/runtime be
 
 ## Pass/Fail State
 
-- Pass: focused local-gate fixture rejects unset `CARGO_TARGET_DIR` before invoking cargo.
-- Pass: focused local-gate fixture now rejects relative `CARGO_TARGET_DIR` before invoking cargo.
-- Pass: local gate completed status checks, launcher observability checks, worker-env fixture, full workspace `cargo test` with 106 tests, doc tests, and `git diff --check` under `/home/ubuntu/phpc-targets/INT-04`.
+- Pass: focused local-gate fixture rejects unset and relative `CARGO_TARGET_DIR` before invoking cargo.
+- Pass: focused local-gate fixture now rejects repository-local `CARGO_TARGET_DIR` before invoking cargo.
+- Pass: local gate completed status checks, launcher observability checks, worker-env fixture, full workspace `cargo test --locked` with 106 tests, doc tests, and `git diff --check` under `/home/ubuntu/phpc-targets/INT-04`.
 
 ## Blockers
 
@@ -32,8 +32,8 @@ Narrow denominator: local coordination gate hygiene only. No compiler/runtime be
 
 ## Latest Commit
 
-- This slice commit: `Require absolute target dir in local gate` on `lane/INT-04-fresh-0454`.
+- This slice commit: `Reject repository local target dir in local gate` on `lane/INT-04-fresh-0504`.
 
 ## Next Suggested Slice
 
-- Add a focused local-gate fixture that rejects `CARGO_TARGET_DIR` inside the current worktree when `PHPC_REQUIRE_WORKER_ENV` is not enabled.
+- Add a focused `local-gate.sh` fixture that proves `PHPC_REQUIRE_WORKER_ENV=1` validates the current lane branch when `PHPC_EXPECT_BRANCH` is provided.

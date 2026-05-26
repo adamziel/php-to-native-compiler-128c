@@ -54,6 +54,26 @@ if [ -s "$record_file" ]; then
   exit 1
 fi
 
+if PATH="$tmpdir:$PATH" \
+  PHPC_FAKE_CARGO_RECORD="$record_file" \
+  CARGO_TARGET_DIR="$repo_root/target/local-gate-test" \
+  scripts/local-gate.sh >"$tmpdir/worktree-target.out" 2>"$tmpdir/worktree-target.err"; then
+  echo "local-gate.sh accepted a repository-local CARGO_TARGET_DIR" >&2
+  exit 1
+fi
+
+if ! grep -F "requires CARGO_TARGET_DIR outside the repository" "$tmpdir/worktree-target.err" >/dev/null; then
+  echo "local-gate.sh failed without the expected repository-local CARGO_TARGET_DIR diagnostic" >&2
+  cat "$tmpdir/worktree-target.err" >&2
+  exit 1
+fi
+
+if [ -s "$record_file" ]; then
+  echo "local-gate.sh invoked cargo before rejecting a repository-local CARGO_TARGET_DIR" >&2
+  cat "$record_file" >&2
+  exit 1
+fi
+
 PATH="$tmpdir:$PATH" \
 PHPC_FAKE_CARGO_RECORD="$record_file" \
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/home/ubuntu/phpc-targets/local-gate-test}" \
