@@ -2,29 +2,23 @@
 
 summary:
 - Milestone: Integration / coordination gate safety.
-- Started from current `origin/main` on `lane/INT-01-batch-0526`; earlier INT-01 branches were left untouched.
-- Added `scripts/check-lanes-integration.sh`, a non-mutating batch wrapper around `scripts/check-lane-integration.sh`.
-- The wrapper checks every supplied lane, prints a section for each result, and exits nonzero if any underlying lane check fails.
-- Added focused temp-repo regression coverage for mixed safe/unsafe batches and safe all-pass batches.
-- Documented the batch workflow in `swarm/integration.md`.
-- No compiler/runtime behavior, PHP-core denominator, WordPress behavior, launcher behavior, or generated progress output changed.
+- Started from current `origin/main` on `lane/INT-01-fresh-0443`; after `origin/main` advanced during verification, fast-forwarded the lane and reapplied the slice without destructive git commands.
+- Added an early `CARGO_TARGET_DIR` requirement to `scripts/local-gate.sh` so local coordination gates cannot silently share Cargo build output across lanes.
+- Extended `scripts/test-local-gate.sh` to prove the gate fails before invoking cargo when `CARGO_TARGET_DIR` is unset.
+- No compiler/runtime semantics, PHP-core denominator, WordPress behavior, launcher behavior, or generated progress output changed.
 
 files changed:
-- `scripts/check-lanes-integration.sh`
-- `scripts/test-check-lane-integration.sh`
 - `scripts/local-gate.sh`
-- `swarm/integration.md`
+- `scripts/test-local-gate.sh`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
 - `git fetch origin`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-check-lane-integration.sh`
-- `scripts/check-lanes-integration.sh --help >/dev/null 2>&1`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/test-local-gate.sh`
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 
 pass/fail state:
-- PASS: focused checker regression covers batch output sections, continued checking after a missing-handoff failure, and nonzero batch exit.
-- PASS: focused checker regression covers an all-safe batch with `already-integrated` and `stale-equivalent` classifications.
+- PASS: focused local-gate regression rejects an unset `CARGO_TARGET_DIR` and confirms cargo is not invoked before the isolation check.
 - PASS: local coordination gate, including status consistency, runtime ABI docs, progress launcher-log fixture, launcher observability, lane integration checker tests, worker-env tests, full workspace tests, and diff hygiene.
 - PASS: full workspace tests reported 19 runtime, 11 CLI, and 76 core tests passing.
 
@@ -32,7 +26,7 @@ blockers:
 - None for this integration-safety slice.
 
 latest commit:
-- `cf11900` (`Add batch lane integration checker`)
+- This lane commit: `Require isolated target dir for local gate`
 
 next suggested slice:
-- Use `scripts/check-lanes-integration.sh` against the next small set of dirty coordination or integration lanes and record terminal decisions in `swarm/integration.md`; do not broaden into compiler feature work from INT-01.
+- Keep INT-01 focused on gate hygiene and status publication reliability; candidate follow-up is a small status-gate check that validates documented verification commands name an explicit `CARGO_TARGET_DIR`.

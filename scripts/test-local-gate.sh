@@ -15,6 +15,25 @@ printf '%s\n' "$*" >>"$PHPC_FAKE_CARGO_RECORD"
 SH
 chmod +x "$tmpdir/cargo"
 
+if PATH="$tmpdir:$PATH" \
+  PHPC_FAKE_CARGO_RECORD="$record_file" \
+  env -u CARGO_TARGET_DIR scripts/local-gate.sh >"$tmpdir/unset-target.out" 2>"$tmpdir/unset-target.err"; then
+  echo "local-gate.sh accepted an unset CARGO_TARGET_DIR" >&2
+  exit 1
+fi
+
+if ! grep -F "requires CARGO_TARGET_DIR" "$tmpdir/unset-target.err" >/dev/null; then
+  echo "local-gate.sh failed without the expected CARGO_TARGET_DIR diagnostic" >&2
+  cat "$tmpdir/unset-target.err" >&2
+  exit 1
+fi
+
+if [ -s "$record_file" ]; then
+  echo "local-gate.sh invoked cargo before validating CARGO_TARGET_DIR" >&2
+  cat "$record_file" >&2
+  exit 1
+fi
+
 PATH="$tmpdir:$PATH" \
 PHPC_FAKE_CARGO_RECORD="$record_file" \
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/home/ubuntu/phpc-targets/local-gate-test}" \

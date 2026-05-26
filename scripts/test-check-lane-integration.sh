@@ -63,6 +63,24 @@ if scripts/check-lane-integration.sh lane/conflict main > conflict.out 2> confli
 fi
 grep -F "classification: unsafe-to-merge" conflict.out >/dev/null
 
+git switch -q --orphan unrelated
+git rm -q -r --ignore-unmatch .
+printf 'unrelated\n' > unrelated.txt
+git add unrelated.txt
+git commit -q -m unrelated
+git branch lane/unrelated-history
+git switch -q main
+
+if scripts/check-lane-integration.sh lane/unrelated-history main > unrelated.out 2> unrelated.err; then
+  echo "check-lane-integration.sh accepted a lane with unrelated history" >&2
+  cat unrelated.out >&2
+  cat unrelated.err >&2
+  exit 1
+fi
+grep -F "merge-base: none" unrelated.out >/dev/null
+grep -F "classification: unsafe-to-merge" unrelated.out >/dev/null
+grep -F "target does not share history with main" unrelated.out >/dev/null
+
 git switch -q -c lane/review main
 printf 'review\n' > review.txt
 git add review.txt

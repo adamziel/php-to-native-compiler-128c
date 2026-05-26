@@ -4,6 +4,11 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+if [ -z "${CARGO_TARGET_DIR:-}" ]; then
+  echo "local-gate.sh requires CARGO_TARGET_DIR to keep lane builds isolated" >&2
+  exit 2
+fi
+
 if [ "${PHPC_REQUIRE_WORKER_ENV:-0}" = "1" ]; then
   scripts/verify-worker-env.sh
 fi

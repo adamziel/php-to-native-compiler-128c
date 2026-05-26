@@ -46,7 +46,14 @@ fi
 
 main_commit="$(git rev-parse "${main_ref}^{commit}")"
 target_commit="$(git rev-parse "${target_ref}^{commit}")"
-merge_base="$(git merge-base "$main_commit" "$target_commit")"
+if ! merge_base="$(git merge-base "$main_commit" "$target_commit")"; then
+  echo "main: ${main_ref} $(git rev-parse --short "$main_commit")"
+  echo "target: ${target_ref} $(git rev-parse --short "$target_commit")"
+  echo "merge-base: none"
+  echo "classification: unsafe-to-merge"
+  echo "action: request a rebase or manual integration; target does not share history with main."
+  exit 1
+fi
 
 lane_name="$target_input"
 case "$target_ref" in
