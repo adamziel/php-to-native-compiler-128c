@@ -29,7 +29,8 @@ blockers:
 - This remains a `phpc run` harness slice and does not prove linked native execution.
 
 latest commit if any:
-- Pending until this handoff and slice are committed.
+- `a67cfe1` Run PHPT FILEEOF sources.
+- `0a71d1b` Merge remote-tracking branch `origin/main` into `lane/INT-03-fileeof-run` after `origin/main` advanced with launcher observability and published-progress commits.
 
 next suggested slice:
 - Add the first narrow `SKIPIF` classification path without changing php-src runnable counts, or add explicit runner coverage for `FILEEOF` plus xfail/unexpected-pass if integration wants that denominator before SKIPIF.
