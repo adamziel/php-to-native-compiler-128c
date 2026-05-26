@@ -9,6 +9,7 @@ pub type PhpcValueHandle = u64;
 pub const PHPC_VALUE_KIND_INVALID: i32 = -1;
 pub const PHPC_VALUE_KIND_NULL: i32 = 0;
 pub const PHPC_VALUE_KIND_BINARY_STRING: i32 = 1;
+pub const PHPC_VALUE_KIND_INTEGER: i32 = 2;
 
 pub const PHPC_STATUS_OK: i32 = 0;
 pub const PHPC_STATUS_INVALID_HANDLE: i32 = -1;
@@ -20,6 +21,7 @@ const INVALID_HANDLE: PhpcValueHandle = 0;
 enum PhpValue {
     Null,
     BinaryString(Vec<u8>),
+    Integer(i64),
 }
 
 #[derive(Debug)]
@@ -74,6 +76,11 @@ pub extern "C" fn phpc_value_null() -> PhpcValueHandle {
 }
 
 #[no_mangle]
+pub extern "C" fn phpc_integer_new(value: i64) -> PhpcValueHandle {
+    runtime().lock().unwrap().insert(PhpValue::Integer(value))
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn phpc_binary_string_new(
     ptr: *const c_char,
     len: usize,
@@ -98,6 +105,7 @@ pub extern "C" fn phpc_value_kind(handle: PhpcValueHandle) -> i32 {
     match runtime.values.get(&handle) {
         Some(PhpValue::Null) => PHPC_VALUE_KIND_NULL,
         Some(PhpValue::BinaryString(_)) => PHPC_VALUE_KIND_BINARY_STRING,
+        Some(PhpValue::Integer(_)) => PHPC_VALUE_KIND_INTEGER,
         None => PHPC_VALUE_KIND_INVALID,
     }
 }
@@ -132,6 +140,22 @@ pub unsafe extern "C" fn phpc_binary_string_data(
         *out_len = bytes.len();
     }
     bytes.as_ptr().cast::<c_char>()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn phpc_integer_value(handle: PhpcValueHandle, out_value: *mut i64) -> i32 {
+    if out_value.is_null() {
+        return PHPC_STATUS_INVALID_ARGUMENT;
+    }
+
+    let runtime = runtime().lock().unwrap();
+    let Some(PhpValue::Integer(value)) = runtime.values.get(&handle) else {
+        *out_value = 0;
+        return PHPC_STATUS_INVALID_HANDLE;
+    };
+
+    *out_value = *value;
+    PHPC_STATUS_OK
 }
 
 #[no_mangle]
@@ -208,6 +232,56 @@ mod tests {
     }
 
     #[test]
+    fn integer_handle_is_runtime_owned_until_free() {
+        let handle = phpc_integer_new(-42);
+
+        assert_ne!(handle, INVALID_HANDLE);
+        assert_eq!(phpc_value_kind(handle), PHPC_VALUE_KIND_INTEGER);
+
+        let mut value = 0;
+        assert_eq!(
+            unsafe { phpc_integer_value(handle, &mut value) },
+            PHPC_STATUS_OK
+        );
+        assert_eq!(value, -42);
+
+        assert_eq!(phpc_value_free(handle), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_kind(handle), PHPC_VALUE_KIND_INVALID);
+    }
+
+    #[test]
+    fn integer_value_reports_invalid_handles() {
+        let mut value = i64::MAX;
+
+        assert_eq!(
+            unsafe { phpc_integer_value(INVALID_HANDLE, &mut value) },
+            PHPC_STATUS_INVALID_HANDLE
+        );
+        assert_eq!(value, 0);
+
+        let string = unsafe { phpc_binary_string_new(b"not-int".as_ptr().cast::<c_char>(), 7) };
+        value = i64::MAX;
+        assert_eq!(
+            unsafe { phpc_integer_value(string, &mut value) },
+            PHPC_STATUS_INVALID_HANDLE
+        );
+        assert_eq!(value, 0);
+        assert_eq!(phpc_value_free(string), PHPC_STATUS_OK);
+    }
+
+    #[test]
+    fn integer_value_rejects_null_out_pointer() {
+        let handle = phpc_integer_new(123);
+
+        assert_eq!(
+            unsafe { phpc_integer_value(handle, std::ptr::null_mut()) },
+            PHPC_STATUS_INVALID_ARGUMENT
+        );
+        assert_eq!(phpc_value_kind(handle), PHPC_VALUE_KIND_INTEGER);
+        assert_eq!(phpc_value_free(handle), PHPC_STATUS_OK);
+    }
+
+    #[test]
     fn clone_rejects_invalid_handles() {
         assert_eq!(phpc_value_clone(INVALID_HANDLE), INVALID_HANDLE);
 
@@ -250,6 +324,27 @@ mod tests {
         let bytes = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), len) };
         assert_eq!(bytes, b"owned");
 
+        assert_eq!(phpc_value_free(clone), PHPC_STATUS_OK);
+    }
+
+    #[test]
+    fn cloned_integer_handle_has_independent_ownership() {
+        let original = phpc_integer_new(i64::MIN);
+        let clone = phpc_value_clone(original);
+
+        assert_ne!(clone, INVALID_HANDLE);
+        assert_ne!(clone, original);
+        assert_eq!(phpc_value_kind(clone), PHPC_VALUE_KIND_INTEGER);
+
+        assert_eq!(phpc_value_free(original), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_kind(original), PHPC_VALUE_KIND_INVALID);
+
+        let mut value = 0;
+        assert_eq!(
+            unsafe { phpc_integer_value(clone, &mut value) },
+            PHPC_STATUS_OK
+        );
+        assert_eq!(value, i64::MIN);
         assert_eq!(phpc_value_free(clone), PHPC_STATUS_OK);
     }
 }

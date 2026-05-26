@@ -7,6 +7,7 @@
 | CLI compile IR | `cargo run -p phpc -- compile fixtures/bootstrap/hello.php --emit-ir` | passing | Emits placeholder IR |
 | CLI native output gates | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int04 cargo test -p phpc --test bootstrap_cli` | passing | Verifies `--emit-asm` and `--emit-exe` fail explicitly until M3 implements real native output |
 | CLI run argument hygiene | `cargo test -p phpc --test bootstrap_cli cli_run_rejects_trailing_arguments` | passing | `phpc run <input.php>` rejects trailing arguments instead of silently ignoring bad test invocations |
+| CLI compile flag hygiene | `cargo test -p phpc --test bootstrap_cli cli_compile_rejects_conflicting_emit_flags` | passing | Conflicting compile emit flags fail explicitly with no stdout |
 | PHP oracle | `php fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |
 | `.phpt` parser | `cargo test -p phpc_core phpt::tests` | passing | Minimal TEST/FILE/EXPECT/SKIPIF parser plus static metadata-carrying harness input |
 | PHPT-03 committed candidate review | `git merge-base --is-ancestor 0cbd609 main`; inspect `main:crates/phpc_core/src/phpt.rs`; run `scripts/local-gate.sh` on current `main` | verified | Current `main` already contains accepted parser-level `SKIPIF`/`XFAIL` metadata behavior; standalone `ea96852` candidate should not be reapplied |

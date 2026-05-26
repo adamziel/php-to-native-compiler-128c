@@ -3,12 +3,11 @@
 ## Summary
 
 - Milestone: Integration.
-- Tightened CLI integration hygiene for the interpreter reference path.
-- `phpc run <input.php>` now rejects trailing arguments instead of silently ignoring them, so bad test invocations do not look like valid interpreter runs.
+- Added a focused CLI hygiene gate for unsupported `phpc compile` flag combinations.
+- `phpc compile <input.php> --emit-ir --emit-exe` is now covered as an explicit failure with no stdout and the existing truthful unsupported-flags diagnostic.
 
 ## Files Changed
 
-- `crates/phpc/src/main.rs`
 - `crates/phpc/tests/bootstrap_cli.rs`
 - `swarm/test-matrix.md`
 - `swarm/handoffs/INT-08.md`
@@ -16,12 +15,13 @@
 ## Tests Run
 
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-08 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-08 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test`
+- `scripts/local-gate.sh`
+- `git diff --check`
 
 ## Pass/Fail State
 
-- PASS: focused CLI gate, 5 tests passed.
-- PASS: workspace suite, 22 tests passed.
+- PASS: focused CLI gate, 5 tests passed on current main after porting this slice.
+- PASS: local gate and diff check.
 
 ## Blockers
 
@@ -30,7 +30,7 @@
 
 ## Latest Commit
 
-- `8d68d4f Update INT-08 handoff`
+- `d8e861f Update INT-08 handoff`
 
 ## Next Suggested Slice
 
