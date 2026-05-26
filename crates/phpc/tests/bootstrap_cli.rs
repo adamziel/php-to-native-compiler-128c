@@ -19,6 +19,32 @@ fn cli_without_command_prints_help_and_usage_exit() {
 }
 
 #[test]
+fn cli_help_aliases_print_usage_successfully() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+
+    for arg in ["--help", "-h", "help"] {
+        let output = Command::new(exe).arg(arg).output().expect("run phpc help");
+
+        assert!(
+            output.status.success(),
+            "{arg} failed with stderr:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(stdout.contains("phpc run <input.php>"), "{arg} stdout:\n{stdout}");
+        assert!(
+            stdout.contains("phpc compile <input.php> --emit-exe <output>"),
+            "{arg} stdout:\n{stdout}"
+        );
+        assert!(
+            stdout.contains("phpc wordpress-bootstrap-check <wordpress-root>"),
+            "{arg} stdout:\n{stdout}"
+        );
+        assert_eq!(String::from_utf8_lossy(&output.stderr), "", "{arg}");
+    }
+}
+
+#[test]
 fn cli_rejects_unknown_command_without_stdout() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let output = Command::new(exe)
