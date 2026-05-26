@@ -5,6 +5,8 @@
 - Milestone: Integration safety / status accuracy.
 - Narrow denominator: static progress-output structure inside the existing non-mutating `scripts/refresh-progress.sh --check` path.
 - Added section and milestone-row assertions for generated markdown and HTML output.
+- Follow-up: aligned the generated HTML milestone table with the eight Markdown milestone rows and tightened `refresh-progress.sh --check` to require all eight HTML rows.
+- Renamed the HTML dirty-count label to `Working tree dirty entries`, matching the branch-local measurement.
 - Preserved existing live-value checks for repository, branch, supervised target, worker command count, slot label, launcher status, and HTML health rows.
 - The structural checks intentionally avoid refreshed timestamps, branch/HEAD values, process counts, dirty counts, and other live counters.
 
@@ -33,6 +35,7 @@
 ## Latest Commit
 
 - Ported from `3d9bed1 Tighten progress structural check`.
+- Follow-up helper port: `Align progress dashboard milestones`.
 
 ## Next Suggested Slice
 

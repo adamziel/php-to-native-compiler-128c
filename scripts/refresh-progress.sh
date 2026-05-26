@@ -281,6 +281,8 @@ tmp="$(mktemp)"
         <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:4%"></span></div>4%</td><td>interpreter-supported constructs</td><td>String, integer, boolean, and null echo literals; top-level string define/global no-output statements; explicit variable diagnostic</td></tr>
         <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:6%"></span></div>6%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files</td><td>Static inventory pinned; minimal FILE/FILEEOF exact-EXPECT/EXPECTF runner plus limited SKIPIF classification integrated</td></tr>
         <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress ${wp_version} entrypoints</td><td>Source pinned; ${wp_entrypoints} entrypoints present; ${wp_bootstrap_summary}</td></tr>
+        <tr><td>M7 object/SAPI/DB generality</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>required semantic families</td><td>Request header runtime state integrated; PHP header() wiring queued</td></tr>
+        <tr><td>M8 performance after correctness</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>truthful native benchmarks</td><td>Deferred</td></tr>
       </tbody>
     </table>
     <h2>Swarm Health</h2>
@@ -289,7 +291,7 @@ tmp="$(mktemp)"
       <tbody>
         <tr><td>Branch</td><td><code>${branch}</code></td></tr>
         <tr><td>Report base HEAD</td><td><code>${head}</code></td></tr>
-        <tr><td>Main dirty entries</td><td><code>${dirty}</code></td></tr>
+        <tr><td>Working tree dirty entries</td><td><code>${dirty}</code></td></tr>
         <tr><td>Dirty lane worktrees preserved for review</td><td><code>${dirty_lanes}</code></td></tr>
         <tr><td>Active agent slot cap</td><td><code>${active_cap}</code></td></tr>
         <tr><td>Active slot locks</td><td><code>${slot_locks}</code></td></tr>
@@ -334,6 +336,7 @@ if [ "$mode" = "--check" ]; then
   [ "$(grep -Ec '^\| M[0-9] ' "$progress_out")" -eq 8 ]
   grep -q '<h2>Milestones</h2>' "$html_out"
   grep -q '<h2>Swarm Health</h2>' "$html_out"
+  grep -q 'Working tree dirty entries' "$html_out"
   grep -q '<h2>Immediate Actions</h2>' "$html_out"
-  [ "$(grep -Ec '<tr><td>M[0-9] ' "$html_out")" -eq 6 ]
+  [ "$(grep -Ec '<tr><td>M[0-9] ' "$html_out")" -eq 8 ]
 fi
