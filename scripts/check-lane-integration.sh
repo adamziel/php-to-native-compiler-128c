@@ -62,6 +62,11 @@ fi
 
 main_commit="$(git rev-parse "${main_ref}^{commit}")"
 target_commit="$(git rev-parse "${target_ref}^{commit}")"
+if [[ "$main_ref" == "$target_ref" ]]; then
+  echo "lane integration check: main ref and target ref are identical: ${main_ref}" >&2
+  echo "lane integration check: use the current integration base, usually origin/main, as main-ref" >&2
+  exit 2
+fi
 if ! merge_base="$(git merge-base "$main_commit" "$target_commit")"; then
   echo "main: ${main_ref} $(git rev-parse --short "$main_commit")"
   echo "target: ${target_ref} $(git rev-parse --short "$target_commit")"

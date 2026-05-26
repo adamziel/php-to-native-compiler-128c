@@ -91,6 +91,19 @@ scripts/check-lane-integration.sh lane/review main > review.out
 grep -F "handoff: present swarm/handoffs/review.md" review.out >/dev/null
 grep -F "classification: review-required" review.out >/dev/null
 
+set +e
+scripts/check-lane-integration.sh lane/review lane/review > same-ref.out 2> same-ref.err
+same_ref_status=$?
+set -e
+if [[ "$same_ref_status" -ne 2 ]]; then
+  echo "check-lane-integration.sh did not reject identical main and target commits with status 2" >&2
+  cat same-ref.out >&2
+  cat same-ref.err >&2
+  exit 1
+fi
+grep -F "main ref and target ref are identical: lane/review" same-ref.err >/dev/null
+grep -F "use the current integration base, usually origin/main, as main-ref" same-ref.err >/dev/null
+
 git branch review main
 if scripts/check-lane-integration.sh review main > ambiguous.out 2> ambiguous.err; then
   echo "check-lane-integration.sh accepted an ambiguous unqualified target" >&2
