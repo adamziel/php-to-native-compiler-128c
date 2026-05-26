@@ -6,7 +6,7 @@ States: `ready`, `assigned`, `blocked`, `review`, `integration`, `verified`, `re
 | --- | --- | --- | --- | --- | --- |
 | Q-001 | ready | Coordination | INT-01 | Establish current repo state and progress baseline | `progress.md` reflects branch, HEAD, dirty state, tools |
 | Q-002 | ready | Coordination | DOC-01 | Keep `progress.md`, `docs/progress.html`, and manifests current | Dashboard matches current evidence |
-| Q-003 | ready | Tooling | INT-04 | Verify bootstrap toolchain and `cargo test` | Commands recorded with pass/fail |
+| Q-003 | verified | Tooling | INT-06 | Verify bootstrap toolchain and `cargo test` | Verified on current `main`: toolchain versions recorded and `cargo test` passed with 40 tests using `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-toolchain-status` |
 | Q-004 | ready | M4 | LOW-01 | Replace toy parser with token stream foundation | Tests for PHP open tag, echo, literals, errors |
 | Q-005 | ready | M2 | ABI-01 | Define runtime value handle ownership model | Runtime tests for null/free/invalid handles |
 | Q-006 | ready | M3 | LINK-01 | Design and implement first linked native executable path | Produces executable for echo literal fixture |

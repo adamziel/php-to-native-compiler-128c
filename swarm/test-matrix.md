@@ -2,7 +2,8 @@
 
 | Layer | Command | Current Status | Notes |
 | --- | --- | --- | --- |
-| Rust workspace | `cargo test` | passing | 6 tests passed on 2026-05-25 |
+| Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-toolchain-status CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 40 tests passed on 2026-05-26: 12 runtime, 5 CLI, 23 core |
+| Bootstrap toolchain | `cargo --version`; `rustc --version`; `php --version`; `clang --version` | passing | cargo 1.75.0; rustc 1.75.0; PHP 8.3.6 CLI; Ubuntu clang 18.1.3 |
 | CLI run | `cargo run -p phpc -- run fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |
 | CLI compile IR | `cargo run -p phpc -- compile fixtures/bootstrap/hello.php --emit-ir` | passing | Emits placeholder IR |
 | CLI native output gates | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int04 cargo test -p phpc --test bootstrap_cli` | passing | Verifies `--emit-asm` and `--emit-exe` fail explicitly until M3 implements real native output |
