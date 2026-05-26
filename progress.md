@@ -1,12 +1,12 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T00:33:28Z
+Last refreshed: 2026-05-26T00:37:13Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `a094b4e`
+- Report base HEAD: `0d085a1`
 - Dirty entries: `0`
 - tmux windows in `phpc-swarm`: `4`
 - Supervised agents target: `100 workers + auditor`
@@ -20,7 +20,7 @@ Last refreshed: 2026-05-26T00:33:28Z
 - Dirty lane worktrees preserved for review: `57`
 - Worker state files: `101`
 - Expected backend retry/rate-limit states: `101`
-- GitHub Pages reporter: `running`
+- GitHub Pages reporter: `not running`
 
 ## Milestone Estimates
 
@@ -30,8 +30,8 @@ Last refreshed: 2026-05-26T00:33:28Z
 | M2 runtime value ABI | value kinds and ownership semantics | 3% | Runtime-owned null and binary-string handles integrated |
 | M3 linked native execution | compile, link, run, compare | 0% | Queued |
 | M4 native lowering | interpreter-supported constructs lowered or rejected | 2% | String and integer echo literals; explicit variable diagnostic |
-| M5 PHP core .phpt harness | pinned php-src denominator | 2% | PHP-8.3 inventory pinned and minimal .phpt parser integrated |
-| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; five entrypoints present; runner queued |
+| M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files | 2% | PHP-8.3 inventory pinned and minimal .phpt parser integrated |
+| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; 5 entrypoints present; runner queued |
 | M7 object/SAPI/DB generality | required semantic families | 0% | Queued |
 | M8 performance after correctness | truthful native benchmarks | 0% | Deferred |
 
