@@ -7,8 +7,16 @@ cd "$repo_root"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
-out_file="/tmp/phpc-runtime-abi-docs-test.out"
-err_file="/tmp/phpc-runtime-abi-docs-test.err"
+out_file="$tmpdir/runtime-abi-docs-test.out"
+err_file="$tmpdir/runtime-abi-docs-test.err"
+
+case "$out_file:$err_file" in
+  "$tmpdir"/*:"$tmpdir"/*) ;;
+  *)
+    echo "test-runtime-abi-docs.sh must keep captured output files under its per-run temp directory" >&2
+    exit 1
+    ;;
+esac
 
 new_fixture() {
   local fixture
