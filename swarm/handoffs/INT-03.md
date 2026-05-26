@@ -1,8 +1,8 @@
 summary:
-- Started fresh from `origin/main` on `lane/INT-03-expectf` instead of building on stale `lane/INT-03` mini-runner commits.
-- Extended the existing `run_phpt_with_phpc` / `PhptRunStatus` model with `EXPECTF` matching while preserving exact `EXPECT` and `EXPECTREGEX` unsupported behavior.
-- Added focused tests for `EXPECTF` pass, fail, xfail, and unexpected-pass classification.
-- Follow-up tightened `EXPECTF` token semantics toward php-src `run-tests.php`: `%s`/`%a` are non-empty, `%S`/`%A` can be empty, `%w` can be empty, `%e` and `%0` are supported, and `%f` no longer accepts generic Rust `NaN`/`inf`.
+- Started fresh from current `origin/main` on `lane/INT-03-fileeof-run`; the prior EXPECTF branch was stale/divergent and was not reused.
+- Extended `run_phpt_with_phpc` to execute `FILEEOF` through the same path as `FILE` by using the existing `source_file()` selection.
+- Preserved exact `EXPECT`, `EXPECTF`, xfail/unexpected-pass, unsupported `EXPECTREGEX`, and interpreter-error behavior.
+- Added focused tests for `FILEEOF` execution with exact `EXPECT` and `EXPECTF`; existing ambiguous `FILE` plus `FILEEOF` rejection remains covered.
 - Updated support, blocker, and test-matrix status without changing php-src runnable counts.
 
 files changed:
@@ -15,23 +15,21 @@ files changed:
 tests run:
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core phpt::tests`
 - `git diff --check`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 
 pass/fail state:
-- PASS: focused PHPT tests, 31 passed.
+- PASS: focused PHPT tests, 33 passed.
 - PASS: `git diff --check`.
+- PASS: `scripts/local-gate.sh`; status checks, runtime ABI docs check, full workspace tests, and diff hygiene completed cleanly.
 
 blockers:
 - `EXPECTREGEX` still returns `PhptRunStatus::Unsupported`.
 - `SKIPIF` scripts are still not executed.
-- The runner still requires `FILE`; `FILEEOF` is carried in harness input but is not executed by `run_phpt_with_phpc`.
 - No php-src-scale runner or runnable-count update was added for the pinned 19,346-test denominator.
 - This remains a `phpc run` harness slice and does not prove linked native execution.
 
 latest commit if any:
-- `00a1ffa` Add PHPT EXPECTF matching.
-- `b101edd` Update INT-03 EXPECTF handoff.
-- `dddda87` Merge remote-tracking branch `origin/main` into `lane/INT-03-expectf` after `origin/main` advanced by one published-progress commit.
-- Supervisor main port pending: EXPECTF matcher plus php-src-aligned token semantics.
+- Pending until this handoff and slice are committed.
 
 next suggested slice:
-- Add `FILEEOF` execution to `run_phpt_with_phpc` using the existing `PhptFileKind` model, with focused tests proving exact `EXPECT`, `EXPECTF`, xfail, and existing `FILE` behavior remain unchanged.
+- Add the first narrow `SKIPIF` classification path without changing php-src runnable counts, or add explicit runner coverage for `FILEEOF` plus xfail/unexpected-pass if integration wants that denominator before SKIPIF.

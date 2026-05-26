@@ -174,12 +174,12 @@ impl PhptTest {
 
 pub fn run_phpt_with_phpc(test: &PhptTest) -> PhptRunReport {
     let metadata = test.metadata();
-    let file = match test.file() {
+    let file = match test.source_file() {
         Some(file) => file,
         None => {
             return PhptRunReport {
                 status: PhptRunStatus::Error {
-                    reason: "cannot run .phpt without FILE section".to_string(),
+                    reason: "cannot run .phpt without FILE or FILEEOF section".to_string(),
                 },
                 expected_stdout: None,
                 actual_stdout: None,
@@ -214,7 +214,7 @@ pub fn run_phpt_with_phpc(test: &PhptTest) -> PhptRunReport {
     }
 
     let expected_stdout = normalize_phpt_output(expectation.body);
-    let actual_stdout = match run_php(file) {
+    let actual_stdout = match run_php(file.body) {
         Ok(output) => normalize_phpt_output(&output),
         Err(reason) => {
             return PhptRunReport {
@@ -847,6 +847,24 @@ mod tests {
     }
 
     #[test]
+    fn runs_fileeof_exact_expectation_with_phpc() {
+        let phpt = parse_phpt(
+            "--TEST--\nrunnable fileeof echo\n--FILEEOF--\n<?php echo 'hello'; echo \"\\n\";\n--EXPECT--\nhello\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt),
+            PhptRunReport {
+                status: PhptRunStatus::Pass,
+                expected_stdout: Some("hello\n".to_string()),
+                actual_stdout: Some("hello\n".to_string()),
+                metadata: phpt.metadata(),
+            }
+        );
+    }
+
+    #[test]
     fn normalizes_line_endings_before_comparing_exact_expectation() {
         let phpt = parse_phpt(
             "--TEST--\ncrlf expectation\n--FILE--\n<?php echo \"hello\\n\";\n--EXPECT--\nhello\r\n",
@@ -889,6 +907,23 @@ mod tests {
     fn runs_expectf_expectation_with_phpc() {
         let phpt =
             parse_phpt("--TEST--\nformat\n--FILE--\n<?php echo 'item 123';\n--EXPECTF--\n%s %d")
+                .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt),
+            PhptRunReport {
+                status: PhptRunStatus::Pass,
+                expected_stdout: Some("%s %d".to_string()),
+                actual_stdout: Some("item 123".to_string()),
+                metadata: phpt.metadata(),
+            }
+        );
+    }
+
+    #[test]
+    fn runs_fileeof_expectf_expectation_with_phpc() {
+        let phpt =
+            parse_phpt("--TEST--\nformat fileeof\n--FILEEOF--\n<?php echo 'item 123';\n--EXPECTF--\n%s %d")
                 .unwrap();
 
         assert_eq!(
