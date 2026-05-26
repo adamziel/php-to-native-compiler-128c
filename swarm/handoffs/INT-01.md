@@ -32,7 +32,7 @@ blockers:
 - None for this integration-safety slice.
 
 latest commit:
-- `HEAD` (`Add batch lane integration checker`)
+- `cf11900` (`Add batch lane integration checker`)
 
 next suggested slice:
 - Use `scripts/check-lanes-integration.sh` against the next small set of dirty coordination or integration lanes and record terminal decisions in `swarm/integration.md`; do not broaden into compiler feature work from INT-01.
