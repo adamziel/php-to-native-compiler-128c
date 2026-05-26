@@ -27,6 +27,12 @@ Several worker branches now contain reviewable dirty slices, and four lanes have
 | --- | --- | --- | --- |
 | `PHPT-03` | `ea96852` | Accepted compatible parser-level `SKIPIF`/`XFAIL` metadata into `INT-03`; no runner semantics or skip execution added. | `cargo test -p phpc_core phpt::tests` and `scripts/status-gate.sh` in INT-03 handoff. |
 
+## Integration Decisions
+
+| Date | Lane | Commit | Decision | Evidence | Follow-up |
+| --- | --- | --- | --- | --- | --- |
+| 2026-05-26 | `LINK-01` | `d0257ee` | Reject as-is; request rebase and resubmission | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01-review CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compiles_links_and_runs_bootstrap_echo` passed in the LINK-01 worktree, proving the slice has a real compile/link/run path for the bootstrap echo fixture. `git merge-tree $(git merge-base HEAD lane/LINK-01) HEAD lane/LINK-01` from INT-01 reports conflicts in `crates/phpc/tests/bootstrap_cli.rs` and `crates/phpc_core/src/lib.rs`; the candidate is based on an older core shape and must preserve current `phpt` module exports, integer echo support, and the existing linked-exe unsupported gate transition. | LINK-01 should rebase onto current main, keep the narrow literal-echo executable denominator, preserve current parser/core behavior, and resubmit with the same native comparison test. Do not count this lane as integrated M3 progress until the rebased compile/link/run slice lands. |
+
 ## Recently Integrated Coordination Slices
 
 | Lane | Status | Evidence | Notes |

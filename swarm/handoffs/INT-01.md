@@ -1,27 +1,19 @@
-summary: Integrated a fail-closed Pages reporter gate. `scripts/pages-reporter-loop.sh` now runs `scripts/status-gate.sh` after regenerating progress artifacts and before staging or committing them. Added `PAGES_REPORT_ONCE=1` test mode plus a focused failure-behavior test proving a broken manifest stops the reporter before `git commit`. Documented `scripts/status-gate.sh` as the canonical status gate in `swarm/test-matrix.md`.
+summary: Reviewed committed LINK-01 candidate `d0257ee Add bootstrap linked executable path` as an integration decision artifact only. The candidate proves a real compile/link/run path in its own lane, but is rejected as-is because `git merge-tree` reports conflicts against current main in `crates/phpc/tests/bootstrap_cli.rs` and `crates/phpc_core/src/lib.rs`; it must rebase and preserve current `phpt` exports, integer echo support, and the linked-exe gate transition before integration.
 
 files changed:
-- `scripts/pages-reporter-loop.sh`
-- `scripts/test-pages-reporter-gate.sh`
-- `scripts/test-refresh-progress.sh`
-- `scripts/test-status-gate.sh`
-- `swarm/test-matrix.md`
+- `swarm/integration.md`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/test-pages-reporter-gate.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/test-status-gate.sh`
-- `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 scripts/status-gate.sh`
-- `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 scripts/test-refresh-progress.sh`
-- `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-status-gate scripts/test-status-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01-review CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compiles_links_and_runs_bootstrap_echo` in `/home/ubuntu/phpc-worktrees/LINK-01`
+- `git merge-tree $(git merge-base HEAD lane/LINK-01) HEAD lane/LINK-01` in `/home/ubuntu/phpc-worktrees/INT-01`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/local-gate.sh`
 - `git diff --check`
 
-pass/fail state: pass
+pass/fail state: pass for verification; LINK-01 integration decision is reject-as-is pending rebase
 
-blockers: none
+blockers: LINK-01 is based on an older core/test shape and conflicts with current main. No M3 progress should be counted until a rebased compile/link/run slice lands.
 
-latest lane commit: `f5dc051 Gate pages reporter before publish`
+latest commit: `254f8da Record LINK-01 integration decision`
 
-integration note: Ported onto current `main` after the status-gate slice was already integrated and after newer manifest-sourced progress reporting landed.
-
-next suggested slice: If the supervisor selects a canonical CI entrypoint, wire `scripts/local-gate.sh` there; keep php-src metadata and parser changes with the PHPT lanes.
+next suggested slice: Review another LINK lane candidate, or have LINK-01 rebase its passing bootstrap executable path onto current main and resubmit with the same native comparison test.
