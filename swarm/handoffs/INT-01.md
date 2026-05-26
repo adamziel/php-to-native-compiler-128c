@@ -1,35 +1,38 @@
 # INT-01 Handoff
 
-summary: Started a fresh slice from current `origin/main` on branch `lane/INT-01-require-diag`. Added a precise parser diagnostic for unsupported `require`, `require_once`, `include`, and `include_once` statements without implementing include execution or changing runnable counts. The WordPress bootstrap check now classifies the pinned blocker as unsupported general PHP require execution instead of a generic unsupported-statement snippet.
+summary:
+- Milestone: Integration / coordination gate safety.
+- Started from current `origin/main` on `lane/INT-01-batch-0526`; earlier INT-01 branches were left untouched.
+- Added `scripts/check-lanes-integration.sh`, a non-mutating batch wrapper around `scripts/check-lane-integration.sh`.
+- The wrapper checks every supplied lane, prints a section for each result, and exits nonzero if any underlying lane check fails.
+- Added focused temp-repo regression coverage for mixed safe/unsafe batches and safe all-pass batches.
+- Documented the batch workflow in `swarm/integration.md`.
+- No compiler/runtime behavior, PHP-core denominator, WordPress behavior, launcher behavior, or generated progress output changed.
 
 files changed:
-- `crates/phpc_core/src/parser.rs`
-- `crates/phpc/tests/bootstrap_cli.rs`
-- `docs/WORDPRESS_COMPATIBILITY.md`
-- `swarm/test-matrix.md`
+- `scripts/check-lanes-integration.sh`
+- `scripts/test-check-lane-integration.sh`
+- `scripts/local-gate.sh`
+- `swarm/integration.md`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01-require-diag CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core include`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01-require-diag CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core parser::tests`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01-require-diag CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_reports_wordpress_bootstrap_general_php_gap -- --nocapture`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01-require-diag CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 cargo run -p phpc -- wordpress-bootstrap-check /home/ubuntu/phpc-external/wordpress/wordpress`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01-require-diag CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
-- `git diff --check`
+- `git fetch origin`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-check-lane-integration.sh`
+- `scripts/check-lanes-integration.sh --help >/dev/null 2>&1`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 
 pass/fail state:
-- PASS: parser tests cover precise `require` and `include_once` unsupported diagnostics plus keyword-prefix protection for `include_path`.
-- PASS: focused WordPress bootstrap CLI test expects the new require diagnostic.
-- PASS: real pinned WordPress bootstrap check reports all five entrypoints present and blocks with `unsupported require statement: include/require execution is not implemented`.
-- PASS: local coordination gate, including status consistency, runtime ABI docs, launcher observability, full workspace tests, and diff hygiene. Full workspace tests reported 19 runtime, 11 CLI, and 73 core tests passing.
+- PASS: focused checker regression covers batch output sections, continued checking after a missing-handoff failure, and nonzero batch exit.
+- PASS: focused checker regression covers an all-safe batch with `already-integrated` and `stale-equivalent` classifications.
+- PASS: local coordination gate, including status consistency, runtime ABI docs, progress launcher-log fixture, launcher observability, lane integration checker tests, worker-env tests, full workspace tests, and diff hygiene.
+- PASS: full workspace tests reported 19 runtime, 11 CLI, and 76 core tests passing.
 
 blockers:
-- No blocker for this diagnostic slice.
-- WordPress bootstrap remains blocked on general PHP require/include execution.
-- This slice intentionally does not parse include expressions, resolve constants, read files, execute included PHP, or change php-src `.phpt` runnable counts.
+- None for this integration-safety slice.
 
 latest commit:
-- Branch HEAD for this slice: `Classify unsupported include statements`
+- `HEAD` (`Add batch lane integration checker`)
 
 next suggested slice:
-- Either implement a narrow, general require/include statement model for literal or constant/string-concat paths with execution tests, or add PHPT `SKIPIF` classification without increasing runnable denominators.
+- Use `scripts/check-lanes-integration.sh` against the next small set of dirty coordination or integration lanes and record terminal decisions in `swarm/integration.md`; do not broaden into compiler feature work from INT-01.

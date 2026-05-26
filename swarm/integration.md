@@ -16,6 +16,16 @@ Before reviewing or porting a `lane/*` candidate, fetch current `main` and run:
 scripts/check-lane-integration.sh lane/<name> origin/main
 ```
 
+For batches, use the non-mutating wrapper and review every printed section before
+acting on a lane:
+
+```sh
+scripts/check-lanes-integration.sh --main-ref origin/main lane/<name> lane/<other>
+```
+
+The batch wrapper keeps checking later lanes after an individual unsafe or
+missing-handoff result, then exits nonzero if any lane check failed.
+
 Interpret the classification as follows:
 
 - `already-integrated`: do not merge or cherry-pick. Record the lane as integrated or stale against current `main`.

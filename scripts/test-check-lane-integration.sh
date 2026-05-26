@@ -10,6 +10,7 @@ trap 'rm -rf "$tmpdir"' EXIT
 git init -q "$tmpdir/repo"
 mkdir -p "$tmpdir/repo/scripts"
 cp scripts/check-lane-integration.sh "$tmpdir/repo/scripts/check-lane-integration.sh"
+cp scripts/check-lanes-integration.sh "$tmpdir/repo/scripts/check-lanes-integration.sh"
 cd "$tmpdir/repo"
 
 git config user.email test@example.invalid
@@ -95,3 +96,20 @@ if scripts/check-lane-integration.sh lane/missing-handoff main > missing-handoff
 fi
 grep -F "handoff: missing swarm/handoffs/missing-handoff.md" missing-handoff.out >/dev/null
 grep -F "classification: review-required-missing-handoff" missing-handoff.out >/dev/null
+
+if scripts/check-lanes-integration.sh --main-ref main lane/review lane/missing-handoff > batch.out 2> batch.err; then
+  echo "check-lanes-integration.sh accepted a batch with a missing handoff" >&2
+  cat batch.out >&2
+  cat batch.err >&2
+  exit 1
+fi
+grep -F "== lane/review ==" batch.out >/dev/null
+grep -F "classification: review-required" batch.out >/dev/null
+grep -F "== lane/missing-handoff ==" batch.out >/dev/null
+grep -F "classification: review-required-missing-handoff" batch.out >/dev/null
+
+scripts/check-lanes-integration.sh --main-ref main lane/integrated lane/stale-equivalent > batch-safe.out
+grep -F "== lane/integrated ==" batch-safe.out >/dev/null
+grep -F "classification: already-integrated" batch-safe.out >/dev/null
+grep -F "== lane/stale-equivalent ==" batch-safe.out >/dev/null
+grep -F "classification: stale-equivalent" batch-safe.out >/dev/null
