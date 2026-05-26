@@ -1,13 +1,13 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T02:02:22Z
+Last refreshed: 2026-05-26T02:04:42Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `307adb5`
-- Dirty entries: `5`
+- Report base HEAD: `3e99347`
+- Dirty entries: `0`
 - tmux windows in `phpc-swarm`: `5`
 - Supervised agents target: `100 workers + auditor`
 - Interactive launch cadence: `480s`
@@ -17,7 +17,7 @@ Last refreshed: 2026-05-26T02:02:22Z
 - Active worker command processes: `0`
 - Active agent slot cap: `interactive`
 - Active slot locks: `0`
-- Dirty lane worktrees preserved for review: `54`
+- Dirty lane worktrees preserved for review: `53`
 - Worker state files: `101`
 - Expected backend retry/rate-limit states: `101`
 - GitHub Pages reporter: `running`
@@ -28,7 +28,7 @@ Last refreshed: 2026-05-26T02:02:22Z
 | --- | --- | ---: | --- |
 | M1 COW shared mechanisms | RPR, DMB, CCA, regression matrix | 0% | Not started |
 | M2 runtime value ABI | value kinds and ownership semantics | 3% | Runtime-owned null and binary-string handles integrated |
-| M3 linked native execution | compile, link, run, compare | 0% | Queued |
+| M3 linked native execution | compile, link, run, compare | 1% | First linked executable path for supported echo literals integrated |
 | M4 native lowering | interpreter-supported constructs lowered or rejected | 2% | String and integer echo literals; explicit variable diagnostic |
 | M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files | 2% | PHP-8.3 inventory pinned and minimal .phpt parser integrated |
 | M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; 5 entrypoints present; runner queued |
@@ -49,4 +49,4 @@ Last refreshed: 2026-05-26T02:02:22Z
 > | B-001 | Tooling | Rust/Cargo/PHP/LLVM were missing at bootstrap | Resolved for baseline verification | Installed and verified versions on 2026-05-25 |
 > | B-002 | M5 | php-src is pinned but no `.phpt` runner exists | Static denominator only | PHPT lanes implement parser/runner |
 > | B-003 | M6 | WordPress 7.0 is pinned but no bootstrap runner exists | Entry files inventoried only | WP lanes implement runner and classify first blocker |
-> | B-004 | M3 | No linked executable path | Native compiler cannot prove execution | LINK-01 implement minimal path |
+> | B-004 | M3 | Linked executable path exists only for literal echo fixtures | M3 has first execution plumbing but not broad native lowering | Extend runner/differential coverage beyond the bootstrap echo denominator |
