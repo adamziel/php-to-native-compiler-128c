@@ -1,35 +1,31 @@
 summary:
-- Started fresh from current `origin/main` on `lane/INT-03-skipif`; old landed INT-03 lane commits were not reused.
-- Added a narrow PHPT `SKIPIF` classification path to `run_phpt_with_phpc`.
-- `SKIPIF` scripts are executed through the current `phpc run` interpreter; output beginning with `skip` returns `PhptRunStatus::Skip`, empty or non-skip output continues to normal test execution, and unsupported `SKIPIF` scripts report interpreter errors.
-- Preserved existing exact `EXPECT`, `EXPECTF`, xfail/unexpected-pass, unsupported `EXPECTREGEX`, `FILE`/`FILEEOF`, and main-file error behavior.
-- Updated support, blocker, and test-matrix status without changing php-src runnable counts.
+- Started fresh from current `origin/main` on `lane/INT-03-fresh-0454`; previous INT-03 lane work was not merged or rebased.
+- Tightened the worker environment preflight for clean-worktree enforcement.
+- `scripts/verify-worker-env.sh` now validates that `PHPC_WORKTREE_ROOT` is a git worktree when `PHPC_REQUIRE_CLEAN_WORKTREE=1`, even if no expected branch is configured.
+- Added a focused fixture proving non-git clean-required roots fail with the lane-specific diagnostic instead of raw git status output.
+- No compiler, runtime, parser, PHPT, or WordPress semantics changed.
 
 files changed:
-- `crates/phpc_core/src/phpt.rs`
-- `docs/SUPPORT.md`
-- `swarm/blockers.md`
-- `swarm/test-matrix.md`
+- `scripts/verify-worker-env.sh`
+- `scripts/test-worker-env.sh`
 - `swarm/handoffs/INT-03.md`
 
 tests run:
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core phpt::tests`
-- `git diff --check`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-worker-env.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-local-gate.sh`
+- `PHPC_REQUIRE_WORKER_ENV=1 PHPC_LANE_ID=INT-03 PHPC_EXPECT_BRANCH=lane/INT-03-fresh-0454 CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 
 pass/fail state:
-- PASS: focused PHPT tests, 36 passed.
-- PASS: `git diff --check`.
-- PASS: `scripts/local-gate.sh`; status checks, runtime ABI docs check, launcher observability check, full workspace tests, and diff hygiene completed cleanly.
+- PASS: focused worker-env fixture, including the new non-git clean-required root case.
+- PASS: local-gate fixture still preserves opt-in worker preflight behavior.
+- PASS: live INT-03 opt-in local gate, including full workspace `cargo test` with 106 Rust tests passing.
 
 blockers:
-- `SKIPIF` support is limited to scripts already supported by `phpc run`; common php-src `if (...) die('skip ...')` forms still report interpreter errors until general PHP parsing/execution expands.
-- `EXPECTREGEX` still returns `PhptRunStatus::Unsupported`.
-- No php-src-scale runner or runnable-count update was added for the pinned 19,346-test denominator.
-- This remains a `phpc run` harness slice and does not prove linked native execution.
+- None for this coordination slice.
+- `PHPC_REQUIRE_CLEAN_WORKTREE=1` remains opt-in and should only be enabled in launcher paths where dirty in-progress worker slices are not expected.
 
 latest commit if any:
-- Main commit for this slice: `Classify PHPT SKIPIF output`.
+- Latest HEAD commit for this slice: `Tighten clean-worktree preflight`.
 
 next suggested slice:
-- Add a narrow general parser/interpreter construct that unlocks common `SKIPIF` scripts, such as top-level `if` with literal boolean condition and `die`/`exit` string output, only if it can be kept general and covered by focused parser/interpreter and PHPT tests.
+- Add launcher-side observability for which workers opt into `PHPC_REQUIRE_WORKER_ENV` and `PHPC_REQUIRE_CLEAN_WORKTREE`, without making clean-worktree enforcement mandatory for active implementation lanes.

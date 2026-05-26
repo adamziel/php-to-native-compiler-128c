@@ -63,6 +63,11 @@ expect_failure \
   env PHPC_WORKTREE_ROOT="$tmpdir/non-git/INT-05" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH=lane/INT-05 scripts/verify-worker-env.sh
 
 expect_failure \
+  "worktree root must be a git worktree for lane INT-05: $tmpdir/non-git/INT-05" \
+  "a non-git clean-required worktree root" \
+  env PHPC_WORKTREE_ROOT="$tmpdir/non-git/INT-05" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_REQUIRE_CLEAN_WORKTREE=1 scripts/verify-worker-env.sh
+
+expect_failure \
   "CARGO_TARGET_DIR must not be inside the worktree" \
   "a worktree-local target directory" \
   env PHPC_TARGET_ROOT=/tmp/phpc-worktrees CARGO_TARGET_DIR=/tmp/phpc-worktrees/INT-05 scripts/verify-worker-env.sh
