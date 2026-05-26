@@ -1,6 +1,6 @@
 # Native Runtime ABI
 
-Current ABI status: first runtime-owned value handle slice.
+Current ABI status: first runtime-owned value handle slice plus request header storage.
 
 Existing exported helpers:
 
@@ -14,6 +14,14 @@ Existing exported helpers:
 - `phpc_binary_string_data(handle, out_len) -> ptr`
 - `phpc_integer_value(handle, out_value) -> status`
 - `phpc_value_free(handle) -> status`
+- `phpc_request_new() -> request`
+- `phpc_request_free(request)`
+- `phpc_request_add_header(request, ptr, len, replace) -> header_result`
+- `phpc_request_header_count(request) -> count`
+- `phpc_request_header_len(request, index) -> len`
+- `phpc_request_header_ptr(request, index) -> ptr`
+- `phpc_request_headers_sent(request) -> bool`
+- `phpc_request_mark_headers_sent(request)`
 
 ## Runtime Constants
 
@@ -46,6 +54,19 @@ Status codes:
 - `phpc_integer_value` writes the stored integer to `out_value`, returns `0` for integer handles, returns `-1` and writes `0` for invalid or non-integer handles, and returns `-2` for a null output pointer. Tests: `integer_handle_is_runtime_owned_until_free`, `integer_value_reports_invalid_handles`, `integer_value_rejects_null_out_pointer`.
 - Cloned integer handles have independent ownership and remain valid after the source handle is freed. Test: `cloned_integer_handle_has_independent_ownership`.
 
+## Request/Header State
+
+`phpc_request_new` allocates runtime-owned request state for linked native execution. The first request family stores response header bytes:
+
+- Header bytes are copied into the request.
+- Insertion order is preserved.
+- `replace=true` removes previous headers with the same case-insensitive name.
+- `replace=false` preserves duplicate names such as repeated `Set-Cookie`.
+- Empty headers and headers containing CR or LF are rejected.
+- Headers cannot be mutated after `phpc_request_mark_headers_sent`.
+
+`phpc_request_header_ptr` returns a pointer owned by the request. Callers must copy from it before freeing the request and must not mutate or free it.
+
 ## Runtime ABI Test Classification
 
 - `null_handle_is_runtime_owned_until_free`: value-handle ownership lifecycle.
@@ -60,6 +81,13 @@ Status codes:
 - `cloned_null_handle_has_independent_ownership`: cloned null handles have separate ownership lifetimes.
 - `cloned_binary_string_owns_independent_bytes`: cloned binary strings remain valid after freeing the source handle.
 - `cloned_integer_handle_has_independent_ownership`: cloned integer handles retain their value after freeing the source handle.
+- `request_headers_append_in_order`: request header storage preserves insertion order.
+- `request_headers_replace_by_case_insensitive_name`: replacement removes existing headers by case-insensitive name.
+- `request_headers_can_keep_duplicate_names`: duplicate header names are preserved when replacement is disabled.
+- `request_headers_reject_empty_and_line_breaks`: empty headers and CR/LF injection attempts are rejected.
+- `request_headers_reject_mutation_after_sent`: headers cannot be mutated after they are marked sent.
+- `c_abi_exposes_request_header_storage`: request header storage is reachable through the C ABI.
+- `c_abi_reports_request_header_errors`: request header C ABI reports null and state errors explicitly.
 
 Required next ABI families:
 

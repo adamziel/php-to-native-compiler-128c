@@ -61,6 +61,106 @@ fn runtime() -> &'static Mutex<RuntimeState> {
     RUNTIME.get_or_init(|| Mutex::new(RuntimeState::new()))
 }
 
+#[derive(Debug, Default)]
+pub struct RequestState {
+    headers: Vec<HeaderLine>,
+    headers_sent: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HeaderLine {
+    raw: Vec<u8>,
+    name_end: Option<usize>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HeaderError {
+    Empty,
+    ContainsLineBreak,
+    HeadersAlreadySent,
+}
+
+impl RequestState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn add_header(&mut self, header: &[u8], replace: bool) -> Result<(), HeaderError> {
+        if self.headers_sent {
+            return Err(HeaderError::HeadersAlreadySent);
+        }
+        if header.is_empty() {
+            return Err(HeaderError::Empty);
+        }
+        if header.iter().any(|byte| matches!(byte, b'\r' | b'\n')) {
+            return Err(HeaderError::ContainsLineBreak);
+        }
+
+        let header = HeaderLine::new(header.to_vec());
+        if replace {
+            if let Some(name) = header.name() {
+                self.headers
+                    .retain(|existing| !existing.name().is_some_and(|existing_name| {
+                        ascii_eq_ignore_case(existing_name, name)
+                    }));
+            }
+        }
+        self.headers.push(header);
+        Ok(())
+    }
+
+    pub fn header_count(&self) -> usize {
+        self.headers.len()
+    }
+
+    pub fn header(&self, index: usize) -> Option<&[u8]> {
+        self.headers.get(index).map(HeaderLine::raw)
+    }
+
+    pub fn headers_sent(&self) -> bool {
+        self.headers_sent
+    }
+
+    pub fn mark_headers_sent(&mut self) {
+        self.headers_sent = true;
+    }
+}
+
+impl HeaderLine {
+    fn new(raw: Vec<u8>) -> Self {
+        let name_end = raw
+            .iter()
+            .position(|byte| *byte == b':')
+            .map(|colon| trim_ascii_space_end(&raw[..colon]).len())
+            .filter(|end| *end > 0);
+        Self { raw, name_end }
+    }
+
+    fn raw(&self) -> &[u8] {
+        &self.raw
+    }
+
+    fn name(&self) -> Option<&[u8]> {
+        self.name_end.map(|end| &self.raw[..end])
+    }
+}
+
+#[repr(C)]
+pub struct PhpcRequestState {
+    inner: RequestState,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PhpcHeaderResult {
+    Ok = 0,
+    NullRequest = 1,
+    NullHeader = 2,
+    Empty = 3,
+    ContainsLineBreak = 4,
+    HeadersAlreadySent = 5,
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn phpc_echo(ptr: *const c_char, len: usize) {
     if ptr.is_null() {
@@ -167,6 +267,106 @@ pub extern "C" fn phpc_value_free(handle: PhpcValueHandle) -> i32 {
     } else {
         PHPC_STATUS_INVALID_HANDLE
     }
+}
+
+#[no_mangle]
+pub extern "C" fn phpc_request_new() -> *mut PhpcRequestState {
+    Box::into_raw(Box::new(PhpcRequestState {
+        inner: RequestState::new(),
+    }))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn phpc_request_free(request: *mut PhpcRequestState) {
+    if !request.is_null() {
+        drop(Box::from_raw(request));
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn phpc_request_add_header(
+    request: *mut PhpcRequestState,
+    header: *const c_char,
+    len: usize,
+    replace: bool,
+) -> PhpcHeaderResult {
+    let Some(request) = request.as_mut() else {
+        return PhpcHeaderResult::NullRequest;
+    };
+    if header.is_null() {
+        return PhpcHeaderResult::NullHeader;
+    }
+    let header = slice::from_raw_parts(header.cast::<u8>(), len);
+    match request.inner.add_header(header, replace) {
+        Ok(()) => PhpcHeaderResult::Ok,
+        Err(HeaderError::Empty) => PhpcHeaderResult::Empty,
+        Err(HeaderError::ContainsLineBreak) => PhpcHeaderResult::ContainsLineBreak,
+        Err(HeaderError::HeadersAlreadySent) => PhpcHeaderResult::HeadersAlreadySent,
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn phpc_request_header_count(request: *const PhpcRequestState) -> usize {
+    request
+        .as_ref()
+        .map(|request| request.inner.header_count())
+        .unwrap_or(0)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn phpc_request_header_len(
+    request: *const PhpcRequestState,
+    index: usize,
+) -> usize {
+    request
+        .as_ref()
+        .and_then(|request| request.inner.header(index))
+        .map(|header| header.len())
+        .unwrap_or(0)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn phpc_request_header_ptr(
+    request: *const PhpcRequestState,
+    index: usize,
+) -> *const c_char {
+    request
+        .as_ref()
+        .and_then(|request| request.inner.header(index))
+        .map(|header| header.as_ptr().cast::<c_char>())
+        .unwrap_or(std::ptr::null())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn phpc_request_headers_sent(request: *const PhpcRequestState) -> bool {
+    request
+        .as_ref()
+        .map(|request| request.inner.headers_sent())
+        .unwrap_or(false)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn phpc_request_mark_headers_sent(request: *mut PhpcRequestState) {
+    if let Some(request) = request.as_mut() {
+        request.inner.mark_headers_sent();
+    }
+}
+
+fn trim_ascii_space_end(bytes: &[u8]) -> &[u8] {
+    let end = bytes
+        .iter()
+        .rposition(|byte| !matches!(byte, b' ' | b'\t'))
+        .map(|index| index + 1)
+        .unwrap_or(0);
+    &bytes[..end]
+}
+
+fn ascii_eq_ignore_case(left: &[u8], right: &[u8]) -> bool {
+    left.len() == right.len()
+        && left
+            .iter()
+            .zip(right)
+            .all(|(left, right)| left.eq_ignore_ascii_case(right))
 }
 
 #[cfg(test)]
@@ -347,5 +547,137 @@ mod tests {
         );
         assert_eq!(value, i64::MIN);
         assert_eq!(phpc_value_free(clone), PHPC_STATUS_OK);
+    }
+
+    #[test]
+    fn request_headers_append_in_order() {
+        let mut request = RequestState::new();
+
+        request.add_header(b"X-First: one", true).unwrap();
+        request.add_header(b"X-Second: two", true).unwrap();
+
+        assert_eq!(request.header_count(), 2);
+        assert_eq!(request.header(0), Some(b"X-First: one".as_slice()));
+        assert_eq!(request.header(1), Some(b"X-Second: two".as_slice()));
+    }
+
+    #[test]
+    fn request_headers_replace_by_case_insensitive_name() {
+        let mut request = RequestState::new();
+
+        request.add_header(b"Content-Type: text/plain", true).unwrap();
+        request.add_header(b"content-type: text/html", true).unwrap();
+
+        assert_eq!(request.header_count(), 1);
+        assert_eq!(request.header(0), Some(b"content-type: text/html".as_slice()));
+    }
+
+    #[test]
+    fn request_headers_can_keep_duplicate_names() {
+        let mut request = RequestState::new();
+
+        request.add_header(b"Set-Cookie: a=1", true).unwrap();
+        request.add_header(b"set-cookie: b=2", false).unwrap();
+
+        assert_eq!(request.header_count(), 2);
+        assert_eq!(request.header(0), Some(b"Set-Cookie: a=1".as_slice()));
+        assert_eq!(request.header(1), Some(b"set-cookie: b=2".as_slice()));
+    }
+
+    #[test]
+    fn request_headers_reject_empty_and_line_breaks() {
+        let mut request = RequestState::new();
+
+        assert_eq!(request.add_header(b"", true), Err(HeaderError::Empty));
+        assert_eq!(
+            request.add_header(b"X-Test: ok\r\nInjected: bad", true),
+            Err(HeaderError::ContainsLineBreak)
+        );
+        assert_eq!(request.header_count(), 0);
+    }
+
+    #[test]
+    fn request_headers_reject_mutation_after_sent() {
+        let mut request = RequestState::new();
+
+        request.add_header(b"X-Test: before", true).unwrap();
+        request.mark_headers_sent();
+
+        assert!(request.headers_sent());
+        assert_eq!(
+            request.add_header(b"X-Test: after", true),
+            Err(HeaderError::HeadersAlreadySent)
+        );
+        assert_eq!(request.header(0), Some(b"X-Test: before".as_slice()));
+    }
+
+    #[test]
+    fn c_abi_exposes_request_header_storage() {
+        unsafe {
+            let request = phpc_request_new();
+            let header = b"X-Abi: value";
+
+            assert_eq!(
+                phpc_request_add_header(
+                    request,
+                    header.as_ptr().cast::<c_char>(),
+                    header.len(),
+                    true
+                ),
+                PhpcHeaderResult::Ok
+            );
+            assert_eq!(phpc_request_header_count(request), 1);
+            assert_eq!(phpc_request_header_len(request, 0), header.len());
+            assert!(!phpc_request_headers_sent(request));
+
+            let ptr = phpc_request_header_ptr(request, 0);
+            assert!(!ptr.is_null());
+            let stored = slice::from_raw_parts(ptr.cast::<u8>(), header.len());
+            assert_eq!(stored, header);
+
+            phpc_request_mark_headers_sent(request);
+            assert!(phpc_request_headers_sent(request));
+
+            phpc_request_free(request);
+        }
+    }
+
+    #[test]
+    fn c_abi_reports_request_header_errors() {
+        unsafe {
+            let request = phpc_request_new();
+            let header = b"X-Abi: value";
+
+            assert_eq!(
+                phpc_request_add_header(
+                    std::ptr::null_mut(),
+                    header.as_ptr().cast::<c_char>(),
+                    header.len(),
+                    true
+                ),
+                PhpcHeaderResult::NullRequest
+            );
+            assert_eq!(
+                phpc_request_add_header(request, std::ptr::null(), 0, true),
+                PhpcHeaderResult::NullHeader
+            );
+            assert_eq!(
+                phpc_request_add_header(request, b"".as_ptr().cast::<c_char>(), 0, true),
+                PhpcHeaderResult::Empty
+            );
+
+            phpc_request_mark_headers_sent(request);
+            assert_eq!(
+                phpc_request_add_header(
+                    request,
+                    header.as_ptr().cast::<c_char>(),
+                    header.len(),
+                    true
+                ),
+                PhpcHeaderResult::HeadersAlreadySent
+            );
+
+            phpc_request_free(request);
+        }
     }
 }

@@ -4,6 +4,7 @@
 | --- | --- | --- | --- |
 | Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-comment-trivia CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 61 tests passed on 2026-05-26: 12 runtime, 9 CLI, 40 core |
 | Bootstrap toolchain | `cargo --version`; `rustc --version`; `php --version`; `clang --version` | passing | cargo 1.75.0; rustc 1.75.0; PHP 8.3.6 CLI; Ubuntu clang 18.1.3 |
+| Runtime ABI | `cargo test -p php_runtime` and `scripts/verify-runtime-abi-docs.sh` | passing | Runtime-owned value handles plus request header storage are tested and documented |
 | CLI run | `cargo run -p phpc -- run fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |
 | CLI compile IR | `cargo run -p phpc -- compile fixtures/bootstrap/hello.php --emit-ir` | passing | Emits placeholder IR |
 | CLI linked native executable | `cargo test -p phpc --test bootstrap_cli cli_emits_linked_native_executable_for_bootstrap_echo` | passing | Builds `libphp_runtime.a`, emits a native executable for `fixtures/bootstrap/hello.php`, runs it, and compares output with `phpc run` and system PHP when available |
