@@ -151,6 +151,7 @@ tmux send-keys -t "=${session}:AUD-01" "$(swarm_codex_command "$repo_root" "$tar
 swarm_paste_prompt "$session" AUD-01 "$aud_prompt" &
 launched_codex_sessions="$((launched_codex_sessions + 1))"
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) launch: started Codex session ${launched_codex_sessions}/${total_codex_sessions} (AUD-01)."
+stagger_before_next_codex_session "$launched_codex_sessions" "$total_codex_sessions"
 fi
 
 for lane in "${lanes[@]}"; do
