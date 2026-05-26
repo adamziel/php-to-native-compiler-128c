@@ -27,12 +27,16 @@ fn parse_statements(mut body: &str) -> Result<Vec<Statement>, String> {
         if let Some(rest) = body.strip_prefix("echo") {
             let (expression, after_expression) = parse_echo_expression(rest.trim_start())?;
             let after_expression = after_expression.trim_start();
-            let Some(after_semicolon) = after_expression.strip_prefix(';') else {
-                return Err("expected semicolon after echo expression".to_string());
+            if let Some(after_semicolon) = after_expression.strip_prefix(';') {
+                statements.push(Statement::Echo(expression));
+                body = after_semicolon;
+                continue;
+            }
+            if after_expression.trim() == "?>" {
+                statements.push(Statement::Echo(expression));
+                break;
             };
-            statements.push(Statement::Echo(expression));
-            body = after_semicolon;
-            continue;
+            return Err("expected semicolon after echo expression".to_string());
         }
         return Err(format!(
             "unsupported PHP statement near `{}`",
@@ -157,6 +161,16 @@ mod tests {
         assert_eq!(
             parse_php("<?php echo 12345;").unwrap(),
             vec![Statement::Echo(Expression::IntegerLiteral(12345))]
+        );
+    }
+
+    #[test]
+    fn parses_final_echo_before_closing_tag_without_semicolon() {
+        assert_eq!(
+            parse_php("<?php echo \"hello\" ?>").unwrap(),
+            vec![Statement::Echo(Expression::StringLiteral(
+                "hello".to_string()
+            ))]
         );
     }
 

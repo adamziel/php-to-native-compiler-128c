@@ -2,45 +2,49 @@
 
 ## Summary
 
-- Milestone: Integration/M4.
-- Ported the INT-02 single-quoted string escape fix onto current `main`.
-- Single-quoted strings now preserve `\n` literally while still unescaping `\\` and `\'`, matching PHP single-quoted string behavior for this supported subset.
-- Rejected broader boolean/function candidates for this slice because they require wider parser/interpreter/IR/docs coordination.
+- Milestone: M4 parser/lowering integration.
+- Rejected and reverted the stale dashboard-target slice because current supervision is `100 workers + auditor`.
+- Merged current `main` into `lane/INT-02` so the slice is based on the accepted linked-executable path and real `scripts/local-gate.sh`.
+- Implemented a narrow general PHP parser/runtime fix: a final supported `echo` expression may omit the semicolon when immediately followed by the closing PHP tag, for example `<?php echo "closing\n" ?>`.
+- Added coverage for parser behavior, `phpc run`, linkable native IR, and a linked native executable comparison.
 
 ## Files Changed
 
 - `crates/phpc_core/src/parser.rs`
 - `crates/phpc_core/src/lib.rs`
+- `crates/phpc/tests/bootstrap_cli.rs`
 - `docs/SUPPORT.md`
-- `swarm/integration.md`
 - `swarm/handoffs/INT-02.md`
 
 ## Tests Run
 
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core run_preserves_single_quoted_backslash_n`
-- `php -r "echo 'a\\nb';" | od -An -tx1`
-- `scripts/verify-status-consistency.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc cli_emits_linked_native_executable_without_semicolon_before_closing_tag`
+- `printf '%s' '<?php echo "hello" ?>' | php | od -An -tx1`
+- `printf '%s' '<?php echo "closing\n" ?>' | php | od -An -tx1`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 - `git diff --check`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-02 cargo fmt --all`
 
 ## Pass/Fail State
 
-- PASS: `phpc_core` focused tests on the lane.
-- PASS: focused runtime regression `run_preserves_single_quoted_backslash_n`.
-- PASS: system PHP oracle bytes for `'a\\nb'` are `61 5c 6e 62`.
-- PASS: status consistency gate on the lane.
-- PASS: diff hygiene on the lane.
-- BLOCKED on the lane only: `scripts/local-gate.sh` was absent before this stale lane was ported to current `main`.
-- BLOCKED: `cargo fmt --all` cannot run because this toolchain lacks `cargo-fmt`/`rustfmt`.
+- PASS: `phpc_core` test suite, 27 passed.
+- PASS: focused native CLI regression for semicolonless final `echo` before `?>`.
+- PASS: system PHP oracle bytes for `<?php echo "hello" ?>` are `68 65 6c 6c 6f`.
+- PASS: system PHP oracle bytes for `<?php echo "closing\n" ?>` are `63 6c 6f 73 69 6e 67 0a`.
+- PASS: `scripts/local-gate.sh`.
+- PASS: `git diff --check`.
+- FAIL/BLOCKED: `cargo fmt --all` cannot run because this toolchain has no `fmt` subcommand.
 
-## Latest Lane Commit
+## Blockers
 
-- `b7d5ad1` - Fix single quoted string escape parsing.
+- Existing project blockers remain for broader PHP syntax, inline HTML after `?>`, full native lowering, and WordPress/bootstrap coverage.
+- Observation for a separate runtime slice: a no-newline linked native executable fixture compiled successfully but emitted empty stdout, while `phpc run` and system PHP emitted `closing`. The committed native executable regression uses a newline fixture to keep this slice focused on closing-tag parsing rather than stdout flushing.
 
-## Integration Note
+## Latest Commit
 
-- Cherry-picked only the substantive parser/runtime/docs slice from the stale INT-02 branch; did not merge the full stale branch.
+- `Allow final echo before closing tag` - current slice commit at lane `HEAD` after this handoff update.
 
 ## Next Suggested Slice
 
-- Verify the port on current `main` with `phpc_core`, `scripts/local-gate.sh`, and diff hygiene before integrating additional INT-02 work.
+- Minimize and fix the linked-runtime stdout flushing/no-newline behavior in `php_runtime::phpc_echo`, then add a native executable test for `<?php echo "closing" ?>` without relying on newline output.

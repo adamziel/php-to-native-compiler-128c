@@ -183,6 +183,11 @@ mod tests {
     }
 
     #[test]
+    fn run_echoes_final_literal_before_closing_tag_without_semicolon() {
+        assert_eq!(run_php("<?php echo \"hello\" ?>").unwrap(), "hello");
+    }
+
+    #[test]
     fn compile_emits_ir_for_integer_echo() {
         let ir = compile_php("<?php echo 12345;", CompileMode::EmitIr).unwrap();
         assert!(ir.contains("echo_int[0] value=12345"));
@@ -198,5 +203,14 @@ mod tests {
         assert!(ir.contains("c\"42\""));
         assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.0, i64 3)"));
         assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.1, i64 2)"));
+    }
+
+    #[test]
+    fn linkable_ir_calls_runtime_echo_without_semicolon_before_closing_tag() {
+        let program = parse_php("<?php echo \"native\" ?>").unwrap();
+        let ir = emit_linkable_ir(&program).unwrap();
+
+        assert!(ir.contains("c\"native\""));
+        assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.0, i64 6)"));
     }
 }

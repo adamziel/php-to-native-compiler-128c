@@ -104,6 +104,60 @@ fn cli_emits_linked_native_executable_for_bootstrap_echo() {
 }
 
 #[test]
+fn cli_emits_linked_native_executable_without_semicolon_before_closing_tag() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let runtime_lib = build_runtime_archive();
+    let dir = unique_temp_dir("phpc-linked-closing-tag");
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let input_path = dir.join("closing-tag.php");
+    let output_path = dir.join("closing-tag-native");
+    std::fs::write(&input_path, "<?php echo \"closing\\n\" ?>").expect("write php fixture");
+
+    let interpreted = Command::new(exe)
+        .arg("run")
+        .arg(&input_path)
+        .output()
+        .expect("run phpc interpreter");
+    assert!(interpreted.status.success());
+    assert_eq!(interpreted.stdout, b"closing\n");
+
+    if let Some(system_php) = system_php_output(&input_path) {
+        assert!(
+            system_php.status.success(),
+            "system PHP failed\nstdout:\n{}\nstderr:\n{}",
+            String::from_utf8_lossy(&system_php.stdout),
+            String::from_utf8_lossy(&system_php.stderr)
+        );
+        assert_eq!(system_php.stdout, interpreted.stdout);
+        assert_eq!(system_php.stderr, interpreted.stderr);
+    }
+
+    let compile = Command::new(exe)
+        .env("PHPC_RUNTIME_LIB", &runtime_lib)
+        .arg("compile")
+        .arg(&input_path)
+        .args(["--emit-exe"])
+        .arg(&output_path)
+        .output()
+        .expect("compile native executable");
+    assert!(
+        compile.status.success(),
+        "compile failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&compile.stdout),
+        String::from_utf8_lossy(&compile.stderr)
+    );
+
+    let native = Command::new(&output_path)
+        .output()
+        .expect("run native executable");
+    assert!(native.status.success());
+    assert_eq!(native.stdout, interpreted.stdout);
+    assert_eq!(native.stderr, interpreted.stderr);
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn cli_rejects_native_assembly_emission_until_m3_exists() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let output = Command::new(exe)
@@ -121,7 +175,7 @@ fn cli_rejects_native_assembly_emission_until_m3_exists() {
     assert!(output.stdout.is_empty());
 }
 
-fn system_php_output(path: &str) -> Option<std::process::Output> {
+fn system_php_output(path: impl AsRef<std::ffi::OsStr>) -> Option<std::process::Output> {
     Command::new("php").arg(path).output().ok()
 }
 
