@@ -65,6 +65,9 @@ pub fn compile_php_executable(
 ) -> Result<(), String> {
     let _ = fs::remove_file(output_path);
 
+    let program = parse_php(source)?;
+    let ir = emit_linkable_ir(&program)?;
+
     if !runtime_lib.is_file() {
         return Err(format!(
             "native runtime archive not found: {}",
@@ -72,8 +75,6 @@ pub fn compile_php_executable(
         ));
     }
 
-    let program = parse_php(source)?;
-    let ir = emit_linkable_ir(&program)?;
     let ir_path = temporary_ir_path(output_path)?;
     fs::write(&ir_path, ir)
         .map_err(|err| format!("failed to write temporary IR {}: {err}", ir_path.display()))?;
