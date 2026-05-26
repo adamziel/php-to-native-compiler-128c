@@ -1,12 +1,12 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T03:12:20Z
+Last refreshed: 2026-05-26T03:14:06Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `569ef2c`
+- Report base HEAD: `7fde6d0`
 - Dirty entries: `0`
 - tmux windows in `phpc-swarm`: `7`
 - Supervised agents target: `100 workers`
@@ -17,7 +17,7 @@ Last refreshed: 2026-05-26T03:12:20Z
 - Active worker command processes: `0`
 - Active agent slot cap: `interactive`
 - Active slot locks: `0`
-- Dirty lane worktrees preserved for review: `53`
+- Dirty lane worktrees preserved for review: `52`
 - Worker state files: `101`
 - Expected backend retry/rate-limit states: `101`
 - GitHub Pages reporter: `running`
@@ -48,5 +48,5 @@ Last refreshed: 2026-05-26T03:12:20Z
 > | --- | --- | --- | --- | --- |
 > | B-001 | Tooling | Rust/Cargo/PHP/LLVM were missing at bootstrap | Resolved for baseline verification | Installed and verified versions on 2026-05-25 |
 > | B-002 | M5 | php-src is pinned but `.phpt` execution only supports minimal `FILE` plus exact `EXPECT` cases | Most PHP core tests remain inventory-only | Extend SKIPIF, EXPECTF/EXPECTREGEX, FILEEOF execution, and php-src result classification |
-> | B-003 | M6 | WordPress `wp-settings.php` bootstrap check reaches unsupported `define( 'WPINC', 'wp-includes' )` | Bootstrap cannot reach includes, request setup, or entrypoint execution yet | Reduce constant-definition parsing/interpreter behavior into general fixtures |
+> | B-003 | M6 | WordPress `wp-settings.php` bootstrap check reaches unsupported top-level `global $wp_version, ...` | Bootstrap cannot reach includes, request setup, or entrypoint execution yet | Reduce top-level `global` declaration parsing/interpreter behavior into general fixtures |
 > | B-004 | M3 | Linked executable path exists only for literal echo fixtures | M3 has first execution plumbing but not broad native lowering | Extend runner/differential coverage beyond the bootstrap echo denominator |
