@@ -21,15 +21,15 @@ if ! git -C "$repo_root" rev-parse --verify HEAD >/dev/null 2>&1; then
   exit 1
 fi
 
-if tmux has-session -t "$session" 2>/dev/null; then
-  tmux kill-session -t "$session"
+if tmux has-session -t "=${session}" 2>/dev/null; then
+  tmux kill-session -t "=${session}"
 fi
 
 tmux new-session -d -s "$session" -n supervisor -c "$repo_root"
-tmux send-keys -t "$session:supervisor" "cd '$repo_root' && watch -n 10 'date -u; git status --short --branch; tmux list-windows -t $session | tail -n +1 | wc -l; tail -n 20 progress.md'" C-m
+tmux send-keys -t "=${session}:supervisor" "cd '$repo_root' && watch -n 10 'date -u; git status --short --branch; tmux list-windows -t =$session | tail -n +1 | wc -l; tail -n 20 progress.md'" C-m
 
-tmux new-window -t "$session" -n dashboard -c "$repo_root"
-tmux send-keys -t "$session:dashboard" "cd '$repo_root' && python3 -m http.server 8080 -d docs" C-m
+tmux new-window -t "=${session}" -n dashboard -c "$repo_root"
+tmux send-keys -t "=${session}:dashboard" "cd '$repo_root' && python3 -m http.server 8080 -d docs" C-m
 
 stagger_before_next_codex_session() {
   local launched="$1"
@@ -120,8 +120,8 @@ for lane in "${lanes[@]}"; do
     git -C "$worktree" merge --ff-only main >/dev/null || true
   fi
   mkdir -p "${target_root}/${lane}"
-  tmux new-window -t "$session" -n "$lane" -c "$worktree"
-  tmux send-keys -t "$session:$lane" "$(swarm_codex_command "$repo_root" "$target_root" "$lane" "$worktree")" C-m
+  tmux new-window -t "=${session}" -n "$lane" -c "$worktree"
+  tmux send-keys -t "=${session}:$lane" "$(swarm_codex_command "$repo_root" "$target_root" "$lane" "$worktree")" C-m
   swarm_paste_prompt "$session" "$lane" "$prompt" &
   launched_codex_sessions="$((launched_codex_sessions + 1))"
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) launch: started Codex session ${launched_codex_sessions}/${total_codex_sessions} (${lane})."
@@ -152,16 +152,16 @@ if [ ! -e "$aud_worktree/.git" ]; then
 else
   git -C "$aud_worktree" merge --ff-only main >/dev/null || true
 fi
-tmux new-window -t "$session" -n AUD-01 -c "$aud_worktree"
-tmux send-keys -t "$session:AUD-01" "$(swarm_codex_command "$repo_root" "$target_root" AUD-01 "$aud_worktree")" C-m
+tmux new-window -t "=${session}" -n AUD-01 -c "$aud_worktree"
+tmux send-keys -t "=${session}:AUD-01" "$(swarm_codex_command "$repo_root" "$target_root" AUD-01 "$aud_worktree")" C-m
 swarm_paste_prompt "$session" AUD-01 "$aud_prompt" &
 launched_codex_sessions="$((launched_codex_sessions + 1))"
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) launch: started Codex session ${launched_codex_sessions}/${total_codex_sessions} (AUD-01)."
 
 wait
 if [ "$start_watchdog_after_launch" = "1" ]; then
-  if tmux has-session -t phpc-swarm-watchdog 2>/dev/null; then
-    tmux kill-session -t phpc-swarm-watchdog
+  if tmux has-session -t =phpc-swarm-watchdog 2>/dev/null; then
+    tmux kill-session -t =phpc-swarm-watchdog
   fi
   tmux new-session -d -s phpc-swarm-watchdog -n watchdog -c "$repo_root" \
     "SWARM_WORKER_COUNT=${#lanes[@]} SWARM_INTERACTIVE_PROMPT_DELAY=${SWARM_INTERACTIVE_PROMPT_DELAY:-8} ./scripts/swarm-watchdog.sh ${session}"

@@ -27,18 +27,18 @@ swarm_paste_prompt() {
 
   sleep "$delay"
   tmux load-buffer -b "prompt-${lane}" "$prompt"
-  tmux paste-buffer -t "${session}:${lane}" -b "prompt-${lane}"
+  tmux paste-buffer -t "=${session}:${lane}" -b "prompt-${lane}"
   sleep 1
-  tmux send-keys -t "${session}:${lane}" C-m
+  tmux send-keys -t "=${session}:${lane}" C-m
   sleep 1
-  tmux send-keys -t "${session}:${lane}" C-m
+  tmux send-keys -t "=${session}:${lane}" C-m
 }
 
 swarm_pane_has_interactive_codex() {
   local session="$1"
   local lane="$2"
   local pane_pid
-  pane_pid="$(tmux list-panes -t "${session}:${lane}" -F '#{pane_pid}' 2>/dev/null | head -n 1 || true)"
+  pane_pid="$(tmux list-panes -t "=${session}:${lane}" -F '#{pane_pid}' 2>/dev/null | head -n 1 || true)"
   if [ -z "$pane_pid" ]; then
     return 1
   fi

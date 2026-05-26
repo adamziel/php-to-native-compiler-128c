@@ -8,8 +8,8 @@ source "$repo_root/scripts/swarm-interactive.sh"
 head="$(git rev-parse --short HEAD 2>/dev/null || echo none)"
 branch="$(git branch --show-current 2>/dev/null || echo none)"
 dirty="$(git status --short 2>/dev/null | wc -l)"
-if tmux list-windows -t phpc-swarm >/dev/null 2>&1; then
-  windows="$(tmux list-windows -t phpc-swarm | wc -l)"
+if tmux list-windows -t =phpc-swarm >/dev/null 2>&1; then
+  windows="$(tmux list-windows -t =phpc-swarm | wc -l)"
   pane_pids="$(
     tmux list-panes -a -F '#{session_name} #{pane_pid}' 2>/dev/null |
       awk '$1 == "phpc-swarm" { print $2 }' |
@@ -34,7 +34,7 @@ else
   windows="0"
   worker_loops="0"
 fi
-if tmux has-session -t phpc-pages-reporter 2>/dev/null; then
+if tmux has-session -t =phpc-pages-reporter 2>/dev/null; then
   pages_reporter="running"
 else
   pages_reporter="not running"

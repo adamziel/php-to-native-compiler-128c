@@ -23,14 +23,14 @@ respawn_lane() {
   fi
 
   mkdir -p "${target_root}/${lane}"
-  tmux respawn-pane -k -t "${session}:${lane}" -c "$worktree" \
+  tmux respawn-pane -k -t "=${session}:${lane}" -c "$worktree" \
     "$(swarm_codex_command "$repo_root" "$target_root" "$lane" "$worktree")"
   swarm_paste_prompt "$session" "$lane" "$prompt" &
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: respawned interactive ${lane}"
 }
 
 ensure_reporter() {
-  if tmux has-session -t phpc-pages-reporter 2>/dev/null; then
+  if tmux has-session -t =phpc-pages-reporter 2>/dev/null; then
     return 0
   fi
   tmux new-session -d -s phpc-pages-reporter -n reporter -c "$repo_root" \
@@ -39,7 +39,7 @@ ensure_reporter() {
 }
 
 while true; do
-  if ! tmux has-session -t "$session" 2>/dev/null; then
+  if ! tmux has-session -t "=${session}" 2>/dev/null; then
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: ${session} missing; launch-swarm.sh must be run by supervisor"
     sleep "$interval"
     continue
@@ -49,7 +49,7 @@ while true; do
 
   missing=0
   for lane in "${lanes[@]}"; do
-    if ! tmux list-windows -t "$session" -F '#{window_name}' 2>/dev/null | grep -Fxq "$lane"; then
+    if ! tmux list-windows -t "=${session}" -F '#{window_name}' 2>/dev/null | grep -Fxq "$lane"; then
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: ${lane} window missing"
       missing=$((missing + 1))
       continue
@@ -59,7 +59,7 @@ while true; do
     fi
   done
 
-  windows="$(tmux list-windows -t "$session" 2>/dev/null | wc -l)"
+  windows="$(tmux list-windows -t "=${session}" 2>/dev/null | wc -l)"
   codex="$(swarm_interactive_codex_count "$session")"
   execs="$(swarm_codex_exec_count)"
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: windows=${windows} interactive_codex=${codex} codex_exec=${execs} missing_windows=${missing}"
