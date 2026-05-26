@@ -1,5 +1,5 @@
 {
-  "status": "pinned_inventory_with_three_passing_recorded_subset_runs",
+  "status": "pinned_inventory_with_four_passing_recorded_subset_runs",
   "php_src": {
     "path": "/home/ubuntu/phpc-external/php-src/php-src-PHP-8.3",
     "source": "https://github.com/php/php-src.git",
@@ -10,13 +10,13 @@
   "denominator": {
     "total_phpt": 19346,
     "mapped": 19346,
-    "runnable": 3,
+    "runnable": 4,
     "skipped": 0,
     "xfail": 0
   },
   "results": {
     "system_php": {"pass": 0, "fail": 0},
-    "phpc_run": {"pass": 3, "fail": 0},
+    "phpc_run": {"pass": 4, "fail": 0},
     "native": {"pass": 0, "fail": 0}
   },
   "subset_runs": [
@@ -46,10 +46,19 @@
       "reason": "FILE body reduces to supported string echo plus semicolon and closing tag; INI metadata is present but does not affect this executed output",
       "expected_stdout_len": 4,
       "actual_stdout_len": 4
+    },
+    {
+      "path": "Zend/tests/bug47596.phpt",
+      "name": "Bug #47596 (Bus error on parsing file, when file size is equal to page size)",
+      "runner": "phpc_run",
+      "status": "pass",
+      "reason": "literal echo followed by line comments and a closing PHP tag",
+      "expected_stdout_len": 2,
+      "actual_stdout_len": 2
     }
   ],
   "blockers": [
-    "Only tests/basic/001.phpt, tests/output/ob_001.phpt, and tests/basic/gh15905.phpt have committed php-src subset runs; the remaining 19,343 tests are inventory-only",
+    "Only tests/basic/001.phpt, tests/output/ob_001.phpt, tests/basic/gh15905.phpt, and Zend/tests/bug47596.phpt have committed php-src subset runs; the remaining 19,342 tests are inventory-only",
     "The integrated library runner remains limited to FILE/FILEEOF with exact EXPECT/EXPECTF and limited SKIPIF classification"
   ],
   "last_run": "2026-05-26T08:39:28Z"
