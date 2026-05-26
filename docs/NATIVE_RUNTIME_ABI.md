@@ -28,14 +28,14 @@ Status codes:
 
 ## Value Handle Ownership
 
-- `0` is an invalid handle and is never returned for a successful allocation.
-- Successful constructors return runtime-owned opaque handles.
-- Callers must release owned handles with `phpc_value_free`.
-- `phpc_value_free` returns `0` for a live handle and `-1` for invalid, unknown, or already-freed handles.
-- `phpc_value_kind` returns `-1` for invalid handles, `0` for null, and `1` for binary strings.
-- Binary string construction copies bytes into runtime storage. Embedded NUL bytes are preserved.
-- `phpc_binary_string_new(NULL, nonzero_len)` fails and returns invalid handle `0`.
-- `phpc_binary_string_data` returns a borrowed pointer valid until the handle is freed or runtime mutation invalidates the storage.
+- `0` is an invalid handle and is never returned for a successful allocation. Test: `invalid_and_double_free_are_reported`.
+- Successful constructors return runtime-owned opaque handles. Test: `null_handle_is_runtime_owned_until_free`.
+- Callers must release owned handles with `phpc_value_free`. Test: `null_handle_is_runtime_owned_until_free`.
+- `phpc_value_free` returns `0` for a live handle and `-1` for invalid, unknown, or already-freed handles. Test: `invalid_and_double_free_are_reported`.
+- `phpc_value_kind` returns `-1` for invalid handles, `0` for null, and `1` for binary strings. Tests: `invalid_and_double_free_are_reported`, `null_handle_is_runtime_owned_until_free`, `binary_string_handle_owns_a_byte_copy`.
+- Binary string construction copies bytes into runtime storage. Embedded NUL bytes are preserved. Test: `binary_string_handle_owns_a_byte_copy`.
+- `phpc_binary_string_new(NULL, nonzero_len)` fails and returns invalid handle `0`. Test: `binary_string_rejects_null_pointer_with_nonzero_len`.
+- `phpc_binary_string_data` returns a borrowed pointer valid until the handle is freed or runtime mutation invalidates the storage. Test: `binary_string_data_reports_invalid_handles`.
 
 Required next ABI families:
 

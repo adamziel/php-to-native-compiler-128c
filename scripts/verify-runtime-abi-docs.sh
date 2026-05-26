@@ -89,6 +89,53 @@ if wrong_values:
         )
     )
 
+test_names = set(
+    re.findall(
+        r"#\[test\]\s+fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(",
+        source,
+        flags=re.MULTILINE,
+    )
+)
+
+ownership_match = re.search(
+    r"## Value Handle Ownership\n\n(?P<section>(?:- .+\n)+)",
+    doc,
+    flags=re.MULTILINE,
+)
+if not ownership_match:
+    errors.append("docs/NATIVE_RUNTIME_ABI.md missing `Value Handle Ownership` section")
+else:
+    missing_test_annotations = []
+    unknown_test_annotations = {}
+    for line in ownership_match.group("section").splitlines():
+        if not line.startswith("- "):
+            continue
+        annotation_match = re.search(r"\bTests?: ([^.]+)\.$", line)
+        if not annotation_match:
+            missing_test_annotations.append(line)
+            continue
+        documented_tests = [
+            test.strip().strip("`")
+            for test in annotation_match.group(1).split(",")
+        ]
+        unknown_tests = sorted(test for test in documented_tests if test not in test_names)
+        if unknown_tests:
+            unknown_test_annotations[line] = unknown_tests
+
+    if missing_test_annotations:
+        errors.append(
+            "ownership claims missing runtime test annotations: "
+            + " | ".join(missing_test_annotations)
+        )
+    if unknown_test_annotations:
+        errors.append(
+            "ownership claims reference missing runtime tests: "
+            + " | ".join(
+                f"{line} -> {', '.join(tests)}"
+                for line, tests in unknown_test_annotations.items()
+            )
+        )
+
 if errors:
     for error in errors:
         print(f"runtime ABI documentation error: {error}", file=sys.stderr)
@@ -96,6 +143,7 @@ if errors:
 
 print(
     "runtime ABI docs ok: "
-    f"{len(exported)} exported helpers and {len(source_constants)} constants documented"
+    f"{len(exported)} exported helpers, {len(source_constants)} constants, "
+    "and ownership test annotations documented"
 )
 PY

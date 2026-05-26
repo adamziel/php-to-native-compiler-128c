@@ -2,43 +2,40 @@
 
 ## Summary
 
+- Time: 2026-05-26T01:11:00Z.
 - Milestone: Integration / M2 runtime ABI safety.
-- Added a focused gate that compares `php_runtime` exported `#[no_mangle] extern "C"` helpers with `docs/NATIVE_RUNTIME_ABI.md`'s `Existing exported helpers` list.
-- Added a regression test that proves the gate rejects an undocumented runtime export.
-- Wired the ABI documentation verifier into `scripts/local-gate.sh`.
-- Narrow denominator: drift prevention for the current 7 exported runtime ABI helpers only; no new PHP/compiler behavior claimed.
+- Fresh slice: extended the existing runtime ABI documentation verifier to require runtime-test annotations for documented value-handle ownership edge cases.
+- Annotated each `docs/NATIVE_RUNTIME_ABI.md` ownership claim with the focused `php_runtime` test that covers it.
+- Added regression coverage for a missing ownership test annotation and an annotation that names a nonexistent runtime test.
+- Narrow denominator: documentation/test coverage linkage for the current 8 value-handle ownership claims only; no new PHP/compiler behavior claimed.
 
 ## Files Changed
 
+- `docs/NATIVE_RUNTIME_ABI.md`
 - `scripts/verify-runtime-abi-docs.sh`
 - `scripts/test-runtime-abi-docs.sh`
-- `scripts/local-gate.sh`
 - `swarm/handoffs/INT-05.md`
 
 ## Tests Run
 
-- `scripts/verify-runtime-abi-docs.sh`
-- `scripts/test-runtime-abi-docs.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int05 cargo test -p php_runtime`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-local-gate scripts/local-gate.sh`
-- `git diff --check`
+- `scripts/verify-runtime-abi-docs.sh` - pass
+- `scripts/test-runtime-abi-docs.sh` - pass
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 cargo test -p php_runtime` - pass, 5 tests
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 scripts/local-gate.sh` - pass
+- `git diff --check` - pass
 
 ## Pass/Fail State
 
-- Pass. The runtime ABI documentation gate reports 7 exported helpers documented.
+- Pass. The runtime ABI documentation gate reports 7 exported helpers, 6 constants, and ownership test annotations documented.
 
 ## Blockers
 
 - None for this slice.
 
-## Latest Lane Commit
+## Latest Commit
 
-- `7ede37c` Gate runtime ABI documentation drift.
-
-## Integration Note
-
-- Ported manually onto current `main` after local gate and M3/M5 integration work landed.
+- Current lane HEAD: `6850d47 Gate runtime ABI ownership test annotations`
 
 ## Next Suggested Slice
 
-- Extend the runtime ABI safety checks to validate documented status codes and value-kind constants against `php_runtime` once the next ABI helper family lands.
+- Add an integration-safety check that fails if a new `php_runtime` ABI test is added without being classified in the ABI handoff or test matrix.
