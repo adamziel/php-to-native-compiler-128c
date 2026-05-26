@@ -1,13 +1,13 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T02:54:05Z
+Last refreshed: 2026-05-26T02:57:07Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `28b3b7f`
-- Dirty entries: `0`
+- Report base HEAD: `0695e3b`
+- Dirty entries: `3`
 - tmux windows in `phpc-swarm`: `5`
 - Supervised agents target: `100 workers`
 - Interactive launch cadence: `480s`
@@ -17,7 +17,7 @@ Last refreshed: 2026-05-26T02:54:05Z
 - Active worker command processes: `0`
 - Active agent slot cap: `interactive`
 - Active slot locks: `0`
-- Dirty lane worktrees preserved for review: `53`
+- Dirty lane worktrees preserved for review: `52`
 - Worker state files: `101`
 - Expected backend retry/rate-limit states: `101`
 - GitHub Pages reporter: `running`
@@ -28,8 +28,8 @@ Last refreshed: 2026-05-26T02:54:05Z
 | --- | --- | ---: | --- |
 | M1 COW shared mechanisms | RPR, DMB, CCA, regression matrix | 0% | Not started |
 | M2 runtime value ABI | value kinds, ownership, and request state | 4% | Runtime-owned value handles plus request header storage integrated |
-| M3 linked native execution | compile, link, run, compare | 1% | First linked executable path for supported echo literals integrated |
-| M4 native lowering | interpreter-supported constructs lowered or rejected | 2% | String and integer echo literals; explicit variable diagnostic |
+| M3 linked native execution | compile, link, run, compare | 2% | Linked executable path covers string, integer, boolean, and null echo literals |
+| M4 native lowering | interpreter-supported constructs lowered or rejected | 3% | String, integer, boolean, and null echo literals; explicit variable diagnostic |
 | M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files | 3% | PHP-8.3 inventory pinned; minimal parser and exact-EXPECT phpc runner integrated |
 | M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; 5 entrypoints present; bootstrap check blocked in wp-settings.php |
 | M7 object/SAPI/DB generality | required semantic families | 1% | Request header runtime state integrated; PHP header() wiring queued |

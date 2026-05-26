@@ -24,7 +24,7 @@
 <body>
   <header>
     <h1>PHP-to-Native Compiler Swarm Progress</h1>
-    <div>From-scratch bootstrap for <code>adamziel/php-to-native-compiler-128c</code>. Last updated 2026-05-26 02:54 UTC.</div>
+    <div>From-scratch bootstrap for <code>adamziel/php-to-native-compiler-128c</code>. Last updated 2026-05-26 02:57 UTC.</div>
   </header>
   <main>
     <section class="grid">
@@ -46,8 +46,8 @@
       <tbody>
         <tr><td>M1 COW mechanisms</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>RPR, DMB, CCA, regression matrix</td><td>Not started</td></tr>
         <tr><td>M2 runtime ABI</td><td><div class="bar"><span style="width:4%"></span></div>4%</td><td>PHP value kinds, ownership, and request state</td><td>Runtime-owned value handles plus request header storage integrated</td></tr>
-        <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>compile, link, run, compare</td><td>First linked executable path for supported echo literals integrated</td></tr>
-        <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>interpreter-supported constructs</td><td>String and integer echo literals; explicit variable diagnostic</td></tr>
+        <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>compile, link, run, compare</td><td>Linked executable path covers string, integer, boolean, and null echo literals</td></tr>
+        <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>interpreter-supported constructs</td><td>String, integer, boolean, and null echo literals; explicit variable diagnostic</td></tr>
         <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>PHP-8.3 branch, 19,346 .phpt files</td><td>Static inventory pinned; minimal parser and exact-EXPECT phpc runner integrated</td></tr>
         <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress 7.0 entrypoints</td><td>Source pinned; 5 entrypoints present; bootstrap check blocked in wp-settings.php</td></tr>
       </tbody>
@@ -57,9 +57,9 @@
       <thead><tr><th>Signal</th><th>Value</th></tr></thead>
       <tbody>
         <tr><td>Branch</td><td><code>main</code></td></tr>
-        <tr><td>Report base HEAD</td><td><code>28b3b7f</code></td></tr>
-        <tr><td>Main dirty entries</td><td><code>0</code></td></tr>
-        <tr><td>Dirty lane worktrees preserved for review</td><td><code>53</code></td></tr>
+        <tr><td>Report base HEAD</td><td><code>0695e3b</code></td></tr>
+        <tr><td>Main dirty entries</td><td><code>3</code></td></tr>
+        <tr><td>Dirty lane worktrees preserved for review</td><td><code>52</code></td></tr>
         <tr><td>Active agent slot cap</td><td><code>interactive</code></td></tr>
         <tr><td>Active slot locks</td><td><code>0</code></td></tr>
         <tr><td>Worker state files</td><td><code>101</code></td></tr>
