@@ -277,7 +277,10 @@ if [ "$mode" = "--check" ]; then
   grep -F -- "- Repository: \`${repo}\`" "$progress_out" >/dev/null
   grep -F -- "- Branch: \`${branch}\`" "$progress_out" >/dev/null
   grep -F -- "- Supervised agents target: \`${supervised_target}\`" "$progress_out" >/dev/null
+  grep -F -- "- Active worker command processes: \`${active_worker_exec}\`" "$progress_out" >/dev/null
+  grep -F -- "- Active agent slot cap: \`${active_cap}\`" "$progress_out" >/dev/null
   grep -F -- "- Staggered swarm launcher: \`${swarm_launcher}\`" "$progress_out" >/dev/null
   grep -F -- "From-scratch bootstrap for <code>${repo}</code>" "$html_out" >/dev/null
+  grep -F -- "<div class=\"metric\"><span>Active worker commands</span><strong>${active_worker_exec}</strong></div>" "$html_out" >/dev/null
   grep -F -- "<tr><td>Latest launcher event</td><td><code>" "$html_out" >/dev/null
 fi

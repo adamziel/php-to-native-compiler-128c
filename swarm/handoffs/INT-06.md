@@ -2,11 +2,11 @@
 
 ## Summary
 
-- Time: 2026-05-26T01:40:00Z.
-- Milestone: Coordination / M6 status accuracy.
-- Narrow denominator: committed-candidate review status for `Q-023` / `WP-12` WordPress inventory evidence.
-- Verified `WP-12` as a net-new reproducible inventory improvement because current `main` still has only the pinned entrypoint list, while `WP-12` records per-entry byte counts and SHA-256 values.
-- Marked `Q-023` verified as acceptable integration evidence only; no WordPress-specific compiler behavior was added.
+- Time: 2026-05-26T01:55:00Z.
+- Milestone: Coordination status accuracy.
+- Narrow denominator: committed-candidate review status for `Q-024` / `DOC-03` progress dashboard refresh.
+- Rejected `DOC-03` as a stale lane-local generated progress refresh because current `main` has later Pages reporter-owned published progress commits and a dedicated refresh-progress label gate.
+- No reporter functionality or generated dashboard content was duplicated.
 
 ## Files Changed
 
@@ -17,12 +17,12 @@
 
 ## Tests Run
 
-- `git merge-base --is-ancestor 348ad3b main`
-  - Pass for review decision: exit 1 confirms the standalone `WP-12` candidate is not already contained in `main`.
-- Compared `git show 348ad3b:swarm/wordpress-manifest.json` with pinned files under `/home/ubuntu/phpc-external/wordpress/wordpress`
-  - Pass: all five entrypoint byte counts and SHA-256 hashes match the pinned WordPress 7.0 checkout.
-- Inspected current `main:swarm/wordpress-manifest.json`
-  - Pass: current `main` has the pinned source/version/path and five entrypoints, but lacks the per-entry byte/SHA inventory from `WP-12`.
+- `git merge-base --is-ancestor 4ebe2ab main`
+  - Pass for review decision: exit 1 confirms the standalone `DOC-03` candidate is not already contained in `main`.
+- Inspected `4ebe2ab`
+  - Pass: candidate changes are generated `progress.md`/`docs/progress.html`, one `scripts/refresh-progress.sh` label edit, a DOC-03 handoff, and a stale `Q-002` ownership assignment.
+- Inspected current `main`
+  - Pass: current `main` contains `scripts/pages-reporter-loop.sh`, later `Update published swarm progress` commits, and `scripts/test-refresh-progress-labels.sh`.
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-06-main-gate CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
   - Pass in `/home/ubuntu/php-to-native-compiler-128c` on current `main`.
 - `git diff --check`
@@ -30,19 +30,19 @@
 
 ## Pass/Fail State
 
-- Pass for the narrow Q-023 status decision.
+- Pass for the narrow Q-024 status decision.
 - Pass for `scripts/local-gate.sh` on current `main`, the evidence base for this candidate review.
 - Pass for `git diff --check` in `lane/INT-06`.
 
 ## Blockers
 
 - `lane/INT-06` is behind current `main` and lacks `scripts/local-gate.sh`; the gate was run from the clean current main worktree instead.
-- WordPress remains inventory-only: no bootstrap runner has executed these entrypoints through `phpc`, and no compiler progress is claimed.
+- Reporting remains owned by the dedicated Pages reporter; generated progress artifacts should not be hand-refreshed from stale lane evidence.
 
 ## Latest Commit
 
-- Current lane HEAD for this slice: `fa92dbf Verify WP-12 candidate status`.
+- Current lane HEAD for this slice: `38dcaa7 Reject DOC-03 candidate status`.
 
 ## Next Suggested Slice
 
-- Review `Q-024` / `DOC-03` as a stale committed-candidate status item, avoiding duplication with the dedicated Pages reporter.
+- Pick a new queue item outside the now-reviewed committed-candidate set, preferably a narrow integration-safety gate or status-accuracy check with current main evidence.

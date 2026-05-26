@@ -4,16 +4,13 @@
 
 - Time: 2026-05-26T01:11:00Z.
 - Milestone: Integration / M2 runtime ABI safety.
-- Fresh slice: added a `Runtime ABI Test Classification` section to `docs/NATIVE_RUNTIME_ABI.md`.
-- Extended the runtime ABI docs verifier to require every current `php_runtime` unit test to be classified in the ABI docs and to reject stale classifications.
-- Added regression coverage for a missing runtime ABI test classification and a stale classification.
-- Narrow denominator: classification coverage for the current 5 `php_runtime` ABI tests only; no new PHP/compiler behavior claimed.
+- Fresh slice: refactored `scripts/verify-runtime-abi-docs.sh` embedded Python into small named functions.
+- Kept the existing export, constant, ownership annotation, and test-classification checks behavior-preserving; no new verifier scope added.
+- Narrow denominator: verifier maintainability for the current runtime ABI docs gate only; no new PHP/compiler behavior claimed.
 
 ## Files Changed
 
-- `docs/NATIVE_RUNTIME_ABI.md`
 - `scripts/verify-runtime-abi-docs.sh`
-- `scripts/test-runtime-abi-docs.sh`
 - `swarm/handoffs/INT-05.md`
 
 ## Tests Run
@@ -34,8 +31,8 @@
 
 ## Latest Commit
 
-- Current lane HEAD: `d15ca37 Classify runtime ABI tests in docs gate`
+- Current lane HEAD: `63053ee Refactor runtime ABI docs verifier`
 
 ## Next Suggested Slice
 
-- Split `scripts/verify-runtime-abi-docs.sh` into smaller verifier functions once the next runtime ABI family adds more sections, to keep diagnostics reviewable.
+- Add a small ABI verifier fixture strategy if future slices need more negative cases without repeatedly mutating `docs/NATIVE_RUNTIME_ABI.md` in shell.

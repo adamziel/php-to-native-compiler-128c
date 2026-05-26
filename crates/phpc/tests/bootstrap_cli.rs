@@ -12,6 +12,20 @@ fn cli_runs_bootstrap_echo() {
 }
 
 #[test]
+fn cli_run_rejects_trailing_arguments() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let output = Command::new(exe)
+        .args(["run", "../../fixtures/bootstrap/hello.php", "--emit-ir"])
+        .output()
+        .expect("run phpc");
+
+    assert!(!output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+    assert!(String::from_utf8_lossy(&output.stderr)
+        .contains("unsupported trailing arguments: --emit-ir"));
+}
+
+#[test]
 fn cli_rejects_linked_executable_emission_until_m3_exists() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let output = Command::new(exe)

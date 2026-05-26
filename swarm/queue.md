@@ -27,4 +27,4 @@ States: `ready`, `assigned`, `blocked`, `review`, `integration`, `verified`, `re
 | Q-021 | verified | Coordination | INT-06 | Review committed `INT-02` status gate slice | Verified against current CLI; unsupported native-mode gate folded into main with handoff |
 | Q-022 | verified | M5 | INT-03 | Review committed `PHPT-03` skip/XFAIL metadata slice | Verified stale as a standalone candidate: current `main` already contains accepted parser-level `SKIPIF`/`XFAIL` metadata behavior |
 | Q-023 | verified | M6 | INT-04 | Review committed `WP-12` WordPress inventory slice | Verified as a net-new reproducible inventory improvement: pinned entrypoint byte counts and SHA-256 values match `/home/ubuntu/phpc-external/wordpress/wordpress` |
-| Q-024 | review | Coordination | INT-07 | Review committed `DOC-03` dashboard slice | Accept only non-duplicative reporting improvements |
+| Q-024 | rejected | Coordination | INT-07 | Review committed `DOC-03` dashboard slice | Rejected as stale generated progress refresh; current `main` Pages reporter and label-hygiene gate own this surface |

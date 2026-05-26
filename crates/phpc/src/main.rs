@@ -25,6 +25,7 @@ fn real_main() -> Result<ExitCode, String> {
     match command.as_str() {
         "run" => {
             let input = input_path(args.next())?;
+            reject_trailing_args(args.collect::<Vec<_>>().as_slice())?;
             let source = fs::read_to_string(&input)
                 .map_err(|err| format!("failed to read {}: {err}", input.display()))?;
             let output = run_php(&source)?;
@@ -66,8 +67,14 @@ fn parse_compile_mode(args: &[String]) -> Result<CompileMode, String> {
     Err(format!("unsupported compile flags: {}", args.join(" ")))
 }
 
+fn reject_trailing_args(args: &[String]) -> Result<(), String> {
+    if args.is_empty() {
+        return Ok(());
+    }
+    Err(format!("unsupported trailing arguments: {}", args.join(" ")))
+}
+
 fn print_help() {
     println!("phpc run <input.php>");
     println!("phpc compile <input.php> [--emit-ir|--emit-asm|--emit-exe]");
 }
-
