@@ -68,6 +68,7 @@ pub unsafe extern "C" fn phpc_echo(ptr: *const c_char, len: usize) {
     }
     let bytes = slice::from_raw_parts(ptr.cast::<u8>(), len);
     let _ = io::stdout().write_all(bytes);
+    let _ = io::stdout().flush();
 }
 
 #[no_mangle]
