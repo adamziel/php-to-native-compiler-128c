@@ -172,6 +172,19 @@ grep -F "classification: review-required-missing-handoff" batch.out >/dev/null
 grep -F "summary: passed=1 failed=1 total=2" batch.out >/dev/null
 
 set +e
+scripts/check-lanes-integration.sh --summary-json --main-ref main lane/review lane/missing-handoff > batch-json.out 2> batch-json.err
+batch_json_status=$?
+set -e
+if [[ "$batch_json_status" -ne 1 ]]; then
+  echo "check-lanes-integration.sh --summary-json did not preserve mixed batch status 1" >&2
+  cat batch-json.out >&2
+  cat batch-json.err >&2
+  exit 1
+fi
+grep -F "summary: passed=1 failed=1 total=2" batch-json.out >/dev/null
+grep -F 'summary-json: {"passed":1,"failed":1,"total":2,"status":1}' batch-json.out >/dev/null
+
+set +e
 scripts/check-lanes-integration.sh --main-ref main lane/missing-handoff lane/does-not-exist > batch-ref-error.out 2> batch-ref-error.err
 batch_ref_error_status=$?
 set -e
@@ -193,6 +206,10 @@ grep -F "classification: already-integrated" batch-safe.out >/dev/null
 grep -F "== lane/stale-equivalent ==" batch-safe.out >/dev/null
 grep -F "classification: stale-equivalent" batch-safe.out >/dev/null
 grep -F "summary: passed=2 failed=0 total=2" batch-safe.out >/dev/null
+
+scripts/check-lanes-integration.sh --summary-json --main-ref main lane/integrated lane/stale-equivalent > batch-safe-json.out
+grep -F "summary: passed=2 failed=0 total=2" batch-safe-json.out >/dev/null
+grep -F 'summary-json: {"passed":2,"failed":0,"total":2,"status":0}' batch-safe-json.out >/dev/null
 
 set +e
 scripts/check-lanes-integration.sh --main-ref main lane/missing-handoff missing-handoff > batch-alias-duplicate.out 2> batch-alias-duplicate.err

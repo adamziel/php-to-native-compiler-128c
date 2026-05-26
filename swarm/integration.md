@@ -25,6 +25,8 @@ scripts/check-lanes-integration.sh --main-ref origin/main lane/<name> lane/<othe
 
 The batch wrapper keeps checking later lanes after an individual unsafe or
 missing-handoff result, then exits nonzero if any lane check failed.
+Pass `--summary-json` when automation needs stable aggregate counts in addition
+to the human-readable per-lane output.
 
 Interpret the classification as follows:
 

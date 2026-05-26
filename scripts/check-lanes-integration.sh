@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat >&2 <<'EOF'
-usage: scripts/check-lanes-integration.sh [--main-ref <ref>] <lane-or-commit>...
+usage: scripts/check-lanes-integration.sh [--summary-json] [--main-ref <ref>] <lane-or-commit>...
 
 Runs scripts/check-lane-integration.sh for each supplied lane without changing refs
 or the worktree. Exits nonzero if any individual lane check exits nonzero.
@@ -15,9 +15,14 @@ cd "$repo_root"
 
 main_ref="origin/main"
 targets=()
+summary_json=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --summary-json)
+      summary_json=1
+      shift
+      ;;
     --main-ref)
       if [[ $# -lt 2 ]]; then
         usage
@@ -105,5 +110,9 @@ for target in "${targets[@]}"; do
 done
 
 echo "summary: passed=${passed} failed=${failed} total=${#targets[@]}"
+if [[ "$summary_json" -eq 1 ]]; then
+  printf 'summary-json: {"passed":%d,"failed":%d,"total":%d,"status":%d}\n' \
+    "$passed" "$failed" "${#targets[@]}" "$status"
+fi
 
 exit "$status"
