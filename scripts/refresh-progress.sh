@@ -40,7 +40,10 @@ else
   pages_reporter="not running"
 fi
 active_codex="$(swarm_codex_exec_count)"
-slot_locks="$(find /tmp/phpc-swarm-codex-slots -maxdepth 1 -type d -name '*.lock' 2>/dev/null | wc -l)"
+slot_locks="0"
+if [ -d /tmp/phpc-swarm-codex-slots ]; then
+  slot_locks="$(find /tmp/phpc-swarm-codex-slots -maxdepth 1 -type d -name '*.lock' 2>/dev/null | wc -l)"
+fi
 dirty_lanes="0"
 if [ -d /home/ubuntu/phpc-worktrees ]; then
   dirty_lanes="$(
@@ -52,7 +55,10 @@ if [ -d /home/ubuntu/phpc-worktrees ]; then
     done | wc -c
   )"
 fi
-state_files="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f 2>/dev/null | wc -l)"
+state_files="0"
+if [ -d /home/ubuntu/phpc-worktrees ]; then
+  state_files="$(find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f 2>/dev/null | wc -l)"
+fi
 rate_limited="$(
   {
     find /home/ubuntu/phpc-worktrees -path '*/swarm/handoffs/*.state' -type f -exec grep -l '^rate_limited' {} + 2>/dev/null || true
