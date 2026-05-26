@@ -209,7 +209,7 @@ if [ "$start_watchdog_after_launch" = "1" ]; then
     tmux kill-session -t =phpc-swarm-watchdog
   fi
   tmux new-session -d -s phpc-swarm-watchdog -n watchdog -c "$repo_root" \
-    "SWARM_WORKER_COUNT=${#lanes[@]} SWARM_INTERACTIVE_PROMPT_DELAY=${SWARM_INTERACTIVE_PROMPT_DELAY:-8} ./scripts/swarm-watchdog.sh ${session}"
+    "SWARM_WORKER_COUNT=${#lanes[@]} SWARM_INCLUDE_AUDITOR=${include_auditor} SWARM_INTERACTIVE_PROMPT_DELAY=${SWARM_INTERACTIVE_PROMPT_DELAY:-8} ./scripts/swarm-watchdog.sh ${session}"
 fi
 if [ "$include_auditor" = "1" ]; then
   echo "Launched ${#lanes[@]} interactive workers plus auditor in tmux session ${session}."

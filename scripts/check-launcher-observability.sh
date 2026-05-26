@@ -12,10 +12,13 @@ expected_cadence="${PHPC_EXPECT_LAUNCH_STAGGER_SECONDS:-480}"
 bash -n scripts/launch-swarm.sh
 bash -n scripts/swarm-interactive.sh
 bash -n scripts/refresh-progress.sh
+bash -n scripts/swarm-watchdog.sh
 
 grep -F 'source "$repo_root/scripts/swarm-interactive.sh"' scripts/launch-swarm.sh >/dev/null
 grep -F 'swarm_codex_command "$repo_root" "$target_root"' scripts/launch-swarm.sh >/dev/null
 grep -F "codex --cd" scripts/swarm-interactive.sh >/dev/null
+grep -F 'SWARM_INCLUDE_AUDITOR=${include_auditor}' scripts/launch-swarm.sh >/dev/null
+grep -F 'SWARM_WATCHDOG_EXISTING_ONLY' scripts/swarm-watchdog.sh >/dev/null
 
 if grep -Eq "codex[[:space:]]+exec[[:space:]\\]|codex[[:space:]]+-p[[:space:]\\]" scripts/launch-swarm.sh scripts/swarm-interactive.sh; then
   echo "interactive launcher must not start workers with codex -p or codex exec" >&2

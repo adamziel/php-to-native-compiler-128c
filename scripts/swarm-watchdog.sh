@@ -7,11 +7,25 @@ worktree_root="${WORKTREE_ROOT:-/home/ubuntu/phpc-worktrees}"
 target_root="${TARGET_ROOT:-/home/ubuntu/phpc-targets}"
 interval="${SWARM_WATCHDOG_INTERVAL:-60}"
 initial_stagger_max="${SWARM_INITIAL_STAGGER_MAX:-0}"
+include_auditor="${SWARM_INCLUDE_AUDITOR:-1}"
+existing_only="${SWARM_WATCHDOG_EXISTING_ONLY:-0}"
 
 source "$repo_root/scripts/swarm-lanes.sh"
 source "$repo_root/scripts/swarm-interactive.sh"
 swarm_select_lanes
-lanes+=(AUD-01)
+
+case "$include_auditor" in
+  0|1) ;;
+  *) echo "SWARM_INCLUDE_AUDITOR must be 0 or 1." >&2; exit 1 ;;
+esac
+case "$existing_only" in
+  0|1) ;;
+  *) echo "SWARM_WATCHDOG_EXISTING_ONLY must be 0 or 1." >&2; exit 1 ;;
+esac
+
+if [ "$include_auditor" = "1" ]; then
+  lanes+=(AUD-01)
+fi
 
 respawn_lane() {
   local lane="$1"
@@ -48,8 +62,12 @@ while true; do
   ensure_reporter
 
   missing=0
+  window_names="$(tmux list-windows -t "=${session}" -F '#{window_name}' 2>/dev/null || true)"
   for lane in "${lanes[@]}"; do
-    if ! tmux list-windows -t "=${session}" -F '#{window_name}' 2>/dev/null | grep -Fxq "$lane"; then
+    if ! printf '%s\n' "$window_names" | grep -Fxq "$lane"; then
+      if [ "$existing_only" = "1" ]; then
+        continue
+      fi
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: ${lane} window missing"
       missing=$((missing + 1))
       continue
