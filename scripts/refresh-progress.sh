@@ -12,6 +12,7 @@ cd "$repo_root"
 source "$repo_root/scripts/swarm-interactive.sh"
 
 repo="adamziel/php-to-native-compiler-128c"
+launcher_log="${PHPC_SWARM_LAUNCHER_LOG:-/tmp/phpc-swarm-launcher.log}"
 head="$(git rev-parse --short HEAD 2>/dev/null || echo none)"
 branch="$(git branch --show-current 2>/dev/null || echo none)"
 dirty="$(git status --short 2>/dev/null | wc -l)"
@@ -61,7 +62,7 @@ else
   swarm_launcher="not running"
 fi
 latest_launcher_event="$(
-  { grep -E 'launch:' /tmp/phpc-swarm-launcher.log 2>/dev/null || true; } |
+  { grep -E 'launch:' "$launcher_log" 2>/dev/null || true; } |
     tail -n 1
 )"
 if [ -z "$latest_launcher_event" ]; then
@@ -94,7 +95,7 @@ rate_limited="$(
 )"
 active_cap="interactive"
 launch_marker="$(
-  { grep -E '^=== supervised restart:' /tmp/phpc-swarm-launcher.log 2>/dev/null || true; } |
+  { grep -E '^=== supervised restart:' "$launcher_log" 2>/dev/null || true; } |
     tail -n 1
 )"
 if [ -n "$launch_marker" ]; then
