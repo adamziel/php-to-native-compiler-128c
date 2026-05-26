@@ -10,6 +10,7 @@ pub const PHPC_VALUE_KIND_INVALID: i32 = -1;
 pub const PHPC_VALUE_KIND_NULL: i32 = 0;
 pub const PHPC_VALUE_KIND_BINARY_STRING: i32 = 1;
 pub const PHPC_VALUE_KIND_INTEGER: i32 = 2;
+pub const PHPC_VALUE_KIND_BOOLEAN: i32 = 3;
 
 pub const PHPC_STATUS_OK: i32 = 0;
 pub const PHPC_STATUS_INVALID_HANDLE: i32 = -1;
@@ -22,6 +23,7 @@ enum PhpValue {
     Null,
     BinaryString(Vec<u8>),
     Integer(i64),
+    Boolean(bool),
 }
 
 #[derive(Debug)]
@@ -182,6 +184,14 @@ pub extern "C" fn phpc_integer_new(value: i64) -> PhpcValueHandle {
 }
 
 #[no_mangle]
+pub extern "C" fn phpc_boolean_new(value: i32) -> PhpcValueHandle {
+    runtime()
+        .lock()
+        .unwrap()
+        .insert(PhpValue::Boolean(value != 0))
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn phpc_binary_string_new(
     ptr: *const c_char,
     len: usize,
@@ -207,6 +217,7 @@ pub extern "C" fn phpc_value_kind(handle: PhpcValueHandle) -> i32 {
         Some(PhpValue::Null) => PHPC_VALUE_KIND_NULL,
         Some(PhpValue::BinaryString(_)) => PHPC_VALUE_KIND_BINARY_STRING,
         Some(PhpValue::Integer(_)) => PHPC_VALUE_KIND_INTEGER,
+        Some(PhpValue::Boolean(_)) => PHPC_VALUE_KIND_BOOLEAN,
         None => PHPC_VALUE_KIND_INVALID,
     }
 }
@@ -256,6 +267,22 @@ pub unsafe extern "C" fn phpc_integer_value(handle: PhpcValueHandle, out_value: 
     };
 
     *out_value = *value;
+    PHPC_STATUS_OK
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn phpc_boolean_value(handle: PhpcValueHandle, out_value: *mut i32) -> i32 {
+    if out_value.is_null() {
+        return PHPC_STATUS_INVALID_ARGUMENT;
+    }
+
+    let runtime = runtime().lock().unwrap();
+    let Some(PhpValue::Boolean(value)) = runtime.values.get(&handle) else {
+        *out_value = 0;
+        return PHPC_STATUS_INVALID_HANDLE;
+    };
+
+    *out_value = i32::from(*value);
     PHPC_STATUS_OK
 }
 
@@ -483,6 +510,69 @@ mod tests {
     }
 
     #[test]
+    fn boolean_handle_is_runtime_owned_until_free() {
+        let true_handle = phpc_boolean_new(7);
+        let false_handle = phpc_boolean_new(0);
+
+        assert_ne!(true_handle, INVALID_HANDLE);
+        assert_ne!(false_handle, INVALID_HANDLE);
+        assert_ne!(true_handle, false_handle);
+        assert_eq!(phpc_value_kind(true_handle), PHPC_VALUE_KIND_BOOLEAN);
+        assert_eq!(phpc_value_kind(false_handle), PHPC_VALUE_KIND_BOOLEAN);
+
+        let mut value = -1;
+        assert_eq!(
+            unsafe { phpc_boolean_value(true_handle, &mut value) },
+            PHPC_STATUS_OK
+        );
+        assert_eq!(value, 1);
+
+        value = -1;
+        assert_eq!(
+            unsafe { phpc_boolean_value(false_handle, &mut value) },
+            PHPC_STATUS_OK
+        );
+        assert_eq!(value, 0);
+
+        assert_eq!(phpc_value_free(true_handle), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_free(false_handle), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_kind(true_handle), PHPC_VALUE_KIND_INVALID);
+        assert_eq!(phpc_value_kind(false_handle), PHPC_VALUE_KIND_INVALID);
+    }
+
+    #[test]
+    fn boolean_value_reports_invalid_handles() {
+        let mut value = i32::MAX;
+
+        assert_eq!(
+            unsafe { phpc_boolean_value(INVALID_HANDLE, &mut value) },
+            PHPC_STATUS_INVALID_HANDLE
+        );
+        assert_eq!(value, 0);
+
+        let integer = phpc_integer_new(1);
+        value = i32::MAX;
+        assert_eq!(
+            unsafe { phpc_boolean_value(integer, &mut value) },
+            PHPC_STATUS_INVALID_HANDLE
+        );
+        assert_eq!(value, 0);
+        assert_eq!(phpc_value_free(integer), PHPC_STATUS_OK);
+    }
+
+    #[test]
+    fn boolean_value_rejects_null_out_pointer() {
+        let handle = phpc_boolean_new(1);
+
+        assert_eq!(
+            unsafe { phpc_boolean_value(handle, std::ptr::null_mut()) },
+            PHPC_STATUS_INVALID_ARGUMENT
+        );
+        assert_eq!(phpc_value_kind(handle), PHPC_VALUE_KIND_BOOLEAN);
+        assert_eq!(phpc_value_free(handle), PHPC_STATUS_OK);
+    }
+
+    #[test]
     fn clone_rejects_invalid_handles() {
         assert_eq!(phpc_value_clone(INVALID_HANDLE), INVALID_HANDLE);
 
@@ -546,6 +636,27 @@ mod tests {
             PHPC_STATUS_OK
         );
         assert_eq!(value, i64::MIN);
+        assert_eq!(phpc_value_free(clone), PHPC_STATUS_OK);
+    }
+
+    #[test]
+    fn cloned_boolean_handle_has_independent_ownership() {
+        let original = phpc_boolean_new(1);
+        let clone = phpc_value_clone(original);
+
+        assert_ne!(clone, INVALID_HANDLE);
+        assert_ne!(clone, original);
+        assert_eq!(phpc_value_kind(clone), PHPC_VALUE_KIND_BOOLEAN);
+
+        assert_eq!(phpc_value_free(original), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_kind(original), PHPC_VALUE_KIND_INVALID);
+
+        let mut value = 0;
+        assert_eq!(
+            unsafe { phpc_boolean_value(clone, &mut value) },
+            PHPC_STATUS_OK
+        );
+        assert_eq!(value, 1);
         assert_eq!(phpc_value_free(clone), PHPC_STATUS_OK);
     }
 
