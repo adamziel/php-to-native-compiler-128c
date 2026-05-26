@@ -94,7 +94,7 @@ PHPC_ALLOW_WORKTREE_LANE_MISMATCH=1 \
 PHPC_TARGET_ROOT=/tmp/phpc-targets \
 PHPC_LANE_ID=LOCAL-GATE \
 CARGO_TARGET_DIR=/tmp/phpc-targets/LOCAL-GATE \
-  scripts/local-gate.sh
+  env -u PHPC_EXPECT_BRANCH scripts/local-gate.sh
 
 if ! grep -Fx "test --locked" "$record_file" >/dev/null; then
   echo "local-gate.sh did not continue to cargo test --locked after worker env preflight passed" >&2
@@ -111,7 +111,7 @@ if PATH="$tmpdir:$PATH" \
   PHPC_TARGET_ROOT=/tmp/phpc-targets \
   PHPC_LANE_ID=LOCAL-GATE \
   CARGO_TARGET_DIR=/tmp/phpc-targets/OTHER \
-  scripts/local-gate.sh >"$tmpdir/out" 2>"$tmpdir/err"; then
+  env -u PHPC_EXPECT_BRANCH scripts/local-gate.sh >"$tmpdir/out" 2>"$tmpdir/err"; then
   echo "local-gate.sh accepted a mismatched worker CARGO_TARGET_DIR" >&2
   exit 1
 fi

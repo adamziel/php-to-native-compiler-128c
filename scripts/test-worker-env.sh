@@ -13,6 +13,7 @@ fixture_root="$tmpdir/phpc-worktrees"
 fixture_worktree="$fixture_root/INT-05"
 fixture_target_root="$tmpdir/phpc-targets"
 fixture_target_dir="$fixture_target_root/INT-05"
+mkdir -p "$fixture_worktree"
 
 run_fixture() {
   PHPC_WORKTREE_ROOT="$fixture_worktree" \
@@ -42,6 +43,11 @@ expect_failure \
   "PHPC_WORKTREE_ROOT must be absolute: relative/INT-05" \
   "a relative worktree root" \
   env PHPC_WORKTREE_ROOT=relative/INT-05 CARGO_TARGET_DIR="$fixture_target_dir" scripts/verify-worker-env.sh
+
+expect_failure \
+  "PHPC_WORKTREE_ROOT must exist as a directory: $tmpdir/missing/INT-05" \
+  "a missing worktree root" \
+  env PHPC_WORKTREE_ROOT="$tmpdir/missing/INT-05" CARGO_TARGET_DIR="$fixture_target_dir" scripts/verify-worker-env.sh
 
 expect_failure \
   "PHPC_TARGET_ROOT must be absolute: relative-targets" \

@@ -19,6 +19,11 @@ case "$worktree_root" in
     ;;
 esac
 
+if [[ ! -d "$worktree_root" ]]; then
+  echo "worker env error: PHPC_WORKTREE_ROOT must exist as a directory: $worktree_root" >&2
+  exit 1
+fi
+
 case "$target_root" in
   /*) ;;
   *)
