@@ -27,6 +27,32 @@ Several worker branches now contain reviewable dirty slices, and four lanes have
 | --- | --- | --- | --- |
 | `PHPT-03` | `ea96852` | Accepted compatible parser-level `SKIPIF`/`XFAIL` metadata into `INT-03`; no runner semantics or skip execution added. | `cargo test -p phpc_core phpt::tests` and `scripts/status-gate.sh` in INT-03 handoff. |
 
+## Recently Integrated Coordination Slices
+
+| Lane | Status | Evidence | Notes |
+| --- | --- | --- | --- |
+| `INT-01` | integrated | Reporter/local coordination gates present in `main`. | Covers reporter health and the local coordination gate; avoid duplicating reporter-gate work. |
+| `INT-02` | integrated | Manifest-sourced denominator refresh and generated-output consistency checks present in `main`. | Covers PHP core and WordPress manifest denominator rendering and drift checks. |
+| `INT-03` | integrated | `.phpt` parser metadata work present in `main`. | Covers parser metadata accounting; avoid duplicate `.phpt` metadata-only slices. |
+| `INT-04` | integrated | Linked executable unsupported CLI gate present in `main`. | Covers truthful M3 unsupported-mode behavior; does not count as linked native execution progress. |
+
+## Next Non-Duplicate Integration Candidate
+
+Highest-priority small candidate: review a real LINK lane implementation slice and accept only a narrow compile/link/run improvement with focused tests.
+
+Acceptance:
+
+- The slice must produce and run a native executable, not only add scaffolding, generated fixtures, wrappers, or shell-outs.
+- Compare stdout, stderr, and exit status against `phpc run` and system PHP for committed fixtures.
+- Keep `--emit-exe` explicitly unsupported until a real linked executable path exists.
+
+Out of scope:
+
+- No additional progress-denominator checks unless a real drift is found.
+- No reporter-gate duplication.
+- No `.phpt` parser metadata work.
+- No fake linked execution progress.
+
 | Priority | Lane(s) | Area | Current artifact | Integration instruction |
 | --- | --- | --- | --- | --- |
 | P1 | `LINK-01`, `LINK-02`, `LINK-08`, `LINK-09`, `LINK-11` | M3 linked/native path | Core compile/link diffs | Review first because native executable support is still 0%; accept only a narrow compile/link/run slice with tests. |
