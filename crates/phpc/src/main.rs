@@ -3,7 +3,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use phpc_core::phpt::{parse_phpt, run_phpt_with_phpc_in_dir, PhptRunReport, PhptRunStatus};
+use phpc_core::phpt::{
+    parse_phpt, run_phpt_with_phpc_in_dir, PhptExpectationKind, PhptFileKind, PhptRunReport,
+    PhptRunStatus,
+};
 use phpc_core::{compile_php, compile_php_executable, run_php_file, CompileMode};
 
 const WORDPRESS_BOOTSTRAP_ENTRYPOINTS: &[&str] = &[
@@ -72,7 +75,13 @@ fn real_main() -> Result<ExitCode, String> {
                 .map_err(|err| format!("failed to parse {}: {err}", input.display()))?;
             let base_dir = input.parent().unwrap_or_else(|| Path::new("."));
             let report = run_phpt_with_phpc_in_dir(&test, base_dir);
-            print_phpt_run_report(&input, test.test_name(), &report);
+            print_phpt_run_report(
+                &input,
+                test.test_name(),
+                test.source_file().map(|file| file.kind),
+                test.expectation().map(|expectation| expectation.kind),
+                &report,
+            );
             Ok(ExitCode::SUCCESS)
         }
         "--help" | "-h" | "help" => {
@@ -176,11 +185,26 @@ fn wordpress_bootstrap_check(root: &Path) -> Result<String, String> {
     Ok(report)
 }
 
-fn print_phpt_run_report(input: &Path, test_name: Option<&str>, report: &PhptRunReport) {
+fn print_phpt_run_report(
+    input: &Path,
+    test_name: Option<&str>,
+    source_kind: Option<PhptFileKind>,
+    expectation_kind: Option<PhptExpectationKind>,
+    report: &PhptRunReport,
+) {
     println!("phpt_run");
     println!("path={}", input.display());
     if let Some(test_name) = test_name {
         println!("test_name={}", escape_report_value(test_name));
+    }
+    if let Some(source_kind) = source_kind {
+        println!("source_kind={}", phpt_file_kind_name(source_kind));
+    }
+    if let Some(expectation_kind) = expectation_kind {
+        println!(
+            "expectation_kind={}",
+            phpt_expectation_kind_name(expectation_kind)
+        );
     }
     println!("runner=phpc_run");
     match &report.status {
@@ -217,6 +241,21 @@ fn print_phpt_run_report(input: &Path, test_name: Option<&str>, report: &PhptRun
 
 fn escape_report_value(value: &str) -> String {
     value.replace('\\', "\\\\").replace('\r', "\\r").replace('\n', "\\n")
+}
+
+fn phpt_file_kind_name(kind: PhptFileKind) -> &'static str {
+    match kind {
+        PhptFileKind::File => "FILE",
+        PhptFileKind::FileEof => "FILEEOF",
+    }
+}
+
+fn phpt_expectation_kind_name(kind: PhptExpectationKind) -> &'static str {
+    match kind {
+        PhptExpectationKind::Exact => "EXPECT",
+        PhptExpectationKind::Format => "EXPECTF",
+        PhptExpectationKind::Regex => "EXPECTREGEX",
+    }
 }
 
 fn print_help() {

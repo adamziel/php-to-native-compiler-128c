@@ -3,10 +3,9 @@
 ## Summary
 
 - Milestone: M5.
-- Preserved completed gh15905, bug47596, and base-path-aware `.phpt` runner commits.
-- Added a small non-denominator harness reporting improvement: `phpc phpt-run` now prints `test_name=<name>` when the `.phpt` has a `TEST` section.
-- The emitted test name is escaped for backslashes and line breaks so the status report remains one key/value per line.
-- No php-src runnable denominator change in this slice.
+- Current `origin/main` already contains the previous PHPT-02 `test_name` reporting slice, so this slice extends that reporting without duplicating denominator accounting.
+- `phpc phpt-run` now prints `source_kind=<FILE|FILEEOF>` and `expectation_kind=<EXPECT|EXPECTF|EXPECTREGEX>` when those sections are present.
+- This is a machine-readable reporting improvement only. The php-src runnable denominator remains 4 of 19,346.
 
 ## Files Changed
 
@@ -23,19 +22,19 @@
 
 ## Pass/Fail State
 
-- PASS: focused CLI `.phpt` runner report test, including `test_name=Trivial "Hello World" test`.
+- PASS: focused CLI `.phpt` runner report test, including `test_name`, `source_kind=FILE`, and `expectation_kind=EXPECT`.
 - PASS: status gate.
 - PASS: `git diff --check`.
 
 ## Latest Commit
 
-- This committed slice: `Report phpt test names in CLI output`
+- This committed slice: `Report phpt section kinds in CLI output`
 
 ## Blockers
 
 - No blocker for this reporting slice.
-- M5 remains blocked on broader `.phpt` semantics: INI, native execution, full SKIPIF, EXPECTREGEX, and many unsupported PHP language/runtime features.
+- M5 remains blocked on broader `.phpt` semantics: INI, native execution, full SKIPIF, EXPECTREGEX matching, and many unsupported PHP language/runtime features.
 
 ## Next Suggested Slice
 
-- Add focused result metadata for another parsed section only if it improves run classification, or continue mining tiny already-supported pinned `.phpt` tests without counting unsupported probes.
+- Add focused result metadata only when it improves classification, or mine another tiny already-supported pinned `.phpt` without counting unsupported probes.
