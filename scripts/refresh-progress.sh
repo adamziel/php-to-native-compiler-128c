@@ -331,25 +331,61 @@ HTML
 mv "$tmp" "$html_out"
 
 if [ "$mode" = "--check" ]; then
-  grep -F -- "- Repository: \`${repo}\`" "$progress_out" >/dev/null
-  grep -F -- "- Branch: \`${branch}\`" "$progress_out" >/dev/null
-  grep -F -- "- Supervised agents target: \`${supervised_target}\`" "$progress_out" >/dev/null
-  grep -F -- "- Active worker command processes: \`${active_worker_exec}\`" "$progress_out" >/dev/null
-  grep -F -- "- Active agent slot cap: \`${active_cap}\`" "$progress_out" >/dev/null
-  grep -F -- "- Staggered swarm launcher: \`${swarm_launcher}\`" "$progress_out" >/dev/null
-  grep -F -- "From-scratch bootstrap for <code>${repo}</code>" "$html_out" >/dev/null
-  grep -F -- "<div class=\"metric\"><span>Active worker commands</span><strong>${active_worker_exec}</strong></div>" "$html_out" >/dev/null
-  grep -F -- "<tr><td>Latest launcher event</td><td><code>" "$html_out" >/dev/null
-  grep -F -- "# PHP-To-Native Compiler Swarm Progress" "$progress_out" >/dev/null
-  grep -F -- "<title>PHP-to-Native Compiler Swarm Progress</title>" "$html_out" >/dev/null
-  grep -q '^## Current State$' "$progress_out"
-  grep -q '^## Milestone Estimates$' "$progress_out"
-  grep -q '^## Latest Verification$' "$progress_out"
-  grep -q '^## Current Blockers$' "$progress_out"
-  [ "$(grep -Ec '^\| M[0-9] ' "$progress_out")" -eq 8 ]
-  grep -q '<h2>Milestones</h2>' "$html_out"
-  grep -q '<h2>Swarm Health</h2>' "$html_out"
-  grep -q 'Working tree dirty entries' "$html_out"
-  grep -q '<h2>Immediate Actions</h2>' "$html_out"
-  [ "$(grep -Ec '<tr><td>M[0-9] ' "$html_out")" -eq 8 ]
+  check_fixed() {
+    local label="$1"
+    local pattern="$2"
+    local file="$3"
+    if ! grep -F -- "$pattern" "$file" >/dev/null; then
+      echo "refresh-progress check failed: missing ${label}" >&2
+      echo "  expected fixed text: ${pattern}" >&2
+      exit 1
+    fi
+  }
+
+  check_regex() {
+    local label="$1"
+    local pattern="$2"
+    local file="$3"
+    if ! grep -Eq "$pattern" "$file"; then
+      echo "refresh-progress check failed: missing ${label}" >&2
+      echo "  expected regex: ${pattern}" >&2
+      exit 1
+    fi
+  }
+
+  check_count() {
+    local label="$1"
+    local pattern="$2"
+    local expected="$3"
+    local file="$4"
+    local actual
+    actual="$(grep -Ec "$pattern" "$file")"
+    if [ "$actual" -ne "$expected" ]; then
+      echo "refresh-progress check failed: ${label} count was ${actual}, expected ${expected}" >&2
+      echo "  counted regex: ${pattern}" >&2
+      exit 1
+    fi
+  }
+
+  check_fixed "progress repository line" "- Repository: \`${repo}\`" "$progress_out"
+  check_fixed "progress branch line" "- Branch: \`${branch}\`" "$progress_out"
+  check_fixed "progress supervised-agent target" "- Supervised agents target: \`${supervised_target}\`" "$progress_out"
+  check_fixed "progress active worker command count" "- Active worker command processes: \`${active_worker_exec}\`" "$progress_out"
+  check_fixed "progress active slot cap" "- Active agent slot cap: \`${active_cap}\`" "$progress_out"
+  check_fixed "progress staggered launcher state" "- Staggered swarm launcher: \`${swarm_launcher}\`" "$progress_out"
+  check_fixed "HTML repository header" "From-scratch bootstrap for <code>${repo}</code>" "$html_out"
+  check_fixed "HTML active worker command metric" "<div class=\"metric\"><span>Active worker commands</span><strong>${active_worker_exec}</strong></div>" "$html_out"
+  check_fixed "HTML latest launcher row" "<tr><td>Latest launcher event</td><td><code>" "$html_out"
+  check_fixed "progress title" "# PHP-To-Native Compiler Swarm Progress" "$progress_out"
+  check_fixed "HTML title" "<title>PHP-to-Native Compiler Swarm Progress</title>" "$html_out"
+  check_regex "progress Current State section" '^## Current State$' "$progress_out"
+  check_regex "progress Milestone Estimates section" '^## Milestone Estimates$' "$progress_out"
+  check_regex "progress Latest Verification section" '^## Latest Verification$' "$progress_out"
+  check_regex "progress Current Blockers section" '^## Current Blockers$' "$progress_out"
+  check_count "progress milestone rows" '^\| M[0-9] ' 8 "$progress_out"
+  check_fixed "HTML Milestones heading" "<h2>Milestones</h2>" "$html_out"
+  check_fixed "HTML Swarm Health heading" "<h2>Swarm Health</h2>" "$html_out"
+  check_fixed "HTML dirty-worktree row" "Working tree dirty entries" "$html_out"
+  check_fixed "HTML Immediate Actions heading" "<h2>Immediate Actions</h2>" "$html_out"
+  check_count "HTML milestone rows" '<tr><td>M[0-9] ' 8 "$html_out"
 fi

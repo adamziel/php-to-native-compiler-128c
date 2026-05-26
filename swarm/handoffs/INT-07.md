@@ -1,42 +1,33 @@
 # INT-07 Handoff
 
 ## Summary
-
-- Milestone: Integration safety / status accuracy.
-- Narrow denominator: static progress-output structure inside the existing non-mutating `scripts/refresh-progress.sh --check` path.
-- Added section and milestone-row assertions for generated markdown and HTML output.
-- Follow-up: aligned the generated HTML milestone table with the eight Markdown milestone rows and tightened `refresh-progress.sh --check` to require all eight HTML rows.
-- Renamed the HTML dirty-count label to `Working tree dirty entries`, matching the branch-local measurement.
-- Preserved existing live-value checks for repository, branch, supervised target, worker command count, slot label, launcher status, and HTML health rows.
-- The structural checks intentionally avoid refreshed timestamps, branch/HEAD values, process counts, dirty counts, and other live counters.
+- Milestone: Integration safety/status accuracy.
+- Narrow denominator: diagnostics for the existing non-mutating `scripts/refresh-progress.sh --check` structural gate.
+- Replaced bare `grep`/row-count assertions with named helpers that report the missing generated section, fixed text, regex, or wrong row count before exiting.
+- No compiler, runtime, PHP-core denominator, WordPress behavior, generated progress output, or progress percentage changed.
 
 ## Files Changed
-
 - `scripts/refresh-progress.sh`
+- `scripts/test-refresh-progress.sh`
 - `swarm/handoffs/INT-07.md`
 
 ## Tests Run
-
-- `scripts/refresh-progress.sh --check`
-- `scripts/test-refresh-progress-labels.sh`
-- `scripts/local-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-07 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-refresh-progress.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-07 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-refresh-progress-labels.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-07 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 - `git diff --check`
 
 ## Pass/Fail State
-
-- Pass: progress label, structural, and non-mutating refresh checks completed with no output/errors.
-- Pass: `git diff --check` reported no whitespace errors.
+- Pass: focused progress refresh check completed and remained non-mutating.
+- Pass: progress label/status wording gate completed.
+- Pass: full local gate completed, including shell gates and Rust tests.
+- Pass: whitespace check completed.
 
 ## Blockers
-
 - None for this slice.
-- M3 linked native executable emission remains blocked outside this slice by the missing linked execution implementation.
 
 ## Latest Commit
-
-- Ported from `3d9bed1 Tighten progress structural check`.
-- Follow-up helper port: `Align progress dashboard milestones`.
+- `HEAD` on `lane/INT-07`: `Improve progress check diagnostics`
 
 ## Next Suggested Slice
-
-- Add a focused failure-message helper for `refresh-progress.sh --check` so structural failures identify the missing section or wrong row count directly.
+- Add a dedicated negative fixture for `refresh-progress.sh --check` if a future refactor introduces injectable generated-output paths; avoid test-only hooks in the production status script unless another structural regression proves the need.
