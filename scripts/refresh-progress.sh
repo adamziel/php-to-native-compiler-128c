@@ -302,4 +302,15 @@ if [ "$mode" = "--check" ]; then
   grep -F -- "From-scratch bootstrap for <code>${repo}</code>" "$html_out" >/dev/null
   grep -F -- "<div class=\"metric\"><span>Active worker commands</span><strong>${active_worker_exec}</strong></div>" "$html_out" >/dev/null
   grep -F -- "<tr><td>Latest launcher event</td><td><code>" "$html_out" >/dev/null
+  grep -F -- "# PHP-To-Native Compiler Swarm Progress" "$progress_out" >/dev/null
+  grep -F -- "<title>PHP-to-Native Compiler Swarm Progress</title>" "$html_out" >/dev/null
+  grep -q '^## Current State$' "$progress_out"
+  grep -q '^## Milestone Estimates$' "$progress_out"
+  grep -q '^## Latest Verification$' "$progress_out"
+  grep -q '^## Current Blockers$' "$progress_out"
+  [ "$(grep -Ec '^\| M[0-9] ' "$progress_out")" -eq 8 ]
+  grep -q '<h2>Milestones</h2>' "$html_out"
+  grep -q '<h2>Swarm Health</h2>' "$html_out"
+  grep -q '<h2>Immediate Actions</h2>' "$html_out"
+  [ "$(grep -Ec '<tr><td>M[0-9] ' "$html_out")" -eq 6 ]
 fi

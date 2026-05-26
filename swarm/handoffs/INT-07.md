@@ -3,8 +3,10 @@
 ## Summary
 
 - Milestone: Integration safety / status accuracy.
-- Narrow denominator: non-mutating progress refresher smoke behavior.
-- Extended `scripts/refresh-progress.sh --check` to assert the tool-neutral worker/agent labels are present in generated markdown and HTML output without touching the tracked generated files.
+- Narrow denominator: static progress-output structure inside the existing non-mutating `scripts/refresh-progress.sh --check` path.
+- Added section and milestone-row assertions for generated markdown and HTML output.
+- Preserved existing live-value checks for repository, branch, supervised target, worker command count, slot label, launcher status, and HTML health rows.
+- The structural checks intentionally avoid refreshed timestamps, branch/HEAD values, process counts, dirty counts, and other live counters.
 
 ## Files Changed
 
@@ -20,7 +22,7 @@
 
 ## Pass/Fail State
 
-- Pass: progress label and non-mutating refresh checks completed with no output/errors.
+- Pass: progress label, structural, and non-mutating refresh checks completed with no output/errors.
 - Pass: `git diff --check` reported no whitespace errors.
 
 ## Blockers
@@ -30,8 +32,8 @@
 
 ## Latest Commit
 
-- `8f85214 Add non-mutating progress refresh check`
+- Ported from `3d9bed1 Tighten progress structural check`.
 
 ## Next Suggested Slice
 
-- Extend `refresh-progress.sh --check` with stable structural checks that exclude timestamps and live counters.
+- Add a focused failure-message helper for `refresh-progress.sh --check` so structural failures identify the missing section or wrong row count directly.
