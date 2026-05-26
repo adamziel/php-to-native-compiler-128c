@@ -58,6 +58,36 @@ fi
 cp progress.md "$tmpdir/progress.md"
 cp docs/progress.html "$tmpdir/progress.html"
 
+cp swarm/php-core-manifest.json "$tmpdir/php-core-manifest.json"
+
+python3 - "$tmpdir/php-core-manifest.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+manifest = json.loads(path.read_text(encoding="utf-8"))
+manifest["subset_runs"][0]["path"] = "tests/basic/missing-recorded-subset.phpt"
+path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+PY
+
+if PHPC_PHP_CORE_MANIFEST="$tmpdir/php-core-manifest.json" \
+  PHPC_PROGRESS_MD="$tmpdir/progress.md" \
+  PHPC_PROGRESS_HTML="$tmpdir/progress.html" \
+  scripts/verify-status-consistency.sh >"$tmpdir/out" 2>"$tmpdir/err"; then
+  echo "verify-status-consistency.sh accepted a missing recorded php-src subset .phpt path" >&2
+  exit 1
+fi
+
+if ! grep -F "php-src subset_runs[1] file is missing: tests/basic/missing-recorded-subset.phpt" "$tmpdir/err" >/dev/null; then
+  echo "verify-status-consistency.sh failed without the expected missing subset-run path diagnostic" >&2
+  cat "$tmpdir/err" >&2
+  exit 1
+fi
+
+cp progress.md "$tmpdir/progress.md"
+cp docs/progress.html "$tmpdir/progress.html"
+
 python3 - "$tmpdir/progress.html" <<'PY'
 from pathlib import Path
 import sys

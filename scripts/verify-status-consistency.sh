@@ -96,6 +96,22 @@ else:
         errors.append(
             f"php-src .phpt count drift: manifest={manifest_total}, actual={actual_total}"
         )
+    for index, subset_run in enumerate(php_manifest.get("subset_runs", []), start=1):
+        subset_path = subset_run.get("path")
+        if not isinstance(subset_path, str) or not subset_path:
+            errors.append(f"php-src subset_runs[{index}] is missing path")
+            continue
+        relative_path = pathlib.PurePosixPath(subset_path)
+        if relative_path.is_absolute() or ".." in relative_path.parts:
+            errors.append(
+                f"php-src subset_runs[{index}] path must stay under pinned php-src: {subset_path}"
+            )
+            continue
+        if relative_path.suffix != ".phpt":
+            errors.append(f"php-src subset_runs[{index}] path is not a .phpt file: {subset_path}")
+            continue
+        if not (php_src / pathlib.Path(*relative_path.parts)).is_file():
+            errors.append(f"php-src subset_runs[{index}] file is missing: {subset_path}")
 
 runnable = int(php_manifest["denominator"]["runnable"])
 if runnable != 0 and "runner not implemented" in progress:
