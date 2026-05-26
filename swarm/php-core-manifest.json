@@ -1,5 +1,5 @@
 {
-  "status": "pinned_inventory_with_library_runner",
+  "status": "pinned_inventory_with_one_recorded_subset_run",
   "php_src": {
     "path": "/home/ubuntu/phpc-external/php-src/php-src-PHP-8.3",
     "source": "https://github.com/php/php-src.git",
@@ -10,17 +10,29 @@
   "denominator": {
     "total_phpt": 19346,
     "mapped": 19346,
-    "runnable": 0,
+    "runnable": 1,
     "skipped": 0,
     "xfail": 0
   },
   "results": {
     "system_php": {"pass": 0, "fail": 0},
-    "phpc_run": {"pass": 0, "fail": 0},
+    "phpc_run": {"pass": 0, "fail": 1},
     "native": {"pass": 0, "fail": 0}
   },
-  "blockers": [
-    "No committed php-src .phpt subset run has been recorded yet; the integrated library runner is limited to FILE/FILEEOF with exact EXPECT/EXPECTF and limited SKIPIF classification"
+  "subset_runs": [
+    {
+      "path": "tests/basic/001.phpt",
+      "name": "Trivial \"Hello World\" test",
+      "runner": "phpc_run",
+      "status": "fail",
+      "reason": "exact EXPECT includes a trailing newline; phpc run emits the literal output without one",
+      "expected_stdout_len": 12,
+      "actual_stdout_len": 11
+    }
   ],
-  "last_run": "2026-05-25T23:15:00Z"
+  "blockers": [
+    "Only tests/basic/001.phpt has a committed php-src subset run; it currently fails under phpc_run exact EXPECT comparison",
+    "The integrated library runner remains limited to FILE/FILEEOF with exact EXPECT/EXPECTF and limited SKIPIF classification"
+  ],
+  "last_run": "2026-05-26T07:05:00Z"
 }

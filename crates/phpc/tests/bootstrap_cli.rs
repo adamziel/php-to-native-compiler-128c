@@ -15,6 +15,7 @@ fn cli_without_command_prints_help_and_usage_exit() {
     assert!(stdout.contains("phpc run <input.php>"));
     assert!(stdout.contains("phpc compile <input.php> --emit-exe <output>"));
     assert!(stdout.contains("phpc wordpress-bootstrap-check <wordpress-root>"));
+    assert!(stdout.contains("phpc phpt-run <input.phpt>"));
     assert_eq!(String::from_utf8_lossy(&output.stderr), "");
 }
 
@@ -38,6 +39,10 @@ fn cli_help_aliases_print_usage_successfully() {
         );
         assert!(
             stdout.contains("phpc wordpress-bootstrap-check <wordpress-root>"),
+            "{arg} stdout:\n{stdout}"
+        );
+        assert!(
+            stdout.contains("phpc phpt-run <input.phpt>"),
             "{arg} stdout:\n{stdout}"
         );
         assert_eq!(String::from_utf8_lossy(&output.stderr), "", "{arg}");
@@ -67,6 +72,41 @@ fn cli_runs_bootstrap_echo() {
         .expect("run phpc");
     assert!(output.status.success());
     assert_eq!(String::from_utf8_lossy(&output.stdout), "hello from phpc\n");
+}
+
+#[test]
+fn cli_runs_minimal_phpt_with_phpc_runner() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let dir = unique_temp_dir("phpc-phpt-run");
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let phpt = dir.join("basic_001.phpt");
+    std::fs::write(
+        &phpt,
+        "--TEST--\nTrivial \"Hello World\" test\n--FILE--\n<?php echo \"Hello World\"?>\n--EXPECT--\nHello World\n",
+    )
+    .expect("write phpt");
+
+    let output = Command::new(exe)
+        .args(["phpt-run"])
+        .arg(&phpt)
+        .output()
+        .expect("run phpc phpt-run");
+
+    assert!(
+        output.status.success(),
+        "phpt-run failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("phpt_run\n"));
+    assert!(stdout.contains("runner=phpc_run\n"));
+    assert!(stdout.contains("status=fail\n"));
+    assert!(stdout.contains("expected_stdout_len=12\n"));
+    assert!(stdout.contains("actual_stdout_len=11\n"));
+    assert_eq!(String::from_utf8_lossy(&output.stderr), "");
+
+    let _ = std::fs::remove_dir_all(&dir);
 }
 
 #[test]

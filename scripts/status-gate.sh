@@ -40,6 +40,7 @@ if not isinstance(runnable, int) or runnable < 0 or runnable > total_phpt:
     raise SystemExit("php-core manifest denominator.runnable must be between 0 and total_phpt")
 
 results = php_core.get("results", {})
+phpc_run_total = None
 for runner in ("system_php", "phpc_run", "native"):
     runner_results = results.get(runner)
     if not isinstance(runner_results, dict):
@@ -53,6 +54,38 @@ for runner in ("system_php", "phpc_run", "native"):
     if passed + failed > runnable:
         raise SystemExit(
             f"php-core manifest results.{runner} pass/fail total must not exceed denominator.runnable"
+        )
+    if runner == "phpc_run":
+        phpc_run_total = passed + failed
+
+subset_runs = php_core.get("subset_runs", [])
+if runnable:
+    if not isinstance(subset_runs, list) or len(subset_runs) != runnable:
+        raise SystemExit(
+            "php-core manifest denominator.runnable must match recorded subset_runs length"
+        )
+    recorded_phpc_results = {"pass": 0, "fail": 0}
+    for index, subset_run in enumerate(subset_runs, start=1):
+        if not isinstance(subset_run, dict):
+            raise SystemExit(f"php-core manifest subset_runs[{index}] must be an object")
+        for key in ("path", "runner", "status"):
+            if not subset_run.get(key):
+                raise SystemExit(f"php-core manifest subset_runs[{index}] missing {key}")
+        runner = subset_run["runner"]
+        status = subset_run["status"]
+        if runner != "phpc_run":
+            raise SystemExit(
+                f"php-core manifest subset_runs[{index}] has unsupported recorded runner {runner!r}"
+            )
+        if status not in {"pass", "fail", "skip", "xfail", "unexpected_pass", "unsupported", "error"}:
+            raise SystemExit(
+                f"php-core manifest subset_runs[{index}] has unknown status {status!r}"
+            )
+        if status in recorded_phpc_results:
+            recorded_phpc_results[status] += 1
+    if phpc_run_total != recorded_phpc_results["pass"] + recorded_phpc_results["fail"]:
+        raise SystemExit(
+            "php-core manifest results.phpc_run pass/fail total must match recorded subset_runs"
         )
 
 php_src = php_core.get("php_src", {})

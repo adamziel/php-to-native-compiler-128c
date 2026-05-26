@@ -35,6 +35,8 @@ String literal support distinguishes PHP single-quoted and double-quoted escape 
 - `.phpt` files with both `FILE` and `FILEEOF` sections are rejected as ambiguous.
 - Minimal `phpc run` `.phpt` evaluator for parsed tests with `FILE` or `FILEEOF` plus literal `EXPECT` or `EXPECTF`; it normalizes line endings and classifies pass, fail, skip, xfail, unexpected-pass, unsupported matcher, and interpreter-error outcomes.
 - `SKIPIF` execution is limited to scripts supported by `phpc run`; output beginning with `skip` classifies the test as skipped, empty or non-skip output continues to the main test, and unsupported `SKIPIF` scripts report interpreter errors.
+- CLI status probe: `phpc phpt-run <input.phpt>` runs a single `.phpt` through the existing `phpc run` evaluator and prints a machine-readable status report. It does not execute native code.
+- Recorded php-src runnable subset: `tests/basic/001.phpt` from the pinned PHP-8.3 tree executes through `phpc phpt-run` and currently reports `fail` because exact `EXPECT` comparison includes a trailing newline while `phpc run` emits the literal output without one.
 
 ## Explicitly Unsupported
 

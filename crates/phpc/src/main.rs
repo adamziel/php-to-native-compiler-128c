@@ -3,6 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use phpc_core::phpt::{parse_phpt, run_phpt_with_phpc, PhptRunReport, PhptRunStatus};
 use phpc_core::{compile_php, compile_php_executable, run_php, CompileMode};
 
 const WORDPRESS_BOOTSTRAP_ENTRYPOINTS: &[&str] = &[
@@ -62,6 +63,17 @@ fn real_main() -> Result<ExitCode, String> {
             reject_trailing_args(args.collect::<Vec<_>>().as_slice())?;
             let report = wordpress_bootstrap_check(&root)?;
             print!("{report}");
+            Ok(ExitCode::SUCCESS)
+        }
+        "phpt-run" => {
+            let input = input_path(args.next())?;
+            reject_trailing_args(args.collect::<Vec<_>>().as_slice())?;
+            let source = fs::read_to_string(&input)
+                .map_err(|err| format!("failed to read {}: {err}", input.display()))?;
+            let test = parse_phpt(&source)
+                .map_err(|err| format!("failed to parse {}: {err}", input.display()))?;
+            let report = run_phpt_with_phpc(&test);
+            print_phpt_run_report(&input, &report);
             Ok(ExitCode::SUCCESS)
         }
         "--help" | "-h" | "help" => {
@@ -165,9 +177,46 @@ fn wordpress_bootstrap_check(root: &Path) -> Result<String, String> {
     Ok(report)
 }
 
+fn print_phpt_run_report(input: &Path, report: &PhptRunReport) {
+    println!("phpt_run");
+    println!("path={}", input.display());
+    println!("runner=phpc_run");
+    match &report.status {
+        PhptRunStatus::Pass => println!("status=pass"),
+        PhptRunStatus::Fail => println!("status=fail"),
+        PhptRunStatus::Skip { reason } => {
+            println!("status=skip");
+            println!("reason={reason}");
+        }
+        PhptRunStatus::Xfail => println!("status=xfail"),
+        PhptRunStatus::UnexpectedPass => println!("status=unexpected_pass"),
+        PhptRunStatus::Unsupported { reason } => {
+            println!("status=unsupported");
+            println!("reason={reason}");
+        }
+        PhptRunStatus::Error { reason } => {
+            println!("status=error");
+            println!("reason={reason}");
+        }
+    }
+    if let Some(expected) = report.expected_stdout.as_ref() {
+        println!("expected_stdout_len={}", expected.len());
+    }
+    if let Some(actual) = report.actual_stdout.as_ref() {
+        println!("actual_stdout_len={}", actual.len());
+    }
+    if report.metadata.skip.is_some() {
+        println!("has_skipif=true");
+    }
+    if report.metadata.xfail.is_some() {
+        println!("has_xfail=true");
+    }
+}
+
 fn print_help() {
     println!("phpc run <input.php>");
     println!("phpc compile <input.php> [--emit-ir|--emit-asm]");
     println!("phpc compile <input.php> --emit-exe <output>");
     println!("phpc wordpress-bootstrap-check <wordpress-root>");
+    println!("phpc phpt-run <input.phpt>");
 }
