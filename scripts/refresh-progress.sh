@@ -58,7 +58,7 @@ latest_launcher_event="$(
 if [ -z "$latest_launcher_event" ]; then
   latest_launcher_event="none"
 fi
-active_codex="$(swarm_codex_exec_count)"
+active_worker_exec="$(swarm_codex_exec_count)"
 slot_locks="0"
 if [ -d /tmp/phpc-swarm-codex-slots ]; then
   slot_locks="$(find /tmp/phpc-swarm-codex-slots -maxdepth 1 -type d -name '*.lock' 2>/dev/null | wc -l)"
@@ -140,8 +140,8 @@ tmp="$(mktemp)"
   echo "- Staggered swarm launcher: \`${swarm_launcher}\`"
   echo "- Latest launcher event: \`${latest_launcher_event}\`"
   echo "- Interactive Codex panes: \`${worker_loops}\`"
-  echo "- Active \`codex exec\` processes: \`${active_codex}\`"
-  echo "- Active Codex slot cap: \`${active_cap}\`"
+  echo "- Active worker command processes: \`${active_worker_exec}\`"
+  echo "- Active agent slot cap: \`${active_cap}\`"
   echo "- Active slot locks: \`${slot_locks}\`"
   echo "- Dirty lane worktrees preserved for review: \`${dirty_lanes}\`"
   echo "- Worker state files: \`${state_files}\`"
@@ -222,7 +222,7 @@ tmp="$(mktemp)"
       <div class="metric"><span>Staggered launcher</span><strong>${swarm_launcher}</strong></div>
       <div class="metric"><span>tmux windows</span><strong>${windows}</strong></div>
       <div class="metric"><span>Interactive Codex panes</span><strong>${worker_loops}</strong></div>
-      <div class="metric"><span>Active codex exec</span><strong>${active_codex}</strong></div>
+      <div class="metric"><span>Active worker commands</span><strong>${active_worker_exec}</strong></div>
       <div class="metric"><span>Active slot cap</span><strong>${active_cap}</strong></div>
       <div class="metric"><span>Retry states</span><strong>${rate_limited}</strong></div>
       <div class="metric"><span>Pages reporter</span><strong>${pages_reporter}</strong></div>
@@ -249,7 +249,7 @@ tmp="$(mktemp)"
         <tr><td>Report base HEAD</td><td><code>${head}</code></td></tr>
         <tr><td>Main dirty entries</td><td><code>${dirty}</code></td></tr>
         <tr><td>Dirty lane worktrees preserved for review</td><td><code>${dirty_lanes}</code></td></tr>
-        <tr><td>Active Codex slot cap</td><td><code>${active_cap}</code></td></tr>
+        <tr><td>Active agent slot cap</td><td><code>${active_cap}</code></td></tr>
         <tr><td>Active slot locks</td><td><code>${slot_locks}</code></td></tr>
         <tr><td>Worker state files</td><td><code>${state_files}</code></td></tr>
         <tr><td>Expected backend retry/rate-limit states</td><td><code>${rate_limited}</code></td></tr>
