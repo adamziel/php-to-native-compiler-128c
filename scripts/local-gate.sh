@@ -4,6 +4,10 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+if [ "${PHPC_REQUIRE_WORKER_ENV:-0}" = "1" ]; then
+  scripts/verify-worker-env.sh
+fi
+
 scripts/status-gate.sh
 scripts/verify-status-consistency.sh
 scripts/test-status-consistency.sh

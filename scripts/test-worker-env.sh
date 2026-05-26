@@ -16,7 +16,7 @@ run_fixture() {
   PHPC_WORKTREE_ROOT="$fixture_worktree" \
     PHPC_TARGET_ROOT="$fixture_target_root" \
     PHPC_LANE_ID=INT-05 \
-    "$@"
+    env -u PHPC_EXPECT_BRANCH "$@"
 }
 
 expect_failure() {

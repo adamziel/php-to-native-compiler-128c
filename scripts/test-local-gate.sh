@@ -25,3 +25,44 @@ if ! grep -Fx "test" "$record_file" >/dev/null; then
   cat "$record_file" >&2
   exit 1
 fi
+
+: >"$record_file"
+PATH="$tmpdir:$PATH" \
+PHPC_FAKE_CARGO_RECORD="$record_file" \
+PHPC_REQUIRE_WORKER_ENV=1 \
+PHPC_WORKTREE_ROOT="$repo_root" \
+PHPC_TARGET_ROOT=/tmp/phpc-targets \
+PHPC_LANE_ID=LOCAL-GATE \
+CARGO_TARGET_DIR=/tmp/phpc-targets/LOCAL-GATE \
+  scripts/local-gate.sh
+
+if ! grep -Fx "test" "$record_file" >/dev/null; then
+  echo "local-gate.sh did not continue to cargo test after worker env preflight passed" >&2
+  cat "$record_file" >&2
+  exit 1
+fi
+
+: >"$record_file"
+if PATH="$tmpdir:$PATH" \
+  PHPC_FAKE_CARGO_RECORD="$record_file" \
+  PHPC_REQUIRE_WORKER_ENV=1 \
+  PHPC_WORKTREE_ROOT="$repo_root" \
+  PHPC_TARGET_ROOT=/tmp/phpc-targets \
+  PHPC_LANE_ID=LOCAL-GATE \
+  CARGO_TARGET_DIR=/tmp/phpc-targets/OTHER \
+  scripts/local-gate.sh >"$tmpdir/out" 2>"$tmpdir/err"; then
+  echo "local-gate.sh accepted a mismatched worker CARGO_TARGET_DIR" >&2
+  exit 1
+fi
+
+if ! grep -F "CARGO_TARGET_DIR must be /tmp/phpc-targets/LOCAL-GATE" "$tmpdir/err" >/dev/null; then
+  echo "local-gate.sh failed without the expected worker env diagnostic" >&2
+  cat "$tmpdir/err" >&2
+  exit 1
+fi
+
+if [ -s "$record_file" ]; then
+  echo "local-gate.sh invoked cargo after worker env preflight failed" >&2
+  cat "$record_file" >&2
+  exit 1
+fi
