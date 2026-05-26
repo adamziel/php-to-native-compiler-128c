@@ -30,6 +30,7 @@ pub fn run_php(source: &str) -> Result<String, String> {
                 Expression::BooleanLiteral(false) | Expression::NullLiteral => {}
             },
             Statement::Call(call) => interpret_call_statement(call, &mut constants)?,
+            Statement::Global(_) => {}
         }
     }
     Ok(output)
@@ -91,6 +92,9 @@ fn emit_ir(program: &[Statement]) -> Result<String, String> {
                     "  ; define_string[{index}] name={name:?} value={value:?}\n"
                 ));
             }
+            Statement::Global(names) => {
+                ir.push_str(&format!("  ; global[{index}] names={names:?}\n"));
+            }
             Statement::Echo(Expression::StringLiteral(text)) => {
                 ir.push_str(&format!(
                     "  ; echo_string[{index}] len={} text={:?}\n",
@@ -123,6 +127,7 @@ fn emit_linkable_ir(program: &[Statement]) -> Result<String, String> {
                 define_string_literal(call)?;
                 continue;
             }
+            Statement::Global(_) => continue,
             Statement::Echo(Expression::StringLiteral(text)) => text.as_bytes().to_vec(),
             Statement::Echo(Expression::IntegerLiteral(value)) => value.to_string().into_bytes(),
             Statement::Echo(Expression::BooleanLiteral(true)) => b"1".to_vec(),
@@ -301,6 +306,27 @@ mod tests {
     }
 
     #[test]
+    fn run_treats_top_level_global_declaration_as_no_op() {
+        assert_eq!(
+            run_php("<?php global $first, $second; echo 'ok';").unwrap(),
+            "ok"
+        );
+    }
+
+    #[test]
+    fn compile_emits_ir_for_global_declaration_no_op() {
+        let ir = compile_php(
+            "<?php define('APP_DIR', 'app'); global $first, $second; echo 'ok';",
+            CompileMode::EmitIr,
+        )
+        .unwrap();
+
+        assert!(ir.contains("define_string[0] name=\"APP_DIR\" value=\"app\""));
+        assert!(ir.contains("global[1] names=[\"first\", \"second\"]"));
+        assert!(ir.contains("echo_string[2] len=2 text=\"ok\""));
+    }
+
+    #[test]
     fn linkable_ir_calls_runtime_echo_for_supported_literals() {
         let program =
             parse_php("<?php echo \"hi\\n\"; echo 42; echo true; echo false; echo null;").unwrap();
@@ -333,6 +359,17 @@ mod tests {
         let ir = emit_linkable_ir(&program).unwrap();
 
         assert!(!ir.contains("wp-includes"));
+        assert!(ir.contains("c\"native\""));
+        assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.1, i64 6)"));
+    }
+
+    #[test]
+    fn linkable_ir_accepts_global_declaration_as_no_output() {
+        let program = parse_php("<?php global $first, $second; echo \"native\";").unwrap();
+        let ir = emit_linkable_ir(&program).unwrap();
+
+        assert!(!ir.contains("first"));
+        assert!(!ir.contains("second"));
         assert!(ir.contains("c\"native\""));
         assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.1, i64 6)"));
     }

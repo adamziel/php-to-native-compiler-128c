@@ -2,6 +2,7 @@
 pub enum Statement {
     Echo(Expression),
     Call(CallExpression),
+    Global(Vec<String>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -55,6 +56,15 @@ fn parse_statements(mut body: &str) -> Result<Vec<Statement>, String> {
                 continue;
             }
             return Err("expected semicolon after function call statement".to_string());
+        }
+        if let Some((names, after_global)) = parse_global_statement(body)? {
+            let after_global = after_global.trim_start();
+            if let Some(after_semicolon) = after_global.strip_prefix(';') {
+                statements.push(Statement::Global(names));
+                body = after_semicolon;
+                continue;
+            }
+            return Err("expected semicolon after global declaration".to_string());
         }
         return Err(format!(
             "unsupported PHP statement near `{}`",
@@ -162,6 +172,34 @@ fn parse_call_expression(input: &str) -> Result<Option<(CallExpression, &str)>, 
         }
         return Err("expected comma or closing parenthesis after function call argument".to_string());
     }
+}
+
+fn parse_global_statement(input: &str) -> Result<Option<(Vec<String>, &str)>, String> {
+    let Some(mut rest) = parse_keyword(input, "global") else {
+        return Ok(None);
+    };
+    rest = rest.trim_start();
+
+    let mut names = Vec::new();
+    loop {
+        let Some((name, after_variable)) = parse_variable_name(rest) else {
+            return Err("expected variable name in global declaration".to_string());
+        };
+        names.push(name.to_string());
+        rest = after_variable.trim_start();
+
+        if let Some(after_comma) = rest.strip_prefix(',') {
+            rest = after_comma.trim_start();
+            continue;
+        }
+        return Ok(Some((names, rest)));
+    }
+}
+
+fn parse_variable_name(input: &str) -> Option<(&str, &str)> {
+    let rest = input.strip_prefix('$')?;
+    let (name, after_name) = parse_identifier(rest)?;
+    Some((name, after_name))
 }
 
 fn parse_identifier(input: &str) -> Option<(&str, &str)> {
@@ -384,6 +422,49 @@ mod tests {
                 ],
             })]
         );
+    }
+
+    #[test]
+    fn parses_top_level_global_declaration() {
+        assert_eq!(
+            parse_php("<?php global $wp_version, $wp_db_version;").unwrap(),
+            vec![Statement::Global(vec![
+                "wp_version".to_string(),
+                "wp_db_version".to_string(),
+            ])]
+        );
+    }
+
+    #[test]
+    fn parses_global_after_define_and_comments() {
+        assert_eq!(
+            parse_php(
+                "<?php\n/** bootstrap docs */\ndefine( 'WPINC', 'wp-includes' );\nglobal $first, $second;"
+            )
+            .unwrap(),
+            vec![
+                Statement::Call(CallExpression {
+                    name: "define".to_string(),
+                    arguments: vec![
+                        Expression::StringLiteral("WPINC".to_string()),
+                        Expression::StringLiteral("wp-includes".to_string()),
+                    ],
+                }),
+                Statement::Global(vec!["first".to_string(), "second".to_string()]),
+            ]
+        );
+    }
+
+    #[test]
+    fn rejects_global_without_variable_name() {
+        let err = parse_php("<?php global ;").unwrap_err();
+        assert_eq!(err, "expected variable name in global declaration");
+    }
+
+    #[test]
+    fn rejects_global_without_semicolon() {
+        let err = parse_php("<?php global $name echo 'x';").unwrap_err();
+        assert_eq!(err, "expected semicolon after global declaration");
     }
 
     #[test]

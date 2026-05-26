@@ -19,9 +19,10 @@ Bootstrap check:
 
 - Command: `phpc wordpress-bootstrap-check /home/ubuntu/phpc-external/wordpress/wordpress`
 - Current result: blocked in `wp-settings.php`
-- Normalized blocker: general PHP parser/compiler gap at the top-level
-  `global $wp_version, $wp_db_version, ...` declaration after leading
-  comments/docblocks and `define( 'WPINC', 'wp-includes' )` are handled.
+- Normalized blocker: general PHP parser/compiler gap at `require ABSPATH .
+  WPINC . '/version.php';` after leading comments/docblocks,
+  `define( 'WPINC', 'wp-includes' )`, and the top-level `global
+  $wp_version, ...` declaration are handled.
 
 The harness must keep WordPress source outside the repo unless a size/license/update policy is approved. Track:
 

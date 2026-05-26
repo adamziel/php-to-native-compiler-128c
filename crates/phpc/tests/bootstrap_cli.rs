@@ -311,7 +311,7 @@ fn cli_reports_wordpress_bootstrap_general_php_gap() {
     }
     fs::write(
         root.join("wp-settings.php"),
-        "<?php\n/**\n * WordPress bootstrap docblock.\n */\ndefine( 'WPINC', 'wp-includes' );\nglobal $wp_version;",
+        "<?php\n/**\n * WordPress bootstrap docblock.\n */\ndefine( 'WPINC', 'wp-includes' );\nglobal $wp_version, $wp_db_version;\nrequire ABSPATH . WPINC . '/version.php';",
     )
     .expect("write bootstrap");
 
@@ -330,7 +330,7 @@ fn cli_reports_wordpress_bootstrap_general_php_gap() {
     assert!(stdout.contains("status=blocked"));
     assert!(stdout.contains("bootstrap=wp-settings.php"));
     assert!(
-        stdout.contains("general_php_gap=unsupported PHP statement near `global $wp_version;`")
+        stdout.contains("general_php_gap=unsupported PHP statement near `require ABSPATH . WPINC . '/vers`")
     );
 }
 
