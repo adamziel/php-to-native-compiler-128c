@@ -1,13 +1,13 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T08:47:12Z
+Last refreshed: 2026-05-26T08:47:38Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `987238e`
-- Dirty entries: `6`
+- Report base HEAD: `e388e24`
+- Dirty entries: `5`
 - tmux windows in `phpc-swarm`: `53`
 - Supervised agents target: `50 workers + auditor`
 - Interactive launch cadence: `0s`
@@ -30,7 +30,7 @@ Last refreshed: 2026-05-26T08:47:12Z
 | M2 runtime value ABI | value kinds, ownership, and request state | 4% | Runtime-owned value handles plus request header storage integrated |
 | M3 linked native execution | compile, link, run, compare | 2% | Linked executable path covers string, integer, boolean, and null echo literals |
 | M4 native lowering | interpreter-supported constructs lowered or rejected | 4% | String, integer, boolean, and null echo literals; top-level string define/global no-output statements; explicit variable diagnostic |
-| M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files; 3 recorded runnable subset test | 6% | PHP-8.3 inventory pinned; tests/basic/001.phpt recorded through phpc_run and currently reports pass; minimal FILE/FILEEOF exact-EXPECT/EXPECTF runner plus limited SKIPIF classification integrated |
+| M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files; 3 recorded runnable subset tests | 6% | PHP-8.3 inventory pinned; 3 subset runs recorded through phpc_run; latest tests/basic/gh15905.phpt reports pass; minimal FILE/FILEEOF exact-EXPECT/EXPECTF runner plus limited SKIPIF classification integrated |
 | M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; 5 entrypoints present; bootstrap check blocked in wp-settings.php |
 | M7 object/SAPI/DB generality | required semantic families | 1% | Request header runtime state integrated; PHP header() wiring queued |
 | M8 performance after correctness | truthful native benchmarks | 0% | Deferred |

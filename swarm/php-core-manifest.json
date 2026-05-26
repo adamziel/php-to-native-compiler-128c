@@ -1,5 +1,5 @@
 {
-  "status": "pinned_inventory_with_two_passing_recorded_subset_runs",
+  "status": "pinned_inventory_with_three_passing_recorded_subset_runs",
   "php_src": {
     "path": "/home/ubuntu/phpc-external/php-src/php-src-PHP-8.3",
     "source": "https://github.com/php/php-src.git",
@@ -10,13 +10,13 @@
   "denominator": {
     "total_phpt": 19346,
     "mapped": 19346,
-    "runnable": 2,
+    "runnable": 3,
     "skipped": 0,
     "xfail": 0
   },
   "results": {
     "system_php": {"pass": 0, "fail": 0},
-    "phpc_run": {"pass": 2, "fail": 0},
+    "phpc_run": {"pass": 3, "fail": 0},
     "native": {"pass": 0, "fail": 0}
   },
   "subset_runs": [
@@ -37,11 +37,20 @@
       "reason": "literal echo with a closing PHP tag followed by trailing whitespace",
       "expected_stdout_len": 3,
       "actual_stdout_len": 3
+    },
+    {
+      "path": "tests/basic/gh15905.phpt",
+      "name": "GH-15905 (Assertion failure for TRACK_VARS_SERVER)",
+      "runner": "phpc_run",
+      "status": "pass",
+      "reason": "FILE body reduces to supported string echo plus semicolon and closing tag; INI metadata is present but does not affect this executed output",
+      "expected_stdout_len": 4,
+      "actual_stdout_len": 4
     }
   ],
   "blockers": [
-    "Only tests/basic/001.phpt and tests/output/ob_001.phpt have committed php-src subset runs; the remaining 19,344 tests are inventory-only",
+    "Only tests/basic/001.phpt, tests/output/ob_001.phpt, and tests/basic/gh15905.phpt have committed php-src subset runs; the remaining 19,343 tests are inventory-only",
     "The integrated library runner remains limited to FILE/FILEEOF with exact EXPECT/EXPECTF and limited SKIPIF classification"
   ],
-  "last_run": "2026-05-26T07:41:00Z"
+  "last_run": "2026-05-26T08:39:28Z"
 }

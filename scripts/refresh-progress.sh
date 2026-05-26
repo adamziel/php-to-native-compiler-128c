@@ -132,12 +132,17 @@ wp_manifest = json.loads((root / "swarm/wordpress-manifest.json").read_text(enco
 php_phpt_total = int(php_manifest["denominator"]["total_phpt"])
 php_phpt_runnable = int(php_manifest["denominator"].get("runnable", 0))
 subset_runs = php_manifest.get("subset_runs", [])
+php_phpt_recorded_label = (
+    "recorded runnable subset test"
+    if php_phpt_runnable == 1
+    else "recorded runnable subset tests"
+)
 if subset_runs:
-    first_subset = subset_runs[0]
+    latest_subset = subset_runs[-1]
     php_phpt_subset_summary = (
-        f"{first_subset.get('path', 'unknown')} recorded through "
-        f"{first_subset.get('runner', 'unknown')} and currently reports "
-        f"{first_subset.get('status', 'unknown')}"
+        f"{len(subset_runs)} subset runs recorded through phpc_run; latest "
+        f"{latest_subset.get('path', 'unknown')} reports "
+        f"{latest_subset.get('status', 'unknown')}"
     )
 else:
     php_phpt_subset_summary = "no committed php-src subset run recorded"
@@ -154,6 +159,7 @@ else:
 print(f"php_phpt_total={php_phpt_total}")
 print(f"php_phpt_total_display='{php_phpt_total:,}'")
 print(f"php_phpt_runnable={php_phpt_runnable}")
+print(f"php_phpt_recorded_label={php_phpt_recorded_label!r}")
 print(f"php_phpt_subset_summary={php_phpt_subset_summary!r}")
 print(f"wp_version={wp_version!r}")
 print(f"wp_entrypoints={wp_entrypoints}")
@@ -211,7 +217,7 @@ tmp="$(mktemp)"
   echo "| M2 runtime value ABI | value kinds, ownership, and request state | 4% | Runtime-owned value handles plus request header storage integrated |"
   echo "| M3 linked native execution | compile, link, run, compare | 2% | Linked executable path covers string, integer, boolean, and null echo literals |"
   echo "| M4 native lowering | interpreter-supported constructs lowered or rejected | 4% | String, integer, boolean, and null echo literals; top-level string define/global no-output statements; explicit variable diagnostic |"
-  echo "| M5 PHP core .phpt harness | PHP-8.3 branch, ${php_phpt_total_display} \`.phpt\` files; ${php_phpt_runnable} recorded runnable subset test | 6% | PHP-8.3 inventory pinned; ${php_phpt_subset_summary}; minimal FILE/FILEEOF exact-EXPECT/EXPECTF runner plus limited SKIPIF classification integrated |"
+  echo "| M5 PHP core .phpt harness | PHP-8.3 branch, ${php_phpt_total_display} \`.phpt\` files; ${php_phpt_runnable} ${php_phpt_recorded_label} | 6% | PHP-8.3 inventory pinned; ${php_phpt_subset_summary}; minimal FILE/FILEEOF exact-EXPECT/EXPECTF runner plus limited SKIPIF classification integrated |"
   echo "| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress ${wp_version} pinned; ${wp_entrypoints} entrypoints present; ${wp_bootstrap_summary} |"
   echo "| M7 object/SAPI/DB generality | required semantic families | 1% | Request header runtime state integrated; PHP header() wiring queued |"
   echo "| M8 performance after correctness | truthful native benchmarks | 0% | Deferred |"
@@ -292,7 +298,7 @@ tmp="$(mktemp)"
         <tr><td>M2 runtime ABI</td><td><div class="bar"><span style="width:4%"></span></div>4%</td><td>PHP value kinds, ownership, and request state</td><td>Runtime-owned value handles plus request header storage integrated</td></tr>
         <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>compile, link, run, compare</td><td>Linked executable path covers string, integer, boolean, and null echo literals</td></tr>
         <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:4%"></span></div>4%</td><td>interpreter-supported constructs</td><td>String, integer, boolean, and null echo literals; top-level string define/global no-output statements; explicit variable diagnostic</td></tr>
-        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:6%"></span></div>6%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files; ${php_phpt_runnable} recorded runnable subset test</td><td>Static inventory pinned; ${php_phpt_subset_summary}; minimal FILE/FILEEOF exact-EXPECT/EXPECTF runner plus limited SKIPIF classification integrated</td></tr>
+        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:6%"></span></div>6%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files; ${php_phpt_runnable} ${php_phpt_recorded_label}</td><td>Static inventory pinned; ${php_phpt_subset_summary}; minimal FILE/FILEEOF exact-EXPECT/EXPECTF runner plus limited SKIPIF classification integrated</td></tr>
         <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress ${wp_version} entrypoints</td><td>Source pinned; ${wp_entrypoints} entrypoints present; ${wp_bootstrap_summary}</td></tr>
         <tr><td>M7 object/SAPI/DB generality</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>required semantic families</td><td>Request header runtime state integrated; PHP header() wiring queued</td></tr>
         <tr><td>M8 performance after correctness</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>truthful native benchmarks</td><td>Deferred</td></tr>
@@ -319,7 +325,7 @@ tmp="$(mktemp)"
       <tbody>
         <tr><td>Keep ${supervised_target} topology alive</td><td>Supervisor</td><td>Running in <code>phpc-swarm</code></td></tr>
         <tr><td>Publish progress to GitHub Pages</td><td>Pages reporter</td><td><code>${pages_reporter}</code></td></tr>
-        <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Done: ${php_phpt_total_display} .phpt files; ${php_phpt_runnable} recorded runnable subset test</td></tr>
+        <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Done: ${php_phpt_total_display} .phpt files; ${php_phpt_runnable} ${php_phpt_recorded_label}</td></tr>
         <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Done: WordPress ${wp_version}; ${wp_bootstrap_summary}</td></tr>
       </tbody>
     </table>
