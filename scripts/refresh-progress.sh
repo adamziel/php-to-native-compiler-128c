@@ -66,6 +66,7 @@ rate_limited="$(
 )"
 active_cap="interactive"
 supervised_target="${SWARM_WORKER_COUNT:-50} workers + auditor"
+launch_cadence="${SWARM_LAUNCH_STAGGER_SECONDS:-unknown}"
 updated_display="$(date -u '+%Y-%m-%d %H:%M UTC')"
 updated_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
@@ -82,6 +83,8 @@ tmp="$(mktemp)"
   echo "- Report base HEAD: \`${head}\`"
   echo "- Dirty entries: \`${dirty}\`"
   echo "- tmux windows in \`phpc-swarm\`: \`${windows}\`"
+  echo "- Supervised agents target: \`${supervised_target}\`"
+  echo "- Interactive launch cadence: \`${launch_cadence}s\`"
   echo "- Interactive Codex panes: \`${worker_loops}\`"
   echo "- Active \`codex exec\` processes: \`${active_codex}\`"
   echo "- Active Codex slot cap: \`${active_cap}\`"
@@ -161,6 +164,7 @@ tmp="$(mktemp)"
   <main>
     <section class="grid">
       <div class="metric"><span>Supervised agents target</span><strong>${supervised_target}</strong></div>
+      <div class="metric"><span>Launch cadence</span><strong>${launch_cadence}s</strong></div>
       <div class="metric"><span>tmux windows</span><strong>${windows}</strong></div>
       <div class="metric"><span>Interactive Codex panes</span><strong>${worker_loops}</strong></div>
       <div class="metric"><span>Active codex exec</span><strong>${active_codex}</strong></div>
