@@ -53,3 +53,26 @@ Follow-up status slice: `scripts/refresh-progress.sh` derives the M6 WordPress b
 ## Next Suggested Slice
 
 - Reduce the reported WordPress blocker through a general M4 parser fixture for PHP comments/docblocks before statements, then re-run `phpc wordpress-bootstrap-check` to classify the next general PHP gap.
+
+## Follow-Up Status Fixture
+
+Summary:
+- Ported the useful status-consistency fixture from `lane/INT-04` onto current `main` without taking stale lane history.
+- `scripts/verify-status-consistency.sh` now supports test-only path overrides for generated status inputs.
+- Added `scripts/test-status-consistency.sh`, which mutates temporary `progress.md` and `docs/progress.html` copies to prove stale WordPress bootstrap wording is rejected without touching checked-in generated files.
+- The local coordination gate now includes this regression, and `swarm/test-matrix.md` records it.
+
+Files changed:
+- `scripts/verify-status-consistency.sh`
+- `scripts/test-status-consistency.sh`
+- `scripts/local-gate.sh`
+- `swarm/test-matrix.md`
+- `swarm/handoffs/INT-04.md`
+
+Tests run:
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-status-consistency CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-status-consistency.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-status-consistency CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
+- `git diff --check`
+
+Latest commit:
+- Pending supervisor commit for the manual main port.

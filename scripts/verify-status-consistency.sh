@@ -6,19 +6,64 @@ cd "$repo_root"
 
 python3 - <<'PY'
 import json
+import os
 import pathlib
 import sys
+from html.parser import HTMLParser
 
 root = pathlib.Path.cwd()
 
-php_manifest = json.loads((root / "swarm/php-core-manifest.json").read_text(encoding="utf-8"))
-wp_manifest = json.loads((root / "swarm/wordpress-manifest.json").read_text(encoding="utf-8"))
-progress = (root / "progress.md").read_text(encoding="utf-8")
-progress_html = (root / "docs/progress.html").read_text(encoding="utf-8")
-test_matrix = (root / "swarm/test-matrix.md").read_text(encoding="utf-8")
-wp_doc = (root / "docs/WORDPRESS_COMPATIBILITY.md").read_text(encoding="utf-8")
+def repo_path(env_name, default):
+    return pathlib.Path(os.environ.get(env_name, root / default))
+
+
+php_manifest = json.loads(repo_path("PHPC_PHP_CORE_MANIFEST", "swarm/php-core-manifest.json").read_text(encoding="utf-8"))
+wp_manifest = json.loads(repo_path("PHPC_WORDPRESS_MANIFEST", "swarm/wordpress-manifest.json").read_text(encoding="utf-8"))
+progress = repo_path("PHPC_PROGRESS_MD", "progress.md").read_text(encoding="utf-8")
+progress_html = repo_path("PHPC_PROGRESS_HTML", "docs/progress.html").read_text(encoding="utf-8")
+test_matrix = repo_path("PHPC_TEST_MATRIX", "swarm/test-matrix.md").read_text(encoding="utf-8")
+wp_doc = repo_path("PHPC_WORDPRESS_DOC", "docs/WORDPRESS_COMPATIBILITY.md").read_text(encoding="utf-8")
 
 errors = []
+
+
+class TableCellTextParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.cells = []
+        self._in_cell = False
+        self._parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"td", "th"}:
+            self._in_cell = True
+            self._parts = []
+
+    def handle_data(self, data):
+        if self._in_cell:
+            self._parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag in {"td", "th"} and self._in_cell:
+            self.cells.append("".join(self._parts).strip())
+            self._in_cell = False
+            self._parts = []
+
+
+def html_cells(text):
+    parser = TableCellTextParser()
+    parser.feed(text)
+    return parser.cells
+
+
+def wordpress_status_lines(text_name, text):
+    if text_name.endswith(".html"):
+        return [cell for cell in html_cells(text) if "WordPress" in cell or "bootstrap" in cell]
+    return [
+        line
+        for line in text.splitlines()
+        if "WordPress" in line or "bootstrap" in line
+    ]
 
 php_src = pathlib.Path(php_manifest["php_src"]["path"])
 manifest_total = int(php_manifest["denominator"]["total_phpt"])
@@ -69,6 +114,37 @@ for text_name, text in (("progress.md", progress), ("docs/progress.html", progre
     for required in wp_progress_snippets:
         if required not in text:
             errors.append(f"{text_name} does not include WordPress manifest value `{required}`")
+
+bootstrap_check = wp_manifest.get("results", {}).get("bootstrap_check")
+if bootstrap_check:
+    stale_bootstrap_phrases = (
+        "runner queued",
+        "bootstrap runner queued",
+        "no bootstrap runner exists",
+    )
+    bootstrap_status = bootstrap_check.get("status")
+    bootstrap_file = bootstrap_check.get("bootstrap")
+    if not bootstrap_status:
+        errors.append("WordPress manifest bootstrap_check is missing status")
+    if not bootstrap_file:
+        errors.append("WordPress manifest bootstrap_check is missing bootstrap file")
+
+    for text_name, text in (("progress.md", progress), ("docs/progress.html", progress_html)):
+        wp_lines = wordpress_status_lines(text_name, text)
+        for stale in stale_bootstrap_phrases:
+            if any(stale in line for line in wp_lines):
+                errors.append(
+                    f"{text_name} uses stale WordPress bootstrap wording `{stale}` "
+                    "despite manifest results.bootstrap_check"
+                )
+        if bootstrap_status and bootstrap_status not in text:
+            errors.append(
+                f"{text_name} does not include WordPress bootstrap status `{bootstrap_status}`"
+            )
+        if bootstrap_file and bootstrap_file not in text:
+            errors.append(
+                f"{text_name} does not include WordPress bootstrap file `{bootstrap_file}`"
+            )
 
 if errors:
     for error in errors:

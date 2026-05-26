@@ -6,6 +6,7 @@ cd "$repo_root"
 
 scripts/status-gate.sh
 scripts/verify-status-consistency.sh
+scripts/test-status-consistency.sh
 scripts/verify-runtime-abi-docs.sh
 scripts/test-status-gate.sh
 scripts/test-runtime-abi-docs.sh
