@@ -110,6 +110,17 @@ grep -F "worktree: dirty $tmpdir/dirty-worktree" dirty-worktree.out >/dev/null
 grep -F "classification: unsafe-to-merge" dirty-worktree.out >/dev/null
 grep -F "finish, commit, or hand off dirty work" dirty-worktree.out >/dev/null
 
+dirty_commit="$(git -C "$tmpdir/dirty-worktree" rev-parse HEAD)"
+if scripts/check-lane-integration.sh "$dirty_commit" main > dirty-commit.out 2> dirty-commit.err; then
+  echo "check-lane-integration.sh accepted a raw commit checked out in a dirty lane worktree" >&2
+  cat dirty-commit.out >&2
+  cat dirty-commit.err >&2
+  exit 1
+fi
+grep -F "worktree: dirty $tmpdir/dirty-worktree" dirty-commit.out >/dev/null
+grep -F "classification: unsafe-to-merge" dirty-commit.out >/dev/null
+grep -F "finish, commit, or hand off dirty work" dirty-commit.out >/dev/null
+
 set +e
 scripts/check-lane-integration.sh lane/review lane/review > same-ref.out 2> same-ref.err
 same_ref_status=$?

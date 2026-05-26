@@ -99,27 +99,6 @@ else
   echo "handoff: missing ${handoff}"
 fi
 
-if [[ "$target_full_ref" == refs/heads/* ]]; then
-  current_worktree=""
-  current_branch=""
-  while IFS= read -r line; do
-    if [[ "$line" == worktree\ * ]]; then
-      current_worktree="${line#worktree }"
-      current_branch=""
-      continue
-    fi
-    if [[ "$line" == branch\ * ]]; then
-      current_branch="${line#branch }"
-      if [[ "$current_branch" == "$target_full_ref" && -n "$(git -C "$current_worktree" status --porcelain)" ]]; then
-        echo "worktree: dirty ${current_worktree}"
-        echo "classification: unsafe-to-merge"
-        echo "action: finish, commit, or hand off dirty work in the checked-out lane worktree before integration."
-        exit 1
-      fi
-    fi
-  done < <(git worktree list --porcelain)
-fi
-
 if git merge-base --is-ancestor "$target_commit" "$main_commit"; then
   echo "classification: already-integrated"
   echo "action: do not merge; record the lane as integrated or stale against current main."
@@ -131,6 +110,32 @@ if git diff --quiet "$main_commit" "$target_commit"; then
   echo "action: do not merge; the target tree matches main even though commit history differs."
   exit 0
 fi
+
+current_worktree=""
+current_branch=""
+current_head=""
+while IFS= read -r line; do
+  if [[ "$line" == worktree\ * ]]; then
+    current_worktree="${line#worktree }"
+    current_branch=""
+    current_head=""
+    continue
+  fi
+  if [[ "$line" == HEAD\ * ]]; then
+    current_head="${line#HEAD }"
+    continue
+  fi
+  if [[ "$line" == branch\ * ]]; then
+    current_branch="${line#branch }"
+    if [[ -n "$(git -C "$current_worktree" status --porcelain)" ]] &&
+      { [[ "$current_branch" == "$target_full_ref" ]] || [[ "$current_head" == "$target_commit" ]]; }; then
+      echo "worktree: dirty ${current_worktree}"
+      echo "classification: unsafe-to-merge"
+      echo "action: finish, commit, or hand off dirty work in the checked-out lane worktree before integration."
+      exit 1
+    fi
+  fi
+done < <(git worktree list --porcelain)
 
 cherry_output="$(git cherry "$main_commit" "$target_commit")"
 plus_count="$(printf '%s\n' "$cherry_output" | grep -c '^+' || true)"

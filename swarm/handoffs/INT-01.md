@@ -1,34 +1,34 @@
 # INT-01 Handoff
 
 summary:
-- Milestone: Integration / status gate accuracy.
-- Narrow denominator: `scripts/status-gate.sh` validation of `Latest Commit` handoff sections.
-- Tightened the gate so unresolved pending markers are rejected in both `## Latest Commit` and lowercase `latest commit:` / `latest commit if any:` handoff styles.
-- Added focused fixture coverage for a lowercase `latest commit: pending` handoff.
-- Replaced the stale `SAPI-05` latest-commit placeholder with the concrete integrated commit already present in repository history.
-- No compiler/runtime behavior, PHP-core denominator, WordPress behavior, launcher behavior, generated progress output, or broad native support claim changed.
+- Milestone: Integration / branch hygiene and review safety.
+- Narrow denominator: `scripts/check-lane-integration.sh` dirty-worktree guard for lane candidates reviewed by raw commit SHA.
+- Tightened the gate so a target commit checked out in any dirty worktree is classified `unsafe-to-merge`, matching the existing protection for branch refs.
+- Kept already-integrated and no-net-diff candidates classifiable before the dirty-worktree scan so redirected test output in the integration worktree does not create false failures.
+- No compiler/runtime behavior, PHP-core denominator, WordPress behavior, generated progress output, or broad native support claim changed.
 
 files changed:
-- `scripts/status-gate.sh`
-- `scripts/test-status-gate.sh`
-- `swarm/handoffs/SAPI-05.md`
+- `scripts/check-lane-integration.sh`
+- `scripts/test-check-lane-integration.sh`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/test-status-gate.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/status-gate.sh`
+- `scripts/test-check-lane-integration.sh`
+- `scripts/status-gate.sh`
 - `git diff --check`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 cargo test --locked -p phpc --test bootstrap_cli`
 
 pass/fail state:
-- PASS: focused status-gate regression rejects lowercase unresolved latest-commit placeholders.
+- PASS: focused lane integration regression rejects a raw commit checked out in a dirty lane worktree.
 - PASS: live status gate completed with no diagnostics.
 - PASS: diff hygiene check completed with no diagnostics.
+- PASS: focused CLI bootstrap suite passed, 20 tests.
 
 blockers:
 - None for this integration-safety slice.
 
 latest commit:
-- `HEAD` after commit: Tighten latest commit handoff gate
+- `HEAD` after commit: Tighten lane dirty commit integration check
 
 next suggested slice:
-- Add a focused handoff gate for stale archive-branch latest-commit references if that policy is accepted, as noted by INT-04.
+- Add a focused status consistency check for generated progress branch/HEAD drift if the supervisor wants lane-local progress files to reflect the active worktree instead of the published main report.
