@@ -32,10 +32,11 @@ CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/status-gate.s
 
 ## What is going wrong
 
-- AUD-01 is behind `origin/main` by two commits (`HEAD` `5e5736e`,
-  `origin/main` `0df868c`). This audit checked the remote versions of the major
-  coordination files, but the lane itself should be refreshed before any further
-  local verification is treated as current-main evidence.
+- AUD-01 was behind `origin/main` when this audit was handed off (`HEAD`
+  `5e5736e`, supervisor `origin/main` `d71b1c5`). This audit checked the remote
+  versions of the major coordination files, but the lane itself should be
+  refreshed before any further local verification is treated as current-main
+  evidence.
 - `swarm/agents.md` still says the target is 100 implementation/research workers
   plus auditor, while the checked-out `progress.md` says 50 workers. `origin/main`
   progress has the cleaner `100 workers + auditor` wording. This is a concrete
@@ -54,10 +55,10 @@ CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/status-gate.s
 
 ## Idle, Stuck, Duplicated, Drifting Lanes
 
-- The active swarm is effectively idle from a compiler-progress standpoint:
-  progress reports one interactive pane, zero active worker command processes,
-  zero active slot locks, and all 101 worker state files in expected retry or
-  rate-limit state.
+- The active swarm was still mostly idle from a compiler-progress standpoint at
+  audit time: progress reported one interactive pane, zero active worker command
+  processes, zero active slot locks, and all 101 worker state files in expected
+  retry or rate-limit state.
 - LINK lanes are duplicated. LINK-02-style execution is the accepted shape now;
   LINK-08/LINK-09-style core `CompileMode::EmitExe` rewrites should remain
   rejected unless mined for focused diagnostics or stale-output cleanup.
