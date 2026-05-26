@@ -33,5 +33,5 @@ scripts/test-launcher-observability.sh
 scripts/test-check-lane-integration.sh
 scripts/check-lanes-integration.sh --help >/dev/null 2>&1
 scripts/test-worker-env.sh
-cargo test
+cargo test --locked
 git diff --check

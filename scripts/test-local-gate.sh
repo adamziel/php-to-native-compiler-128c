@@ -59,8 +59,8 @@ PHPC_FAKE_CARGO_RECORD="$record_file" \
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/home/ubuntu/phpc-targets/local-gate-test}" \
   scripts/local-gate.sh
 
-if ! grep -Fx "test" "$record_file" >/dev/null; then
-  echo "local-gate.sh did not invoke cargo test" >&2
+if ! grep -Fx "test --locked" "$record_file" >/dev/null; then
+  echo "local-gate.sh did not invoke cargo test --locked" >&2
   cat "$record_file" >&2
   exit 1
 fi
@@ -76,8 +76,8 @@ PHPC_LANE_ID=LOCAL-GATE \
 CARGO_TARGET_DIR=/tmp/phpc-targets/LOCAL-GATE \
   scripts/local-gate.sh
 
-if ! grep -Fx "test" "$record_file" >/dev/null; then
-  echo "local-gate.sh did not continue to cargo test after worker env preflight passed" >&2
+if ! grep -Fx "test --locked" "$record_file" >/dev/null; then
+  echo "local-gate.sh did not continue to cargo test --locked after worker env preflight passed" >&2
   cat "$record_file" >&2
   exit 1
 fi
