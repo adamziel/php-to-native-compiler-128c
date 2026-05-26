@@ -32,6 +32,9 @@ String literal support distinguishes PHP single-quoted and double-quoted escape 
   explicit native lowering diagnostic.
 - `phpc compile --emit-ir` rejects non-literal `require`/`include` path
   expressions with `expected literal string path`.
+- `phpc compile --emit-asm` is globally unsupported, but parser-level
+  `require`/`include` path-expression diagnostics are still reported before the
+  assembly backend gap.
 - `phpc compile <input.php> --emit-exe <output>` links a native executable for string, integer, boolean, and null echo literals through `php_runtime::phpc_echo`.
 - `phpc compile --emit-exe` rejects literal-path `require`/`include` before
   runtime link setup with an explicit linked-native unsupported diagnostic.

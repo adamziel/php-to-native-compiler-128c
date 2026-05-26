@@ -483,6 +483,38 @@ fn cli_compile_emit_ir_rejects_require_once_without_claiming_native_require_once
 }
 
 #[test]
+fn cli_compile_emit_asm_rejects_non_literal_require_before_assembly_gap() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let dir = unique_temp_dir("phpc-non-literal-require-emit-asm");
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let input_path = dir.join("main.php");
+    std::fs::write(
+        &input_path,
+        "<?php require APP_DIR . '/included.php'; echo 'after require';",
+    )
+    .expect("write php fixture");
+
+    let output = Command::new(exe)
+        .arg("compile")
+        .arg(&input_path)
+        .arg("--emit-asm")
+        .output()
+        .expect("run phpc compile --emit-asm");
+
+    let _ = std::fs::remove_dir_all(&dir);
+
+    assert!(!output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+    assert!(String::from_utf8_lossy(&output.stderr)
+        .contains("unsupported require statement: expected literal string path"));
+    assert!(
+        !String::from_utf8_lossy(&output.stderr).contains("native assembly emission is not implemented yet"),
+        "unsupported require expression was masked by assembly gap:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
 fn cli_compile_emit_exe_rejects_require_before_runtime_link_setup() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let dir = unique_temp_dir("phpc-require-emit-exe");

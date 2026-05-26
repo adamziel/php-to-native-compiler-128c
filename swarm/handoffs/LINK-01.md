@@ -5,6 +5,12 @@
 - Lane: `lane/LINK-01`.
 - Milestone: M4/M6.
 - Queue item: Q-025 native truthfulness for include/require.
+- Latest slice: added `compile --emit-asm` coverage for non-literal
+  `require APP_DIR . '/included.php';`, proving the parser-level
+  `expected literal string path` diagnostic is not masked by the global
+  assembly backend gap.
+- Updated `docs/SUPPORT.md` to document that `--emit-asm` is globally
+  unsupported while still preserving parser-level include/require diagnostics.
 - New slice: completed once-form native-mode symmetry coverage without changing
   parser/runtime behavior.
 - `compile --emit-ir` now has focused CLI coverage for
@@ -85,6 +91,9 @@
   subcommand.
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core`
   passed: 85 tests.
+- Latest slice:
+  `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_asm_rejects_non_literal_require_before_assembly_gap`
+  passed.
 - New slice:
   `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_ir_rejects_require_once_without_claiming_native_require_once`
   passed.
@@ -123,7 +132,7 @@
   `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_exe_rejects_require_before_runtime_link_setup`;
   passed.
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`
-  passed: 34 tests.
+  passed: 35 tests.
 
 ## Pass/Fail State
 
@@ -137,8 +146,8 @@
 
 ## Latest Commit
 
-- New commit in `lane/LINK-01`: require_once emit-ir and include_once emit-exe
-  diagnostic coverage.
+- Latest commit in `lane/LINK-01`: emit-asm include/require parser diagnostic
+  precedence.
 
 ## Next Suggested Slice
 
