@@ -126,15 +126,16 @@ if handoff_dir.is_dir():
     )
     incomplete_handoffs = []
     stale_handoffs = []
-    pending_commit_re = re.compile(r"\bpending\b.*\bcommit\b|\bcommit\b.*\bpending\b", re.IGNORECASE)
+    pending_commit_re = re.compile(r"\bpending\b|\bcommit\b.*\bpending\b", re.IGNORECASE)
+    latest_commit_section_re = re.compile(
+        r"(?ims)^(?:##\s+Latest Commit|latest commit(?: if any)?):?[ \t]*(?:\n|$)(.*?)(?=^## |\n[a-z][a-z /-]*:\s*|\Z)"
+    )
     for path in sorted(handoff_dir.glob("*.md")):
         text = path.read_text(encoding="utf-8")
-        match = re.search(
-            r"(?ims)^## Latest Commit\s*(.*?)(?=^## |\Z)",
-            text,
-        )
-        if match and pending_commit_re.search(match.group(1)):
-            stale_handoffs.append(path.name)
+        for match in latest_commit_section_re.finditer(text):
+            if pending_commit_re.search(match.group(1)):
+                stale_handoffs.append(path.name)
+                break
     if stale_handoffs:
         raise SystemExit(
             "handoffs contain unresolved latest-commit pending markers: "

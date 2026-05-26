@@ -153,6 +153,35 @@ expect_fixture_failure \
 reset_fixtures
 
 cat >"$handoff_fixture/INT-05.md" <<'EOF'
+summary:
+- Has required structure but unresolved lowercase commit wording.
+
+files changed:
+- `example`
+
+tests run:
+- `example`
+
+pass/fail state:
+- PASS: example.
+
+blockers:
+- None.
+
+latest commit:
+- pending
+
+next suggested slice:
+- Continue.
+EOF
+
+expect_fixture_failure \
+  "handoffs contain unresolved latest-commit pending markers: INT-05.md" \
+  "a lowercase handoff with an unresolved latest-commit placeholder"
+
+reset_fixtures
+
+cat >"$handoff_fixture/INT-05.md" <<'EOF'
 # INT-05 Handoff
 
 ## Summary

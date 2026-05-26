@@ -18,7 +18,7 @@ blockers:
 - This is runtime/SAPI storage only. PHP `header()` parsing/interpreter/native lowering is not wired yet.
 
 latest commit:
-- pending
+- `8cd2172` Add request header runtime state
 
 next suggested slice:
 - Add a minimal compiler-facing `header()` semantic fixture or a native request lifecycle once parser/function-call support exists.
