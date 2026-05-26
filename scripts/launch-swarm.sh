@@ -8,6 +8,7 @@ target_root="${TARGET_ROOT:-/home/ubuntu/phpc-targets}"
 initial_stagger_max="${SWARM_INITIAL_STAGGER_MAX:-90}"
 launch_stagger_seconds="${SWARM_LAUNCH_STAGGER_SECONDS:-0}"
 start_watchdog_after_launch="${SWARM_START_WATCHDOG_AFTER_LAUNCH:-0}"
+include_auditor="${SWARM_INCLUDE_AUDITOR:-1}"
 
 source "$repo_root/scripts/swarm-lanes.sh"
 source "$repo_root/scripts/swarm-interactive.sh"
@@ -107,7 +108,12 @@ If the queue item is too broad, choose the smallest useful tested slice and reco
 PROMPT
 }
 
-total_codex_sessions="$((${#lanes[@]} + 1))"
+case "$include_auditor" in
+  0|1) ;;
+  *) echo "SWARM_INCLUDE_AUDITOR must be 0 or 1." >&2; exit 1 ;;
+esac
+
+total_codex_sessions="$((${#lanes[@]} + include_auditor))"
 launched_codex_sessions="0"
 
 for lane in "${lanes[@]}"; do
@@ -128,6 +134,7 @@ for lane in "${lanes[@]}"; do
   stagger_before_next_codex_session "$launched_codex_sessions" "$total_codex_sessions"
 done
 
+if [ "$include_auditor" = "1" ]; then
 aud_prompt="$repo_root/swarm/worker-prompts/AUD-01.md"
 cat > "$aud_prompt" <<PROMPT
 You are AUD-01, the independent auditor for the PHP-to-native compiler swarm.
@@ -157,6 +164,7 @@ tmux send-keys -t "=${session}:AUD-01" "$(swarm_codex_command "$repo_root" "$tar
 swarm_paste_prompt "$session" AUD-01 "$aud_prompt" &
 launched_codex_sessions="$((launched_codex_sessions + 1))"
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) launch: started Codex session ${launched_codex_sessions}/${total_codex_sessions} (AUD-01)."
+fi
 
 wait
 if [ "$start_watchdog_after_launch" = "1" ]; then
@@ -166,4 +174,8 @@ if [ "$start_watchdog_after_launch" = "1" ]; then
   tmux new-session -d -s phpc-swarm-watchdog -n watchdog -c "$repo_root" \
     "SWARM_WORKER_COUNT=${#lanes[@]} SWARM_INTERACTIVE_PROMPT_DELAY=${SWARM_INTERACTIVE_PROMPT_DELAY:-8} ./scripts/swarm-watchdog.sh ${session}"
 fi
-echo "Launched ${#lanes[@]} interactive workers plus auditor in tmux session ${session}."
+if [ "$include_auditor" = "1" ]; then
+  echo "Launched ${#lanes[@]} interactive workers plus auditor in tmux session ${session}."
+else
+  echo "Launched ${#lanes[@]} interactive workers in tmux session ${session}."
+fi
