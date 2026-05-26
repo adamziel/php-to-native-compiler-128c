@@ -7,6 +7,8 @@ pub enum Statement {
 pub enum Expression {
     StringLiteral(String),
     IntegerLiteral(i64),
+    BooleanLiteral(bool),
+    NullLiteral,
 }
 
 pub fn parse_php(source: &str) -> Result<Vec<Statement>, String> {
@@ -93,6 +95,12 @@ fn parse_echo_expression(input: &str) -> Result<(Expression, &str), String> {
         let (value, rest) = parse_integer_literal(input)?;
         return Ok((Expression::IntegerLiteral(value), rest));
     }
+    if let Some((value, rest)) = parse_boolean_literal(input) {
+        return Ok((Expression::BooleanLiteral(value), rest));
+    }
+    if let Some(rest) = parse_null_literal(input) {
+        return Ok((Expression::NullLiteral, rest));
+    }
     Err("expected echo expression literal".to_string())
 }
 
@@ -151,6 +159,36 @@ fn parse_integer_literal(input: &str) -> Result<(i64, &str), String> {
     Ok((value, &input[end..]))
 }
 
+fn parse_boolean_literal(input: &str) -> Option<(bool, &str)> {
+    if let Some(rest) = parse_keyword(input, "true") {
+        return Some((true, rest));
+    }
+    if let Some(rest) = parse_keyword(input, "false") {
+        return Some((false, rest));
+    }
+    None
+}
+
+fn parse_null_literal(input: &str) -> Option<&str> {
+    parse_keyword(input, "null")
+}
+
+fn parse_keyword<'a>(input: &'a str, keyword: &str) -> Option<&'a str> {
+    let candidate = input.get(..keyword.len())?;
+    if !candidate.eq_ignore_ascii_case(keyword) {
+        return None;
+    }
+    let rest = &input[keyword.len()..];
+    if rest
+        .chars()
+        .next()
+        .is_some_and(|ch| ch.is_ascii_alphanumeric() || ch == '_')
+    {
+        return None;
+    }
+    Some(rest)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -191,6 +229,31 @@ mod tests {
             parse_php("<?php echo 12345;").unwrap(),
             vec![Statement::Echo(Expression::IntegerLiteral(12345))]
         );
+    }
+
+    #[test]
+    fn parses_echo_boolean_literals_case_insensitively() {
+        assert_eq!(
+            parse_php("<?php echo true; echo FALSE;").unwrap(),
+            vec![
+                Statement::Echo(Expression::BooleanLiteral(true)),
+                Statement::Echo(Expression::BooleanLiteral(false))
+            ]
+        );
+    }
+
+    #[test]
+    fn parses_echo_null_literal_case_insensitively() {
+        assert_eq!(
+            parse_php("<?php echo NuLl;").unwrap(),
+            vec![Statement::Echo(Expression::NullLiteral)]
+        );
+    }
+
+    #[test]
+    fn does_not_parse_literal_keyword_prefixes() {
+        let err = parse_php("<?php echo trueish;").unwrap_err();
+        assert_eq!(err, "expected echo expression literal");
     }
 
     #[test]

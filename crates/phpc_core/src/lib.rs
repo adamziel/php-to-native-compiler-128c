@@ -24,6 +24,8 @@ pub fn run_php(source: &str) -> Result<String, String> {
             Statement::Echo(expression) => match expression {
                 Expression::StringLiteral(text) => output.push_str(&text),
                 Expression::IntegerLiteral(value) => output.push_str(&value.to_string()),
+                Expression::BooleanLiteral(true) => output.push('1'),
+                Expression::BooleanLiteral(false) | Expression::NullLiteral => {}
             },
         }
     }
@@ -90,6 +92,12 @@ fn emit_ir(program: &[Statement]) -> Result<String, String> {
             Statement::Echo(Expression::IntegerLiteral(value)) => {
                 ir.push_str(&format!("  ; echo_int[{index}] value={value}\n"));
             }
+            Statement::Echo(Expression::BooleanLiteral(value)) => {
+                ir.push_str(&format!("  ; echo_bool[{index}] value={value}\n"));
+            }
+            Statement::Echo(Expression::NullLiteral) => {
+                ir.push_str(&format!("  ; echo_null[{index}]\n"));
+            }
         }
     }
     ir.push_str("  ret i32 0\n}\n");
@@ -104,6 +112,10 @@ fn emit_linkable_ir(program: &[Statement]) -> Result<String, String> {
         let bytes = match statement {
             Statement::Echo(Expression::StringLiteral(text)) => text.as_bytes().to_vec(),
             Statement::Echo(Expression::IntegerLiteral(value)) => value.to_string().into_bytes(),
+            Statement::Echo(Expression::BooleanLiteral(true)) => b"1".to_vec(),
+            Statement::Echo(Expression::BooleanLiteral(false) | Expression::NullLiteral) => {
+                Vec::new()
+            }
         };
         globals.push_str(&format!(
             "@.phpc.echo.{index} = private unnamed_addr constant [{} x i8] c\"{}\"\n",
@@ -194,15 +206,42 @@ mod tests {
     }
 
     #[test]
+    fn run_echoes_boolean_and_null_literals_like_php() {
+        assert_eq!(
+            run_php("<?php echo true; echo false; echo null;").unwrap(),
+            "1"
+        );
+    }
+
+    #[test]
+    fn compile_emits_ir_for_boolean_and_null_literals() {
+        let ir = compile_php(
+            "<?php echo true; echo false; echo null;",
+            CompileMode::EmitIr,
+        )
+        .unwrap();
+
+        assert!(ir.contains("echo_bool[0] value=true"));
+        assert!(ir.contains("echo_bool[1] value=false"));
+        assert!(ir.contains("echo_null[2]"));
+    }
+
+    #[test]
     fn linkable_ir_calls_runtime_echo_for_supported_literals() {
-        let program = parse_php("<?php echo \"hi\\n\"; echo 42;").unwrap();
+        let program =
+            parse_php("<?php echo \"hi\\n\"; echo 42; echo true; echo false; echo null;").unwrap();
         let ir = emit_linkable_ir(&program).unwrap();
 
         assert!(ir.contains("declare void @phpc_echo(ptr, i64)"));
         assert!(ir.contains("c\"hi\\0A\""));
         assert!(ir.contains("c\"42\""));
+        assert!(ir.contains("c\"1\""));
+        assert!(ir.contains("[0 x i8] c\"\""));
         assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.0, i64 3)"));
         assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.1, i64 2)"));
+        assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.2, i64 1)"));
+        assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.3, i64 0)"));
+        assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.4, i64 0)"));
     }
 
     #[test]

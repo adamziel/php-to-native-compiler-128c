@@ -2,7 +2,7 @@
 
 | Layer | Command | Current Status | Notes |
 | --- | --- | --- | --- |
-| Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-comment-trivia CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 61 tests passed on 2026-05-26: 12 runtime, 9 CLI, 40 core |
+| Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-bool-null CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 75 tests passed on 2026-05-26 after the SAPI request-header and INT-01 boolean/null slices: 19 runtime, 11 CLI, 45 core |
 | Bootstrap toolchain | `cargo --version`; `rustc --version`; `php --version`; `clang --version` | passing | cargo 1.75.0; rustc 1.75.0; PHP 8.3.6 CLI; Ubuntu clang 18.1.3 |
 | Runtime ABI | `cargo test -p php_runtime` and `scripts/verify-runtime-abi-docs.sh` | passing | Runtime-owned value handles plus request header storage are tested and documented |
 | CLI run | `cargo run -p phpc -- run fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |
@@ -10,6 +10,7 @@
 | CLI linked native executable | `cargo test -p phpc --test bootstrap_cli cli_emits_linked_native_executable_for_bootstrap_echo` | passing | Builds `libphp_runtime.a`, emits a native executable for `fixtures/bootstrap/hello.php`, runs it, and compares output with `phpc run` and system PHP when available |
 | CLI linked native executable without closing semicolon | `cargo test -p phpc --test bootstrap_cli cli_emits_linked_native_executable_without_semicolon_before_closing_tag` | passing | Verifies the linked native path preserves PHP-compatible output for a final supported `echo` immediately before `?>` |
 | CLI linked native executable without trailing newline | `cargo test -p phpc --test bootstrap_cli cli_emits_linked_native_executable_without_trailing_newline` | passing | Verifies `php_runtime::phpc_echo` flushes stdout so no-newline native output matches `phpc run` and system PHP when available |
+| CLI boolean/null linked native executable | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_emits_linked_native_executable_for_boolean_and_null_echo -- --nocapture` | passing | Verifies `true`, `false`, and `null` echo output through `phpc run`, system PHP when available, and linked native execution for `fixtures/bootstrap/bool_null_echo.php` |
 | CLI native output gates | `cargo test -p phpc --test bootstrap_cli cli_rejects_native_assembly_emission_until_m3_exists` | passing | Verifies `--emit-asm` still fails explicitly until assembly emission exists |
 | CLI run argument hygiene | `cargo test -p phpc --test bootstrap_cli cli_run_rejects_trailing_arguments` | passing | `phpc run <input.php>` rejects trailing arguments instead of silently ignoring bad test invocations |
 | CLI compile flag hygiene | `cargo test -p phpc --test bootstrap_cli cli_compile_rejects_conflicting_emit_flags` | passing | Conflicting compile emit flags fail explicitly with no stdout |

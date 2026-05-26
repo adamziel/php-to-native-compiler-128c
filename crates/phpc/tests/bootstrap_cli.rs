@@ -3,6 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, fs};
 
 const BOOTSTRAP_HELLO: &str = "../../fixtures/bootstrap/hello.php";
+const BOOTSTRAP_BOOL_NULL: &str = "../../fixtures/bootstrap/bool_null_echo.php";
 
 #[test]
 fn cli_runs_bootstrap_echo() {
@@ -84,6 +85,75 @@ fn cli_emits_linked_native_executable_for_bootstrap_echo() {
     let compile = Command::new(exe)
         .env("PHPC_RUNTIME_LIB", &runtime_lib)
         .args(["compile", BOOTSTRAP_HELLO, "--emit-exe"])
+        .arg(&output_path)
+        .output()
+        .expect("compile native executable");
+    assert!(
+        compile.status.success(),
+        "compile failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&compile.stdout),
+        String::from_utf8_lossy(&compile.stderr)
+    );
+
+    let native = Command::new(&output_path)
+        .output()
+        .expect("run native executable");
+    assert!(native.status.success());
+    assert_eq!(native.stdout, interpreted.stdout);
+    assert_eq!(native.stderr, interpreted.stderr);
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn cli_compile_emits_ir_for_boolean_and_null_echo() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let output = Command::new(exe)
+        .args(["compile", BOOTSTRAP_BOOL_NULL, "--emit-ir"])
+        .output()
+        .expect("run phpc compile --emit-ir");
+
+    assert!(
+        output.status.success(),
+        "compile failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("echo_bool[0] value=true"));
+    assert!(stdout.contains("echo_bool[1] value=false"));
+    assert!(stdout.contains("echo_null[2]"));
+}
+
+#[test]
+fn cli_emits_linked_native_executable_for_boolean_and_null_echo() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let runtime_lib = build_runtime_archive();
+    let dir = unique_temp_dir("phpc-linked-bool-null");
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let output_path = dir.join("bool-null-native");
+
+    let interpreted = Command::new(exe)
+        .args(["run", BOOTSTRAP_BOOL_NULL])
+        .output()
+        .expect("run phpc interpreter");
+    assert!(interpreted.status.success());
+    assert_eq!(interpreted.stdout, b"1");
+
+    if let Some(system_php) = system_php_output(BOOTSTRAP_BOOL_NULL) {
+        assert!(
+            system_php.status.success(),
+            "system PHP failed\nstdout:\n{}\nstderr:\n{}",
+            String::from_utf8_lossy(&system_php.stdout),
+            String::from_utf8_lossy(&system_php.stderr)
+        );
+        assert_eq!(system_php.stdout, interpreted.stdout);
+        assert_eq!(system_php.stderr, interpreted.stderr);
+    }
+
+    let compile = Command::new(exe)
+        .env("PHPC_RUNTIME_LIB", &runtime_lib)
+        .args(["compile", BOOTSTRAP_BOOL_NULL, "--emit-exe"])
         .arg(&output_path)
         .output()
         .expect("compile native executable");
