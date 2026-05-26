@@ -1,19 +1,19 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T03:14:06Z
+Last refreshed: 2026-05-26T03:17:28Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `7fde6d0`
-- Dirty entries: `0`
-- tmux windows in `phpc-swarm`: `7`
+- Report base HEAD: `22a14bb`
+- Dirty entries: `3`
+- tmux windows in `phpc-swarm`: `8`
 - Supervised agents target: `100 workers`
 - Interactive launch cadence: `480s`
 - Staggered swarm launcher: `running`
-- Latest launcher event: `2026-05-26T03:08:57Z launch: waiting 480s before starting Codex session 6/100.`
-- Interactive Codex panes: `5`
+- Latest launcher event: `2026-05-26T03:16:57Z launch: waiting 480s before starting Codex session 7/100.`
+- Interactive Codex panes: `6`
 - Active worker command processes: `0`
 - Active agent slot cap: `interactive`
 - Active slot locks: `0`
@@ -30,7 +30,7 @@ Last refreshed: 2026-05-26T03:14:06Z
 | M2 runtime value ABI | value kinds, ownership, and request state | 4% | Runtime-owned value handles plus request header storage integrated |
 | M3 linked native execution | compile, link, run, compare | 2% | Linked executable path covers string, integer, boolean, and null echo literals |
 | M4 native lowering | interpreter-supported constructs lowered or rejected | 3% | String, integer, boolean, and null echo literals; explicit variable diagnostic |
-| M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files | 3% | PHP-8.3 inventory pinned; minimal parser and exact-EXPECT phpc runner integrated |
+| M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files | 4% | PHP-8.3 inventory pinned; minimal parser and exact-EXPECT/EXPECTF phpc runner integrated |
 | M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; 5 entrypoints present; bootstrap check blocked in wp-settings.php |
 | M7 object/SAPI/DB generality | required semantic families | 1% | Request header runtime state integrated; PHP header() wiring queued |
 | M8 performance after correctness | truthful native benchmarks | 0% | Deferred |
@@ -47,6 +47,6 @@ Last refreshed: 2026-05-26T03:14:06Z
 > | ID | Area | Blocker | Impact | Next Action |
 > | --- | --- | --- | --- | --- |
 > | B-001 | Tooling | Rust/Cargo/PHP/LLVM were missing at bootstrap | Resolved for baseline verification | Installed and verified versions on 2026-05-25 |
-> | B-002 | M5 | php-src is pinned but `.phpt` execution only supports minimal `FILE` plus exact `EXPECT` cases | Most PHP core tests remain inventory-only | Extend SKIPIF, EXPECTF/EXPECTREGEX, FILEEOF execution, and php-src result classification |
+> | B-002 | M5 | php-src is pinned but `.phpt` execution only supports minimal `FILE` plus exact `EXPECT` and `EXPECTF` cases | Most PHP core tests remain inventory-only | Extend SKIPIF, EXPECTREGEX, FILEEOF execution, and php-src result classification |
 > | B-003 | M6 | WordPress `wp-settings.php` bootstrap check reaches unsupported top-level `global $wp_version, ...` | Bootstrap cannot reach includes, request setup, or entrypoint execution yet | Reduce top-level `global` declaration parsing/interpreter behavior into general fixtures |
 > | B-004 | M3 | Linked executable path exists only for literal echo fixtures | M3 has first execution plumbing but not broad native lowering | Extend runner/differential coverage beyond the bootstrap echo denominator |
