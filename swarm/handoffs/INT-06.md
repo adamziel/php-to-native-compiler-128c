@@ -2,12 +2,11 @@
 
 ## Summary
 
-- Time: 2026-05-26T05:10:00Z.
-- Branch: `lane/INT-06-fresh-0510` from current `origin/main`.
+- Time: 2026-05-26T05:19:00Z.
+- Branch: `lane/INT-06-fresh-0519` from current `origin/main`.
 - Milestone: Integration / branch hygiene.
-- Narrow denominator: stronger focused coverage for `scripts/lane-review.sh` divergence reporting.
-- Extended `scripts/test-lane-review.sh` with an isolated temporary git repository whose lane branch and integration base diverge by one commit each.
-- The fixture verifies `scripts/lane-review.sh --repo <fixture> --base integration-base` reports the inspected repo path, branch name, selected base, `ahead 1, behind 1`, and a clean worktree.
+- Narrow denominator: focused detached-HEAD coverage for `scripts/lane-review.sh`.
+- Extended `scripts/test-lane-review.sh` to detach the temporary lane-review fixture repo at its current commit and verify the helper reports `branch: (detached)`, base `HEAD`, zero divergence, and clean dirty/untracked counts.
 - No compiler, runtime, parser, PHPT, WordPress, or progress accounting semantics changed.
 
 ## Files Changed
@@ -23,7 +22,7 @@
   - Pass.
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-06 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
   - Pass: status consistency, runtime ABI docs, launcher observability, lane-review gate, worker-env gate, and `cargo test --locked` passed.
-  - Rust tests passed: 19 `php_runtime`, 11 CLI integration, 76 `phpc_core`, and doc tests.
+  - Rust tests passed: 19 `php_runtime`, 13 CLI integration, 76 `phpc_core`, and doc tests.
 
 ## Pass/Fail State
 
@@ -35,8 +34,8 @@
 
 ## Latest Commit
 
-- This commit: `Test lane review divergence reporting`.
+- This commit: `Test lane review detached head output`.
 
 ## Next Suggested Slice
 
-- Add a focused test for detached-HEAD lane-review output so integration candidates checked out by commit still produce an explicit `(detached)` branch label.
+- Add focused coverage that `scripts/lane-review.sh` reports dirty and untracked counts from an inspected fixture repository without mutating it.

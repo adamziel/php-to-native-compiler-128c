@@ -77,3 +77,22 @@ do
     exit 1
   fi
 done
+
+detached_head="$(git -C "$fixture_repo" rev-parse HEAD)"
+git -C "$fixture_repo" switch -q --detach "$detached_head"
+
+scripts/lane-review.sh --repo "$fixture_repo" --base HEAD >"$tmpdir/detached.out"
+for expected in \
+  "repo: $fixture_repo" \
+  "branch: (detached)" \
+  "base: HEAD" \
+  "divergence: ahead 0, behind 0" \
+  "dirty entries: 0" \
+  "untracked entries: 0"
+do
+  if ! grep -F "$expected" "$tmpdir/detached.out" >/dev/null; then
+    echo "lane-review.sh output missing expected detached fixture field: $expected" >&2
+    cat "$tmpdir/detached.out" >&2
+    exit 1
+  fi
+done
