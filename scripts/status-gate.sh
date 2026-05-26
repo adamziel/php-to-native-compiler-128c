@@ -70,8 +70,38 @@ if missing != 0:
     raise SystemExit("wordpress inventory must not report missing pinned entrypoints")
 
 integration = Path("swarm/integration.md").read_text(encoding="utf-8")
+if "native executable support is still 0%" in integration:
+    raise SystemExit("integration log contains obsolete pre-M3 native-support wording")
+if "Keep `--emit-exe` explicitly unsupported" in integration:
+    raise SystemExit("integration log contains obsolete pre-M3 emit-exe wording")
+
 terminal_lanes = set()
+reviewed_lanes = set()
+in_reviewed_candidates = False
+in_committed_candidates = False
+committed_candidate_lanes = set()
 for row in integration.splitlines():
+    if row == "## Reviewed Candidates":
+        in_reviewed_candidates = True
+        in_committed_candidates = False
+        continue
+    if row == "## Committed Lane Candidates":
+        in_committed_candidates = True
+        in_reviewed_candidates = False
+        continue
+    if row.startswith("## ") and row not in ("## Reviewed Candidates", "## Committed Lane Candidates"):
+        in_reviewed_candidates = False
+        in_committed_candidates = False
+
+    if in_reviewed_candidates and row.startswith("| `"):
+        columns = [column.strip() for column in row.strip("|").split("|")]
+        if columns and columns[0] != "Lane":
+            reviewed_lanes.update(re.findall(r"`([^`]+)`", columns[0]))
+    if in_committed_candidates and row.startswith("| `"):
+        columns = [column.strip() for column in row.strip("|").split("|")]
+        if columns and columns[0] != "Lane":
+            committed_candidate_lanes.update(re.findall(r"`([^`]+)`", columns[0]))
+
     if not row.startswith("| 202"):
         continue
     columns = [column.strip() for column in row.strip("|").split("|")]
@@ -83,6 +113,13 @@ for row in integration.splitlines():
         continue
     for lane in re.findall(r"`([^`]+)`", lane_column):
         terminal_lanes.add(lane)
+
+stale_reviewed_candidates = sorted(reviewed_lanes & committed_candidate_lanes)
+if stale_reviewed_candidates:
+    raise SystemExit(
+        "integration committed-candidate table lists already reviewed lanes: "
+        + ", ".join(stale_reviewed_candidates)
+    )
 
 for row in integration.splitlines():
     if not row.startswith("| P"):

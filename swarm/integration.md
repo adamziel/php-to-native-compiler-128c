@@ -10,16 +10,7 @@
 
 ## Current Integration Queue
 
-Several worker branches now contain reviewable dirty slices, and four lanes have committed handoff-backed work. Integration lanes should inspect these worktrees directly, require focused tests, and ask the producing lane to commit a coherent slice before merge unless the work is only a research artifact.
-
-## Committed Lane Candidates
-
-| Lane | Commit | Area | Artifact | Review instruction |
-| --- | --- | --- | --- | --- |
-| `INT-02` | `c10395c` | CLI gates | Native emission status tests and handoff | Integration reviewer should verify the test gate still matches current CLI behavior before merge. |
-| `PHPT-03` | `ea96852` | `.phpt` harness | Skip/XFAIL metadata in `phpt.rs` plus handoff | Reviewed by `INT-06`: stale as a standalone candidate because current `main` already contains parser-level `SKIPIF`/`XFAIL` metadata and harness input support. |
-| `WP-12` | `348ad3b` | WordPress inventory | Inventory scripts, manifest update, handoff | Reviewed by `INT-06`: verified as net-new reproducible inventory evidence; current `main` manifest lacks per-entry byte counts, SHA-256 values, and inventory unit tests. |
-| `DOC-03` | `4ebe2ab` | Reporting | Progress/dashboard refresh and handoff | Reviewed by `INT-06`: rejected as stale generated progress output and outdated queue assignment; current `main` Pages reporter and label-hygiene gate own this surface. |
+Active integration work is follow-up only. The first M3 linked executable path is integrated for the literal echo denominator, and reviewed committed candidates are tracked below instead of being advertised as active work.
 
 ## Reviewed Candidates
 
@@ -62,13 +53,13 @@ Reviewed for this slice:
 
 ## Next Non-Duplicate Integration Candidate
 
-Highest-priority small candidate: review a real LINK lane implementation slice and accept only a narrow compile/link/run improvement with focused tests.
+Highest-priority small candidate: extend the accepted M3 executable path only through slices that compile, link, run, and compare a committed fixture with focused tests.
 
 Acceptance:
 
 - The slice must produce and run a native executable, not only add scaffolding, generated fixtures, wrappers, or shell-outs.
 - Compare stdout, stderr, and exit status against `phpc run` and system PHP for committed fixtures.
-- Keep `--emit-exe` explicitly unsupported until a real linked executable path exists.
+- Preserve the current `phpc compile <input.php> --emit-exe <output>` executable path and keep any broader native claims tied to tested fixture denominators.
 
 Out of scope:
 

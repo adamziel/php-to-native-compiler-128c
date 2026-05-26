@@ -19,7 +19,7 @@ States: `ready`, `assigned`, `blocked`, `review`, `integration`, `verified`, `re
 | Q-013 | ready | M4 | LOW-07 | Implement functions/call frame roadmap and first fixtures | Failing tests or passing first slice |
 | Q-014 | ready | M7 | SAPI-01 | Specify request/SAPI state model | General model documented with fixtures |
 | Q-015 | ready | M7 | SEM-04 | Specify object/class model | General object lifecycle plan and first tests |
-| Q-016 | integration | M3 | INT-01 | Review dirty LINK lane native execution slices | Coherent branch commit or rejection note in `swarm/integration.md` |
+| Q-016 | verified | M3 | INT-01 | Review dirty LINK lane native execution slices | Completed: first LINK-02-style executable path is integrated on current `main`; obsolete LINK candidates are recorded in `swarm/integration.md` |
 | Q-017 | integration | M4 | INT-02 | Deduplicate dirty LOW/MINE parser slices | One tested parser slice selected; conflicts/blockers recorded |
 | Q-018 | integration | M5 | INT-03 | Review dirty PHPT harness slices against integrated parser | Net-new behavior committed or rejected with reason |
 | Q-019 | integration | M6 | INT-04 | Review dirty WP harness slices for generality | Harness/blocker artifact accepted without WordPress-specific compiler hacks |
