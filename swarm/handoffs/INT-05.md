@@ -2,24 +2,27 @@
 
 ## Summary
 
-- Time: 2026-05-26T07:00:00Z.
+- Time: 2026-05-26T07:25:00Z.
 - Branch: `lane/INT-05`.
-- Milestone: Integration safety / worker environment hygiene.
-- Tightened `scripts/verify-worker-env.sh` so `PHPC_WORKTREE_ROOT` and `PHPC_TARGET_ROOT` must be absolute paths before lane and git-worktree validation.
-- Updated the focused worker-env test to cover relative root rejection and made the not-current expected-branch fixture robust when this lane branch is actually checked out.
+- Milestone: Integration safety / M2 runtime ABI status accuracy.
+- Tightened the runtime ABI documentation gate so `PhpcHeaderResult` C ABI return codes from `phpc_request_add_header` must be documented with exact values.
+- Documented the current six header result codes in `docs/NATIVE_RUNTIME_ABI.md`.
+- Added focused fixture mutations for missing, stale, and wrong-valued header result documentation.
 - No compiler/runtime behavior, PHP-core denominator, WordPress behavior, generated progress output, or broad native support claim changed.
 
 ## Files Changed
 
-- `scripts/verify-worker-env.sh`
-- `scripts/test-worker-env.sh`
+- `docs/NATIVE_RUNTIME_ABI.md`
+- `scripts/verify-runtime-abi-docs.sh`
+- `scripts/test-runtime-abi-docs.sh`
 - `swarm/handoffs/INT-05.md`
 
 ## Tests Run
 
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-worker-env.sh` - pass
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/status-gate.sh` - pass
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh` - pass; full locked workspace tests reported 23 runtime, 20 CLI, and 76 core tests passing
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/verify-runtime-abi-docs.sh` - pass
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-runtime-abi-docs.sh` - pass
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p php_runtime --locked` - pass; 23 runtime tests passed
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh` - pass; full locked workspace tests reported 23 runtime, 21 CLI, and 76 core tests passing
 - `git diff --check` - pass
 
 ## Pass/Fail State
@@ -32,8 +35,8 @@
 
 ## Latest Commit
 
-- `HEAD` after commit: `Require absolute worker env roots`
+- `HEAD` - `Verify ABI header result docs`
 
 ## Next Suggested Slice
 
-- Add a focused local-gate fixture for `PHPC_REQUIRE_WORKER_ENV=1` with `PHPC_EXPECT_BRANCH` set to the active lane branch so branch hygiene is exercised in the standard gate path.
+- Extend the runtime ABI documentation gate to verify request/header behavior claims against named runtime tests, not only the value-handle ownership section.

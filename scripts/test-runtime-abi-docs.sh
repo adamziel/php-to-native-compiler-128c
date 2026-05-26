@@ -132,4 +132,35 @@ expect_fixture_failure \
   "a runtime constant value mismatch"
 
 fixture="$(new_fixture)"
+mutate_fixture "$fixture" '- `PhpcHeaderResult::NullHeader = 2`
+' ''
+expect_fixture_failure \
+  "$fixture" \
+  "runtime header results missing from ABI doc: PhpcHeaderResult::NullHeader" \
+  "an undocumented header result"
+
+fixture="$(new_fixture)"
+mutate_fixture "$fixture" \
+  '- `PhpcHeaderResult::HeadersAlreadySent = 5`
+' \
+  '- `PhpcHeaderResult::HeadersAlreadySent = 5`
+- `PhpcHeaderResult::StaleFixture = 6`
+'
+expect_fixture_failure \
+  "$fixture" \
+  "ABI doc header results not defined by runtime: PhpcHeaderResult::StaleFixture" \
+  "a stale header result"
+
+fixture="$(new_fixture)"
+mutate_fixture "$fixture" \
+  '- `PhpcHeaderResult::ContainsLineBreak = 4`
+' \
+  '- `PhpcHeaderResult::ContainsLineBreak = 7`
+'
+expect_fixture_failure \
+  "$fixture" \
+  "PhpcHeaderResult::ContainsLineBreak documented=7 source=4" \
+  "a header result value mismatch"
+
+fixture="$(new_fixture)"
 verify_fixture "$fixture"

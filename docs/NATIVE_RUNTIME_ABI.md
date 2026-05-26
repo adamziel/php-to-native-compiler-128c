@@ -41,6 +41,15 @@ Status codes:
 - `PHPC_STATUS_INVALID_HANDLE = -1`
 - `PHPC_STATUS_INVALID_ARGUMENT = -2`
 
+Header result codes:
+
+- `PhpcHeaderResult::Ok = 0`
+- `PhpcHeaderResult::NullRequest = 1`
+- `PhpcHeaderResult::NullHeader = 2`
+- `PhpcHeaderResult::Empty = 3`
+- `PhpcHeaderResult::ContainsLineBreak = 4`
+- `PhpcHeaderResult::HeadersAlreadySent = 5`
+
 ## Value Handle Ownership
 
 - `0` is an invalid handle and is never returned for a successful allocation. Test: `invalid_and_double_free_are_reported`.

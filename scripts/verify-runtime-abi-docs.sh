@@ -114,6 +114,65 @@ def check_constants(source_constants, documented_constants):
     return errors
 
 
+def runtime_header_results(source):
+    enum_match = re.search(
+        r"pub\s+enum\s+PhpcHeaderResult\s*\{(?P<body>.*?)\n\}",
+        source,
+        flags=re.DOTALL,
+    )
+    if not enum_match:
+        return {}
+
+    return {
+        variant: int(value)
+        for variant, value in re.findall(
+            r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)\s*,",
+            enum_match.group("body"),
+        )
+    }
+
+
+def documented_header_results(doc):
+    return {
+        variant: int(value)
+        for variant, value in re.findall(
+            r"- `PhpcHeaderResult::([A-Za-z_][A-Za-z0-9_]*)\s+=\s+(-?\d+)`",
+            doc,
+        )
+    }
+
+
+def check_header_results(source_results, documented_results):
+    errors = []
+    missing_results = sorted(set(source_results) - set(documented_results))
+    stale_results = sorted(set(documented_results) - set(source_results))
+    wrong_values = sorted(
+        variant
+        for variant in set(source_results) & set(documented_results)
+        if source_results[variant] != documented_results[variant]
+    )
+
+    if missing_results:
+        errors.append(
+            "runtime header results missing from ABI doc: "
+            + ", ".join(f"PhpcHeaderResult::{variant}" for variant in missing_results)
+        )
+    if stale_results:
+        errors.append(
+            "ABI doc header results not defined by runtime: "
+            + ", ".join(f"PhpcHeaderResult::{variant}" for variant in stale_results)
+        )
+    if wrong_values:
+        errors.append(
+            "ABI doc header results with wrong values: "
+            + ", ".join(
+                f"PhpcHeaderResult::{variant} documented={documented_results[variant]} source={source_results[variant]}"
+                for variant in wrong_values
+            )
+        )
+    return errors
+
+
 def runtime_tests(source):
     return set(
         re.findall(
@@ -220,11 +279,14 @@ def main():
     documented = documented_exports(doc)
     source_constants = runtime_constants(source)
     doc_constants = documented_constants(doc)
+    source_header_results = runtime_header_results(source)
+    doc_header_results = documented_header_results(doc)
     test_names = runtime_tests(source)
 
     errors = []
     errors.extend(check_exports(exported, documented))
     errors.extend(check_constants(source_constants, doc_constants))
+    errors.extend(check_header_results(source_header_results, doc_header_results))
     errors.extend(check_ownership_annotations(doc, test_names))
     errors.extend(check_test_classifications(doc, test_names))
 
@@ -236,7 +298,8 @@ def main():
     print(
         "runtime ABI docs ok: "
         f"{len(exported)} exported helpers, {len(source_constants)} constants, "
-        f"{len(test_names)} classified tests, and ownership test annotations documented"
+        f"{len(source_header_results)} header results, {len(test_names)} classified tests, "
+        "and ownership test annotations documented"
     )
 
 
