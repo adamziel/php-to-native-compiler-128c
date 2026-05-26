@@ -7,6 +7,7 @@ target_root="${PHPC_TARGET_ROOT:-/home/ubuntu/phpc-targets}"
 lane_id="${PHPC_LANE_ID:-$(basename "$worktree_root")}"
 expected_target_dir="${target_root%/}/$lane_id"
 expected_branch="${PHPC_EXPECT_BRANCH:-}"
+require_clean_worktree="${PHPC_REQUIRE_CLEAN_WORKTREE:-0}"
 
 if [[ -z "${CARGO_TARGET_DIR:-}" ]]; then
   echo "worker env error: CARGO_TARGET_DIR must be set for lane $lane_id" >&2
@@ -37,6 +38,13 @@ if [[ -n "$expected_branch" ]]; then
   current_branch="$(git -C "$worktree_root" branch --show-current)"
   if [[ "$current_branch" != "$expected_branch" ]]; then
     echo "worker env error: current branch must be $expected_branch for lane $lane_id, got ${current_branch:-detached HEAD}" >&2
+    exit 1
+  fi
+fi
+
+if [[ "$require_clean_worktree" = "1" ]]; then
+  if [[ -n "$(git -C "$worktree_root" status --porcelain)" ]]; then
+    echo "worker env error: worktree must be clean for lane $lane_id" >&2
     exit 1
   fi
 fi

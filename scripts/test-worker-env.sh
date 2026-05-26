@@ -68,3 +68,19 @@ expect_failure \
 
 run_fixture env PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH="$current_branch" scripts/verify-worker-env.sh >"$out_file"
 grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05" "$out_file" >/dev/null
+
+git init -q "$tmpdir/clean-repo"
+git -C "$tmpdir/clean-repo" config user.email test@example.invalid
+git -C "$tmpdir/clean-repo" config user.name "Integration Test"
+printf 'clean\n' > "$tmpdir/clean-repo/file.txt"
+git -C "$tmpdir/clean-repo" add file.txt
+git -C "$tmpdir/clean-repo" commit -q -m clean
+
+run_fixture env PHPC_WORKTREE_ROOT="$tmpdir/clean-repo" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_REQUIRE_CLEAN_WORKTREE=1 scripts/verify-worker-env.sh >"$out_file"
+grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05" "$out_file" >/dev/null
+
+printf 'dirty\n' >> "$tmpdir/clean-repo/file.txt"
+expect_failure \
+  "worktree must be clean for lane INT-05" \
+  "a dirty worktree when cleanliness is required" \
+  env PHPC_WORKTREE_ROOT="$tmpdir/clean-repo" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_REQUIRE_CLEAN_WORKTREE=1 scripts/verify-worker-env.sh
