@@ -70,6 +70,12 @@ if git merge-base --is-ancestor "$target_commit" "$main_commit"; then
   exit 0
 fi
 
+if git diff --quiet "$main_commit" "$target_commit"; then
+  echo "classification: no-net-diff"
+  echo "action: do not merge; the target tree matches main even though commit history differs."
+  exit 0
+fi
+
 cherry_output="$(git cherry "$main_commit" "$target_commit")"
 plus_count="$(printf '%s\n' "$cherry_output" | grep -c '^+' || true)"
 minus_count="$(printf '%s\n' "$cherry_output" | grep -c '^-' || true)"

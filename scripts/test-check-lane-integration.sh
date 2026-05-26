@@ -42,6 +42,11 @@ git commit -q -m equivalent-main
 scripts/check-lane-integration.sh lane/stale-equivalent main > stale.out
 grep -F "classification: stale-equivalent" stale.out >/dev/null
 
+git switch -q -c lane/no-net-diff main
+git commit -q --allow-empty -m no-net-diff
+scripts/check-lane-integration.sh lane/no-net-diff main > no-net-diff.out
+grep -F "classification: no-net-diff" no-net-diff.out >/dev/null
+
 git switch -q -c lane/conflict HEAD~1
 printf 'lane-conflict\n' > file.txt
 git commit -q -am lane-conflict
