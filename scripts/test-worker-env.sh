@@ -85,15 +85,20 @@ expect_failure \
 run_fixture env CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 scripts/verify-worker-env.sh >"$out_file"
 grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05" "$out_file" >/dev/null
 
-current_branch="$(git branch --show-current)"
+expect_failure \
+  "PHPC_EXPECT_BRANCH must start with lane/INT-05 for lane INT-05, got main" \
+  "an expected branch outside lane namespace" \
+  env PHPC_ALLOW_WORKTREE_LANE_MISMATCH=1 PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH=main scripts/verify-worker-env.sh
 
 expect_failure \
-  "current branch must be lane/not-current for lane INT-05" \
-  "a mismatched expected branch" \
+  "PHPC_EXPECT_BRANCH must start with lane/INT-05 for lane INT-05, got lane/not-current" \
+  "an expected branch for a different lane" \
   env PHPC_ALLOW_WORKTREE_LANE_MISMATCH=1 PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH=lane/not-current scripts/verify-worker-env.sh
 
-run_fixture env PHPC_ALLOW_WORKTREE_LANE_MISMATCH=1 PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH="$current_branch" scripts/verify-worker-env.sh >"$out_file"
-grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05" "$out_file" >/dev/null
+expect_failure \
+  "current branch must be lane/INT-05 for lane INT-05" \
+  "a valid expected lane branch that is not checked out" \
+  env PHPC_ALLOW_WORKTREE_LANE_MISMATCH=1 PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH=lane/INT-05 scripts/verify-worker-env.sh
 
 git init -q "$tmpdir/INT-05"
 git -C "$tmpdir/INT-05" config user.email test@example.invalid
@@ -101,8 +106,16 @@ git -C "$tmpdir/INT-05" config user.name "Integration Test"
 printf 'clean\n' > "$tmpdir/INT-05/file.txt"
 git -C "$tmpdir/INT-05" add file.txt
 git -C "$tmpdir/INT-05" commit -q -m clean
+git -C "$tmpdir/INT-05" switch -q -c lane/INT-05
 
 run_fixture env PHPC_WORKTREE_ROOT="$tmpdir/INT-05" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_REQUIRE_CLEAN_WORKTREE=1 scripts/verify-worker-env.sh >"$out_file"
+grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05" "$out_file" >/dev/null
+
+run_fixture env PHPC_WORKTREE_ROOT="$tmpdir/INT-05" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH=lane/INT-05 scripts/verify-worker-env.sh >"$out_file"
+grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05" "$out_file" >/dev/null
+
+git -C "$tmpdir/INT-05" switch -q -c lane/INT-05-fresh-test
+run_fixture env PHPC_WORKTREE_ROOT="$tmpdir/INT-05" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH=lane/INT-05-fresh-test scripts/verify-worker-env.sh >"$out_file"
 grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05" "$out_file" >/dev/null
 
 printf 'dirty\n' >> "$tmpdir/INT-05/file.txt"

@@ -65,6 +65,11 @@ if [[ -n "$expected_branch" || "$require_clean_worktree" = "1" ]]; then
 fi
 
 if [[ -n "$expected_branch" ]]; then
+  if [[ "$expected_branch" != "lane/$lane_id" && "$expected_branch" != "lane/$lane_id-"* ]]; then
+    echo "worker env error: PHPC_EXPECT_BRANCH must start with lane/$lane_id for lane $lane_id, got $expected_branch" >&2
+    exit 1
+  fi
+
   current_branch="$(git -C "$worktree_root" branch --show-current)"
   if [[ "$current_branch" != "$expected_branch" ]]; then
     echo "worker env error: current branch must be $expected_branch for lane $lane_id, got ${current_branch:-detached HEAD}" >&2
