@@ -25,6 +25,6 @@ States: `ready`, `assigned`, `blocked`, `review`, `integration`, `verified`, `re
 | Q-019 | integration | M6 | INT-04 | Review dirty WP harness slices for generality | Harness/blocker artifact accepted without WordPress-specific compiler hacks |
 | Q-020 | integration | M2/M7 | INT-05 | Review dirty ABI/SAPI runtime slices | Ownership/API compatibility and runtime tests verified |
 | Q-021 | verified | Coordination | INT-06 | Review committed `INT-02` status gate slice | Verified against current CLI; unsupported native-mode gate folded into main with handoff |
-| Q-022 | review | M5 | INT-03 | Review committed `PHPT-03` skip/XFAIL metadata slice | Focused `.phpt` tests prove compatible metadata behavior |
+| Q-022 | verified | M5 | INT-03 | Review committed `PHPT-03` skip/XFAIL metadata slice | Verified stale as a standalone candidate: current `main` already contains accepted parser-level `SKIPIF`/`XFAIL` metadata behavior |
 | Q-023 | review | M6 | INT-04 | Review committed `WP-12` WordPress inventory slice | Reproducible inventory check improves manifest truth |
 | Q-024 | review | Coordination | INT-07 | Review committed `DOC-03` dashboard slice | Accept only non-duplicative reporting improvements |

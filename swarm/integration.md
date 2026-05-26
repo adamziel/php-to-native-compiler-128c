@@ -17,7 +17,7 @@ Several worker branches now contain reviewable dirty slices, and four lanes have
 | Lane | Commit | Area | Artifact | Review instruction |
 | --- | --- | --- | --- | --- |
 | `INT-02` | `c10395c` | CLI gates | Native emission status tests and handoff | Integration reviewer should verify the test gate still matches current CLI behavior before merge. |
-| `PHPT-03` | `ea96852` | `.phpt` harness | Skip/XFAIL metadata in `phpt.rs` plus handoff | Compare with the integrated minimal parser and keep only compatible metadata behavior with focused tests. |
+| `PHPT-03` | `ea96852` | `.phpt` harness | Skip/XFAIL metadata in `phpt.rs` plus handoff | Reviewed by `INT-06`: stale as a standalone candidate because current `main` already contains parser-level `SKIPIF`/`XFAIL` metadata and harness input support. |
 | `WP-12` | `348ad3b` | WordPress inventory | Inventory scripts, manifest update, handoff | Prefer if it improves reproducible WordPress denominator; reject if it duplicates existing manifest generation without added checks. |
 | `DOC-03` | `4ebe2ab` | Reporting | Progress/dashboard refresh and handoff | Review cautiously because the dedicated Pages reporter now owns this surface. |
 
@@ -25,7 +25,7 @@ Several worker branches now contain reviewable dirty slices, and four lanes have
 
 | Lane | Source Commit | Result | Evidence |
 | --- | --- | --- | --- |
-| `PHPT-03` | `ea96852` | Accepted compatible parser-level `SKIPIF`/`XFAIL` metadata into `INT-03`; no runner semantics or skip execution added. | `cargo test -p phpc_core phpt::tests` and `scripts/status-gate.sh` in INT-03 handoff. |
+| `PHPT-03` | `ea96852` | Accepted compatible parser-level `SKIPIF`/`XFAIL` metadata into `INT-03`; standalone candidate now verified stale and should not be reapplied. | `cargo test -p phpc_core phpt::tests` and `scripts/status-gate.sh` in INT-03 handoff; `git merge-base --is-ancestor 0cbd609 main` returned 0 during INT-06 review. |
 
 ## Integration Decisions
 
