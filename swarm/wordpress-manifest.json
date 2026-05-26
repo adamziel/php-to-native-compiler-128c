@@ -1,5 +1,5 @@
 {
-  "status": "pinned_inventory",
+  "status": "bootstrap_check_blocked",
   "wordpress": {
     "path": "/home/ubuntu/phpc-external/wordpress/wordpress",
     "source": "https://downloads.wordpress.org/release/wordpress-7.0.zip",
@@ -17,9 +17,19 @@
     "inventory": {
       "entrypoints_present": 5,
       "entrypoints_missing": 0,
-      "status": "entrypoint files present; no compiler run yet"
+      "status": "entrypoint files present"
+    },
+    "bootstrap_check": {
+      "runner": "phpc wordpress-bootstrap-check /home/ubuntu/phpc-external/wordpress/wordpress",
+      "entrypoints_present": 5,
+      "entrypoints_missing": 0,
+      "status": "blocked",
+      "bootstrap": "wp-settings.php",
+      "general_php_gap": "unsupported PHP statement near `/**\\n * Used to set up and fix co`"
     }
   },
-  "blockers": ["No WordPress bootstrap runner is implemented yet"],
-  "last_run": "2026-05-25T23:15:00Z"
+  "blockers": [
+    "WordPress wp-settings.php bootstrap reaches a general parser gap before executable bootstrap: unsupported PHP statement near the opening docblock."
+  ],
+  "last_run": "2026-05-26T02:20:00Z"
 }

@@ -15,6 +15,12 @@ Pinned entrypoints are present:
 - `wp-admin/admin-ajax.php`
 - `xmlrpc.php`
 
+Bootstrap check:
+
+- Command: `phpc wordpress-bootstrap-check /home/ubuntu/phpc-external/wordpress/wordpress`
+- Current result: blocked in `wp-settings.php`
+- Normalized blocker: general PHP parser/compiler gap at the opening WordPress docblock before bootstrap can reach includes or request setup.
+
 The harness must keep WordPress source outside the repo unless a size/license/update policy is approved. Track:
 
 - version/source/commit;

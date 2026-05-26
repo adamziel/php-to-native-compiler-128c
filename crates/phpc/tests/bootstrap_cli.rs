@@ -1,5 +1,6 @@
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{env, fs};
 
 const BOOTSTRAP_HELLO: &str = "../../fixtures/bootstrap/hello.php";
 
@@ -222,6 +223,43 @@ fn cli_rejects_native_assembly_emission_until_m3_exists() {
     assert!(String::from_utf8_lossy(&output.stderr)
         .contains("native assembly emission is not implemented yet"));
     assert!(output.stdout.is_empty());
+}
+
+#[test]
+fn cli_reports_wordpress_bootstrap_general_php_gap() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let root = unique_temp_dir("phpc-wp-bootstrap-check");
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(root.join("wp-admin")).expect("create fake wp-admin");
+    for entrypoint in [
+        "wp-blog-header.php",
+        "wp-cron.php",
+        "wp-admin/admin-ajax.php",
+        "xmlrpc.php",
+    ] {
+        fs::write(root.join(entrypoint), "<?php echo 'placeholder';").expect("write entrypoint");
+    }
+    fs::write(
+        root.join("wp-settings.php"),
+        "<?php\n/**\n * WordPress bootstrap docblock.\n */\ndefine( 'WPINC', 'wp-includes' );",
+    )
+    .expect("write bootstrap");
+
+    let output = Command::new(exe)
+        .arg("wordpress-bootstrap-check")
+        .arg(&root)
+        .output()
+        .expect("run phpc wordpress bootstrap check");
+
+    let _ = fs::remove_dir_all(&root);
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("entrypoint_present=wp-settings.php"));
+    assert!(stdout.contains("entrypoint_present=wp-admin/admin-ajax.php"));
+    assert!(stdout.contains("status=blocked"));
+    assert!(stdout.contains("bootstrap=wp-settings.php"));
+    assert!(stdout.contains("general_php_gap=unsupported PHP statement near `/**"));
 }
 
 fn system_php_output(path: impl AsRef<std::ffi::OsStr>) -> Option<std::process::Output> {

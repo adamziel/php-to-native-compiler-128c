@@ -2,42 +2,54 @@
 
 ## Summary
 
-Milestone: Integration / M3 status accuracy.
+Milestone: Integration / M6 WordPress bootstrap truthfulness and status accuracy.
 
-Added a focused CLI regression gate proving `phpc compile --emit-exe` fails with the explicit linked-native-executable blocker until the real M3 executable path exists. This is integration safety/status accuracy only; it does not count as native compiler progress.
+Accepted a narrowed WP-06-style bootstrap check on current `main`: `phpc wordpress-bootstrap-check <wordpress-root>` inventories the five pinned entrypoints, runs the existing general compiler IR path on `wp-settings.php`, and reports the first general PHP blocker. No WordPress-specific compiler semantics were added.
 
-Narrow denominator: CLI-visible M3 unsupported-mode behavior for the bootstrap fixture.
+Follow-up status slice: `scripts/refresh-progress.sh` derives the M6 WordPress bootstrap phrase from `swarm/wordpress-manifest.json` instead of hardcoding `runner queued`, so generated progress reports the current blocker: bootstrap check blocked in `wp-settings.php`.
 
 ## Files Changed
 
+- `crates/phpc/src/main.rs`
 - `crates/phpc/tests/bootstrap_cli.rs`
+- `docs/WORDPRESS_COMPATIBILITY.md`
+- `scripts/refresh-progress.sh`
+- `scripts/test-refresh-progress-labels.sh`
+- `swarm/blockers.md`
 - `swarm/handoffs/INT-04.md`
+- `swarm/integration.md`
+- `swarm/test-matrix.md`
+- `swarm/wordpress-manifest.json`
+- `progress.md`
+- `docs/progress.html`
 
 ## Tests Run
 
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_reports_wordpress_bootstrap_general_php_gap -- --nocapture`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 cargo run -p phpc -- wordpress-bootstrap-check /home/ubuntu/phpc-external/wordpress/wordpress`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-refresh-progress-labels.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
+- `git diff --check`
 
 ## Pass/Fail State
 
-- Pass: focused `phpc` bootstrap CLI integration test suite.
+- Pass: focused `phpc` bootstrap CLI integration test.
+- Pass: real pinned WordPress bootstrap check reports all five entrypoints present and blocks in `wp-settings.php` with a general parser gap at the opening docblock.
+- Pass: full workspace `cargo test`, 58 passed.
+- Pass: focused progress-label gate catches stale WordPress bootstrap `queued` text and raw launch-cadence rendering.
+- Pass: status gate and manifest consistency checks.
+- Pass: local coordination gate.
+- Pass: diff whitespace check.
 
 ## Blockers
 
-- M3 remains blocked on real linked native executable implementation: compile/link/run/compare is not implemented.
+- M6 remains blocked on general PHP parser/compiler support for comments/docblocks before WordPress bootstrap can reach includes or request setup.
 
-## Latest Lane Commit
+## Latest Commit
 
-- `5ee3e31` Gate unsupported linked exe CLI mode.
-
-## Integration Note
-
-- Ported manually onto current `main` after newer progress and local-gate integrations landed.
+- Main port pending: WordPress bootstrap blocker check plus generated status-label derivation.
 
 ## Next Suggested Slice
 
-Add a matching CLI gate for `--emit-asm`, or review an existing LINK lane implementation slice and integrate only if it produces and runs an executable without shelling out to generated fixtures or counting scaffolding as native progress.
-
-follow-up integration:
-- Integrated `5ab2077 Gate unsupported native asm CLI mode` from INT-04.
-- `phpc compile --emit-asm` now has the same truthfulness coverage as `--emit-exe`: it must fail explicitly until real M3 native output exists and must not emit stdout.
-- Verification: `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`.
+- Reduce the reported WordPress blocker through a general M4 parser fixture for PHP comments/docblocks before statements, then re-run `phpc wordpress-bootstrap-check` to classify the next general PHP gap.

@@ -1,9 +1,17 @@
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use phpc_core::{compile_php, compile_php_executable, run_php, CompileMode};
+
+const WORDPRESS_BOOTSTRAP_ENTRYPOINTS: &[&str] = &[
+    "wp-settings.php",
+    "wp-blog-header.php",
+    "wp-cron.php",
+    "wp-admin/admin-ajax.php",
+    "xmlrpc.php",
+];
 
 fn main() -> ExitCode {
     match real_main() {
@@ -47,6 +55,13 @@ fn real_main() -> Result<ExitCode, String> {
                     println!("{}", output.display());
                 }
             }
+            Ok(ExitCode::SUCCESS)
+        }
+        "wordpress-bootstrap-check" => {
+            let root = input_path(args.next())?;
+            reject_trailing_args(args.collect::<Vec<_>>().as_slice())?;
+            let report = wordpress_bootstrap_check(&root)?;
+            print!("{report}");
             Ok(ExitCode::SUCCESS)
         }
         "--help" | "-h" | "help" => {
@@ -109,8 +124,50 @@ fn reject_trailing_args(args: &[String]) -> Result<(), String> {
     Err(format!("unsupported trailing arguments: {}", args.join(" ")))
 }
 
+fn wordpress_bootstrap_check(root: &Path) -> Result<String, String> {
+    let mut report = String::new();
+    report.push_str("wordpress_bootstrap_check\n");
+    report.push_str(&format!("root={}\n", root.display()));
+
+    let mut missing = Vec::new();
+    for entrypoint in WORDPRESS_BOOTSTRAP_ENTRYPOINTS {
+        let path = root.join(entrypoint);
+        if path.is_file() {
+            report.push_str(&format!("entrypoint_present={entrypoint}\n"));
+        } else {
+            report.push_str(&format!("entrypoint_missing={entrypoint}\n"));
+            missing.push(*entrypoint);
+        }
+    }
+
+    if !missing.is_empty() {
+        report.push_str("status=blocked\n");
+        report.push_str("blocker=missing pinned WordPress entrypoint\n");
+        return Ok(report);
+    }
+
+    let bootstrap = root.join("wp-settings.php");
+    let source = fs::read_to_string(&bootstrap)
+        .map_err(|err| format!("failed to read {}: {err}", bootstrap.display()))?;
+
+    match compile_php(&source, CompileMode::EmitIr) {
+        Ok(_) => {
+            report.push_str("status=unexpected_pass\n");
+            report.push_str("blocker=none\n");
+        }
+        Err(err) => {
+            report.push_str("status=blocked\n");
+            report.push_str("bootstrap=wp-settings.php\n");
+            report.push_str(&format!("general_php_gap={err}\n"));
+        }
+    }
+
+    Ok(report)
+}
+
 fn print_help() {
     println!("phpc run <input.php>");
     println!("phpc compile <input.php> [--emit-ir|--emit-asm]");
     println!("phpc compile <input.php> --emit-exe <output>");
+    println!("phpc wordpress-bootstrap-check <wordpress-root>");
 }

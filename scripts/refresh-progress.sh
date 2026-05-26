@@ -105,6 +105,11 @@ if [ "$launch_include_auditor" = "1" ]; then
 else
   supervised_target="${launch_worker_count} workers"
 fi
+if [ "$launch_cadence" = "unknown" ]; then
+  launch_cadence_display="unknown"
+else
+  launch_cadence_display="${launch_cadence}s"
+fi
 manifest_vars="$(
   python3 - <<'PY'
 import json
@@ -117,11 +122,19 @@ wp_manifest = json.loads((root / "swarm/wordpress-manifest.json").read_text(enco
 php_phpt_total = int(php_manifest["denominator"]["total_phpt"])
 wp_version = wp_manifest["wordpress"]["version"]
 wp_entrypoints = len(wp_manifest["entrypoints"])
+wp_bootstrap = wp_manifest.get("results", {}).get("bootstrap_check", {})
+wp_bootstrap_status = wp_bootstrap.get("status", "not run")
+wp_bootstrap_file = wp_bootstrap.get("bootstrap", "wp-settings.php")
+if wp_bootstrap:
+    wp_bootstrap_summary = f"bootstrap check {wp_bootstrap_status} in {wp_bootstrap_file}"
+else:
+    wp_bootstrap_summary = "bootstrap check not run"
 
 print(f"php_phpt_total={php_phpt_total}")
 print(f"php_phpt_total_display='{php_phpt_total:,}'")
 print(f"wp_version={wp_version!r}")
 print(f"wp_entrypoints={wp_entrypoints}")
+print(f"wp_bootstrap_summary={wp_bootstrap_summary!r}")
 PY
 )"
 eval "$manifest_vars"
@@ -155,7 +168,7 @@ tmp="$(mktemp)"
   echo "- Dirty entries: \`${dirty}\`"
   echo "- tmux windows in \`phpc-swarm\`: \`${windows}\`"
   echo "- Supervised agents target: \`${supervised_target}\`"
-  echo "- Interactive launch cadence: \`${launch_cadence}s\`"
+  echo "- Interactive launch cadence: \`${launch_cadence_display}\`"
   echo "- Staggered swarm launcher: \`${swarm_launcher}\`"
   echo "- Latest launcher event: \`${latest_launcher_event}\`"
   echo "- Interactive Codex panes: \`${worker_loops}\`"
@@ -176,7 +189,7 @@ tmp="$(mktemp)"
   echo "| M3 linked native execution | compile, link, run, compare | 1% | First linked executable path for supported echo literals integrated |"
   echo "| M4 native lowering | interpreter-supported constructs lowered or rejected | 2% | String and integer echo literals; explicit variable diagnostic |"
   echo "| M5 PHP core .phpt harness | PHP-8.3 branch, ${php_phpt_total_display} \`.phpt\` files | 3% | PHP-8.3 inventory pinned; minimal parser and exact-EXPECT phpc runner integrated |"
-  echo "| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress ${wp_version} pinned; ${wp_entrypoints} entrypoints present; runner queued |"
+  echo "| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress ${wp_version} pinned; ${wp_entrypoints} entrypoints present; ${wp_bootstrap_summary} |"
   echo "| M7 object/SAPI/DB generality | required semantic families | 0% | Queued |"
   echo "| M8 performance after correctness | truthful native benchmarks | 0% | Deferred |"
   echo
@@ -237,7 +250,7 @@ tmp="$(mktemp)"
   <main>
     <section class="grid">
       <div class="metric"><span>Supervised agents target</span><strong>${supervised_target}</strong></div>
-      <div class="metric"><span>Launch cadence</span><strong>${launch_cadence}s</strong></div>
+      <div class="metric"><span>Launch cadence</span><strong>${launch_cadence_display}</strong></div>
       <div class="metric"><span>Staggered launcher</span><strong>${swarm_launcher}</strong></div>
       <div class="metric"><span>tmux windows</span><strong>${windows}</strong></div>
       <div class="metric"><span>Interactive Codex panes</span><strong>${worker_loops}</strong></div>
@@ -257,7 +270,7 @@ tmp="$(mktemp)"
         <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>compile, link, run, compare</td><td>First linked executable path for supported echo literals integrated</td></tr>
         <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>interpreter-supported constructs</td><td>String and integer echo literals; explicit variable diagnostic</td></tr>
         <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files</td><td>Static inventory pinned; minimal parser and exact-EXPECT phpc runner integrated</td></tr>
-        <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress ${wp_version} entrypoints</td><td>Source pinned; ${wp_entrypoints} entrypoints present; runner queued</td></tr>
+        <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress ${wp_version} entrypoints</td><td>Source pinned; ${wp_entrypoints} entrypoints present; ${wp_bootstrap_summary}</td></tr>
       </tbody>
     </table>
     <h2>Swarm Health</h2>
@@ -282,7 +295,7 @@ tmp="$(mktemp)"
         <tr><td>Keep ${supervised_target} topology alive</td><td>Supervisor</td><td>Running in <code>phpc-swarm</code></td></tr>
         <tr><td>Publish progress to GitHub Pages</td><td>Pages reporter</td><td><code>${pages_reporter}</code></td></tr>
         <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Done: ${php_phpt_total_display} .phpt files; runner queued</td></tr>
-        <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Done: WordPress ${wp_version}; bootstrap runner queued</td></tr>
+        <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Done: WordPress ${wp_version}; ${wp_bootstrap_summary}</td></tr>
       </tbody>
     </table>
   </main>
