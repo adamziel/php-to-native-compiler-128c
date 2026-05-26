@@ -78,6 +78,29 @@ do
   fi
 done
 
+printf 'dirty\n' >>"$fixture_repo/file.txt"
+printf 'untracked\n' >"$fixture_repo/untracked.txt"
+scripts/lane-review.sh --repo "$fixture_repo" --base integration-base >"$tmpdir/dirty.out"
+for expected in \
+  "repo: $fixture_repo" \
+  "branch: lane-under-review" \
+  "base: integration-base" \
+  "divergence: ahead 1, behind 1" \
+  "dirty entries: 2" \
+  "untracked entries: 1" \
+  "dirty files:" \
+  "   M file.txt" \
+  "  ?? untracked.txt"
+do
+  if ! grep -F "$expected" "$tmpdir/dirty.out" >/dev/null; then
+    echo "lane-review.sh output missing expected dirty fixture field: $expected" >&2
+    cat "$tmpdir/dirty.out" >&2
+    exit 1
+  fi
+done
+git -C "$fixture_repo" checkout -q -- file.txt
+rm "$fixture_repo/untracked.txt"
+
 detached_head="$(git -C "$fixture_repo" rev-parse HEAD)"
 git -C "$fixture_repo" switch -q --detach "$detached_head"
 
