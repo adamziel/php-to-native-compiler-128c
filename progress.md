@@ -1,13 +1,13 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T01:19:48Z
+Last refreshed: 2026-05-26T01:22:50Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `b53aef5`
-- Dirty entries: `0`
+- Report base HEAD: `65d902a`
+- Dirty entries: `5`
 - tmux windows in `phpc-swarm`: `10`
 - Supervised agents target: `100 workers + auditor`
 - Interactive launch cadence: `480s`
