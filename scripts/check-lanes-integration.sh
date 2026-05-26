@@ -56,11 +56,18 @@ passed=0
 failed=0
 for target in "${targets[@]}"; do
   echo "== ${target} =="
-  if ! scripts/check-lane-integration.sh "$target" "$main_ref"; then
-    status=1
-    failed=$((failed + 1))
-  else
+  if scripts/check-lane-integration.sh "$target" "$main_ref"; then
     passed=$((passed + 1))
+    continue
+  else
+    target_status=$?
+  fi
+
+  failed=$((failed + 1))
+  if [[ "$target_status" -eq 2 ]]; then
+    status=2
+  elif [[ "$status" -eq 0 ]]; then
+    status=1
   fi
 done
 

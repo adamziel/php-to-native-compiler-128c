@@ -109,6 +109,22 @@ grep -F "== lane/missing-handoff ==" batch.out >/dev/null
 grep -F "classification: review-required-missing-handoff" batch.out >/dev/null
 grep -F "summary: passed=1 failed=1 total=2" batch.out >/dev/null
 
+set +e
+scripts/check-lanes-integration.sh --main-ref main lane/missing-handoff lane/does-not-exist > batch-ref-error.out 2> batch-ref-error.err
+batch_ref_error_status=$?
+set -e
+if [[ "$batch_ref_error_status" -ne 2 ]]; then
+  echo "check-lanes-integration.sh did not preserve ref-error status 2" >&2
+  cat batch-ref-error.out >&2
+  cat batch-ref-error.err >&2
+  exit 1
+fi
+grep -F "== lane/missing-handoff ==" batch-ref-error.out >/dev/null
+grep -F "classification: review-required-missing-handoff" batch-ref-error.out >/dev/null
+grep -F "== lane/does-not-exist ==" batch-ref-error.out >/dev/null
+grep -F "lane integration check: target ref not found: lane/does-not-exist" batch-ref-error.err >/dev/null
+grep -F "summary: passed=0 failed=2 total=2" batch-ref-error.out >/dev/null
+
 scripts/check-lanes-integration.sh --main-ref main lane/integrated lane/stale-equivalent > batch-safe.out
 grep -F "== lane/integrated ==" batch-safe.out >/dev/null
 grep -F "classification: already-integrated" batch-safe.out >/dev/null
