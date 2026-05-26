@@ -115,6 +115,16 @@ if unisolated_cargo_rows:
     )
 
 if handoff_dir.is_dir():
+    required_handoff_sections = (
+        ("Summary", ("## Summary", "summary:")),
+        ("Files Changed", ("## Files Changed", "files changed:")),
+        ("Tests Run", ("## Tests Run", "tests run:")),
+        ("Pass/Fail State", ("## Pass/Fail State", "pass/fail state:")),
+        ("Blockers", ("## Blockers", "blockers:")),
+        ("Latest Commit", ("## Latest Commit", "latest commit:", "latest commit if any:")),
+        ("Next Suggested Slice", ("## Next Suggested Slice", "next suggested slice:")),
+    )
+    incomplete_handoffs = []
     stale_handoffs = sorted(
         path.name
         for path in handoff_dir.glob("*.md")
@@ -124,6 +134,22 @@ if handoff_dir.is_dir():
         raise SystemExit(
             "handoffs contain unresolved latest-commit placeholders: "
             + ", ".join(stale_handoffs)
+        )
+    for path in sorted(handoff_dir.glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        missing_sections = [
+            name
+            for name, markers in required_handoff_sections
+            if not any(marker in text for marker in markers)
+        ]
+        if missing_sections:
+            incomplete_handoffs.append(
+                f"{path.name} missing " + ", ".join(f"## {name}" for name in missing_sections)
+            )
+    if incomplete_handoffs:
+        raise SystemExit(
+            "handoffs missing required sections: "
+            + "; ".join(incomplete_handoffs)
         )
 
 terminal_lanes = set()

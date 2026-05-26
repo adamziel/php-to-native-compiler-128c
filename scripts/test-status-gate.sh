@@ -114,6 +114,20 @@ expect_fixture_failure \
 
 reset_fixtures
 
+cat >"$handoff_fixture/INT-05.md" <<'EOF'
+# INT-05 Handoff
+
+## Summary
+
+- Missing the required remaining handoff sections.
+EOF
+
+expect_fixture_failure \
+  "handoffs missing required sections: INT-05.md missing ## Files Changed, ## Tests Run, ## Pass/Fail State, ## Blockers, ## Latest Commit, ## Next Suggested Slice" \
+  "a handoff missing required sections"
+
+reset_fixtures
+
 PHP_CORE_FIXTURE="$php_core_fixture" python3 - <<'PY'
 import json
 import os
