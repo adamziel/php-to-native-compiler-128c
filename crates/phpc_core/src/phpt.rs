@@ -344,7 +344,15 @@ fn normalize_metadata_reason(reason: &str) -> String {
 }
 
 fn normalize_phpt_output(output: &str) -> String {
-    output.replace("\r\n", "\n").replace('\r', "\n")
+    output
+        .replace("\r\n", "\n")
+        .replace('\r', "\n")
+        .trim_matches(is_php_trim_whitespace)
+        .to_string()
+}
+
+fn is_php_trim_whitespace(ch: char) -> bool {
+    matches!(ch, ' ' | '\t' | '\n' | '\r' | '\0' | '\x0B')
 }
 
 fn expectation_matches(kind: PhptExpectationKind, expected: &str, actual: &str) -> bool {
@@ -919,8 +927,8 @@ mod tests {
             run_phpt_with_phpc(&phpt),
             PhptRunReport {
                 status: PhptRunStatus::Pass,
-                expected_stdout: Some("hello\n".to_string()),
-                actual_stdout: Some("hello\n".to_string()),
+                expected_stdout: Some("hello".to_string()),
+                actual_stdout: Some("hello".to_string()),
                 metadata: phpt.metadata(),
             }
         );
@@ -937,8 +945,8 @@ mod tests {
             run_phpt_with_phpc(&phpt),
             PhptRunReport {
                 status: PhptRunStatus::Pass,
-                expected_stdout: Some("hello\n".to_string()),
-                actual_stdout: Some("hello\n".to_string()),
+                expected_stdout: Some("hello".to_string()),
+                actual_stdout: Some("hello".to_string()),
                 metadata: phpt.metadata(),
             }
         );
@@ -952,6 +960,24 @@ mod tests {
         .unwrap();
 
         assert_eq!(run_phpt_with_phpc(&phpt).status, PhptRunStatus::Pass);
+    }
+
+    #[test]
+    fn trims_run_tests_section_newline_before_comparing_exact_expectation() {
+        let phpt = parse_phpt(
+            "--TEST--\nphp-src basic 001 shape\n--FILE--\n<?php echo \"Hello World\"?>\n--EXPECT--\nHello World\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt),
+            PhptRunReport {
+                status: PhptRunStatus::Pass,
+                expected_stdout: Some("Hello World".to_string()),
+                actual_stdout: Some("Hello World".to_string()),
+                metadata: phpt.metadata(),
+            }
+        );
     }
 
     #[test]
