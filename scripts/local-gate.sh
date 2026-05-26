@@ -13,5 +13,6 @@ scripts/test-runtime-abi-docs.sh
 scripts/test-refresh-progress-labels.sh
 scripts/test-launcher-observability.sh
 scripts/test-check-lane-integration.sh
+scripts/test-worker-env.sh
 cargo test
 git diff --check

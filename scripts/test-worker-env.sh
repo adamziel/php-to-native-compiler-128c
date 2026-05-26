@@ -58,3 +58,13 @@ expect_failure \
 
 run_fixture env CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 scripts/verify-worker-env.sh >"$out_file"
 grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05" "$out_file" >/dev/null
+
+current_branch="$(git branch --show-current)"
+
+expect_failure \
+  "current branch must be lane/not-current for lane INT-05" \
+  "a mismatched expected branch" \
+  env PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH=lane/not-current scripts/verify-worker-env.sh
+
+run_fixture env PHPC_WORKTREE_ROOT="$repo_root" CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 PHPC_EXPECT_BRANCH="$current_branch" scripts/verify-worker-env.sh >"$out_file"
+grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05" "$out_file" >/dev/null
