@@ -11,6 +11,7 @@ pub const PHPC_VALUE_KIND_NULL: i32 = 0;
 pub const PHPC_VALUE_KIND_BINARY_STRING: i32 = 1;
 pub const PHPC_VALUE_KIND_INTEGER: i32 = 2;
 pub const PHPC_VALUE_KIND_BOOLEAN: i32 = 3;
+pub const PHPC_VALUE_KIND_ARRAY: i32 = 4;
 
 pub const PHPC_STATUS_OK: i32 = 0;
 pub const PHPC_STATUS_INVALID_HANDLE: i32 = -1;
@@ -24,6 +25,7 @@ enum PhpValue {
     BinaryString(Vec<u8>),
     Integer(i64),
     Boolean(bool),
+    Array(Vec<PhpValue>),
 }
 
 #[derive(Debug)]
@@ -192,6 +194,11 @@ pub extern "C" fn phpc_boolean_new(value: i32) -> PhpcValueHandle {
 }
 
 #[no_mangle]
+pub extern "C" fn phpc_array_new() -> PhpcValueHandle {
+    runtime().lock().unwrap().insert(PhpValue::Array(Vec::new()))
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn phpc_binary_string_new(
     ptr: *const c_char,
     len: usize,
@@ -218,6 +225,7 @@ pub extern "C" fn phpc_value_kind(handle: PhpcValueHandle) -> i32 {
         Some(PhpValue::BinaryString(_)) => PHPC_VALUE_KIND_BINARY_STRING,
         Some(PhpValue::Integer(_)) => PHPC_VALUE_KIND_INTEGER,
         Some(PhpValue::Boolean(_)) => PHPC_VALUE_KIND_BOOLEAN,
+        Some(PhpValue::Array(_)) => PHPC_VALUE_KIND_ARRAY,
         None => PHPC_VALUE_KIND_INVALID,
     }
 }
@@ -284,6 +292,48 @@ pub unsafe extern "C" fn phpc_boolean_value(handle: PhpcValueHandle, out_value: 
 
     *out_value = i32::from(*value);
     PHPC_STATUS_OK
+}
+
+#[no_mangle]
+pub extern "C" fn phpc_array_count(handle: PhpcValueHandle) -> usize {
+    let runtime = runtime().lock().unwrap();
+    match runtime.values.get(&handle) {
+        Some(PhpValue::Array(values)) => values.len(),
+        _ => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn phpc_array_append_value(
+    array_handle: PhpcValueHandle,
+    value_handle: PhpcValueHandle,
+) -> i32 {
+    let mut runtime = runtime().lock().unwrap();
+    let Some(value) = runtime.values.get(&value_handle).cloned() else {
+        return PHPC_STATUS_INVALID_HANDLE;
+    };
+    let Some(PhpValue::Array(values)) = runtime.values.get_mut(&array_handle) else {
+        return PHPC_STATUS_INVALID_HANDLE;
+    };
+
+    values.push(value);
+    PHPC_STATUS_OK
+}
+
+#[no_mangle]
+pub extern "C" fn phpc_array_value_at(
+    array_handle: PhpcValueHandle,
+    index: usize,
+) -> PhpcValueHandle {
+    let mut runtime = runtime().lock().unwrap();
+    let Some(PhpValue::Array(values)) = runtime.values.get(&array_handle) else {
+        return INVALID_HANDLE;
+    };
+    let Some(value) = values.get(index).cloned() else {
+        return INVALID_HANDLE;
+    };
+
+    runtime.insert(value)
 }
 
 #[no_mangle]
@@ -658,6 +708,104 @@ mod tests {
         );
         assert_eq!(value, 1);
         assert_eq!(phpc_value_free(clone), PHPC_STATUS_OK);
+    }
+
+    #[test]
+    fn array_handle_is_runtime_owned_until_free() {
+        let array = phpc_array_new();
+
+        assert_ne!(array, INVALID_HANDLE);
+        assert_eq!(phpc_value_kind(array), PHPC_VALUE_KIND_ARRAY);
+        assert_eq!(phpc_array_count(array), 0);
+
+        assert_eq!(phpc_value_free(array), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_kind(array), PHPC_VALUE_KIND_INVALID);
+    }
+
+    #[test]
+    fn array_append_clones_value_into_array_storage() {
+        let array = phpc_array_new();
+        let original =
+            unsafe { phpc_binary_string_new(b"array-item".as_ptr().cast::<c_char>(), 10) };
+
+        assert_eq!(phpc_array_append_value(array, original), PHPC_STATUS_OK);
+        assert_eq!(phpc_array_count(array), 1);
+        assert_eq!(phpc_value_free(original), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_kind(original), PHPC_VALUE_KIND_INVALID);
+
+        let stored = phpc_array_value_at(array, 0);
+        assert_ne!(stored, INVALID_HANDLE);
+        assert_eq!(phpc_value_kind(stored), PHPC_VALUE_KIND_BINARY_STRING);
+
+        let mut len = 0;
+        let ptr = unsafe { phpc_binary_string_data(stored, &mut len) };
+        assert!(!ptr.is_null());
+        assert_eq!(len, 10);
+        let bytes = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), len) };
+        assert_eq!(bytes, b"array-item");
+
+        assert_eq!(phpc_value_free(stored), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_free(array), PHPC_STATUS_OK);
+    }
+
+    #[test]
+    fn array_value_at_returns_new_owned_handle() {
+        let array = phpc_array_new();
+        let value = phpc_integer_new(9001);
+
+        assert_eq!(phpc_array_append_value(array, value), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_free(value), PHPC_STATUS_OK);
+
+        let first = phpc_array_value_at(array, 0);
+        let second = phpc_array_value_at(array, 0);
+        assert_ne!(first, INVALID_HANDLE);
+        assert_ne!(second, INVALID_HANDLE);
+        assert_ne!(first, second);
+
+        assert_eq!(phpc_value_free(array), PHPC_STATUS_OK);
+
+        let mut first_value = 0;
+        let mut second_value = 0;
+        assert_eq!(
+            unsafe { phpc_integer_value(first, &mut first_value) },
+            PHPC_STATUS_OK
+        );
+        assert_eq!(
+            unsafe { phpc_integer_value(second, &mut second_value) },
+            PHPC_STATUS_OK
+        );
+        assert_eq!(first_value, 9001);
+        assert_eq!(second_value, 9001);
+
+        assert_eq!(phpc_value_free(first), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_free(second), PHPC_STATUS_OK);
+    }
+
+    #[test]
+    fn array_helpers_report_invalid_handles() {
+        let array = phpc_array_new();
+        let value = phpc_boolean_new(1);
+
+        assert_eq!(phpc_array_count(INVALID_HANDLE), 0);
+        assert_eq!(
+            phpc_array_append_value(INVALID_HANDLE, value),
+            PHPC_STATUS_INVALID_HANDLE
+        );
+        assert_eq!(
+            phpc_array_append_value(value, value),
+            PHPC_STATUS_INVALID_HANDLE
+        );
+        assert_eq!(
+            phpc_array_append_value(array, INVALID_HANDLE),
+            PHPC_STATUS_INVALID_HANDLE
+        );
+        assert_eq!(phpc_array_value_at(INVALID_HANDLE, 0), INVALID_HANDLE);
+        assert_eq!(phpc_array_value_at(value, 0), INVALID_HANDLE);
+        assert_eq!(phpc_array_value_at(array, 0), INVALID_HANDLE);
+        assert_eq!(phpc_array_count(array), 0);
+
+        assert_eq!(phpc_value_free(value), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_free(array), PHPC_STATUS_OK);
     }
 
     #[test]

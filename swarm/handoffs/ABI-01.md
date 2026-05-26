@@ -3,13 +3,14 @@
 ## Summary
 
 - Milestone: M2 Runtime ABI.
-- Ported only the current-main-safe boolean ABI from `lane/ABI-01`; current `main` already had the integer handle family.
-- Implemented `phpc_boolean_new(value) -> handle` for runtime-owned boolean values using C-style truthiness.
-- Implemented `phpc_boolean_value(handle, out_value) -> status` for typed boolean reads.
-- Extended `phpc_value_kind` with `PHPC_VALUE_KIND_BOOLEAN = 3`.
-- Existing `phpc_value_clone` now clones boolean handles through the shared `PhpValue: Clone` path.
-- Added focused ownership/error tests for boolean construct/read/free, invalid and non-boolean reads, null output pointer rejection, and cloned boolean ownership after source free.
-- Updated `docs/NATIVE_RUNTIME_ABI.md` to document new exports, constants, ownership behavior, and test classifications.
+- Narrow denominator: ordered array handles with append/read ownership only.
+- Added `PHPC_VALUE_KIND_ARRAY = 4`.
+- Added `phpc_array_new() -> handle` for runtime-owned empty array values.
+- Added `phpc_array_count(handle) -> len`.
+- Added `phpc_array_append_value(array_handle, value_handle) -> status`; append clones the live source value into array-owned storage and does not transfer the caller's handle.
+- Added `phpc_array_value_at(array_handle, index) -> handle`; reads clone the array slot into a new owned handle.
+- Added ownership/error tests for array construct/free, clone-on-append, independent read handles after array free, and invalid/non-array/out-of-range behavior.
+- Updated `docs/NATIVE_RUNTIME_ABI.md` with the new exports, constant, ownership rules, and test classifications.
 
 ## Files Changed
 
@@ -19,26 +20,26 @@
 
 ## Tests Run
 
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-abi-boolean CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p php_runtime`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-runtime-abi-docs CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-runtime-abi-docs.sh`
-- `git diff --check`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/ABI-01 cargo test -p php_runtime`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/ABI-01 scripts/verify-runtime-abi-docs.sh`
+- Attempted `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/ABI-01 cargo fmt --check`; blocked because `cargo fmt` is unavailable in this toolchain.
 
 ## Pass/Fail State
 
-- Pass: `php_runtime` unit tests, 23 passed.
-- Pass: runtime ABI docs verifier reports 20 exported helpers, 8 constants, 23 classified tests, and ownership annotations documented.
-- Pass: `git diff --check`.
+- Pass: `php_runtime` unit tests, 27 passed.
+- Pass: runtime ABI docs verifier reports 24 exported helpers, 9 constants, 6 header results, 27 classified tests, and ownership annotations documented.
+- Blocked: formatting check because `cargo fmt`/`rustfmt` are not installed.
 
 ## Blockers
 
-- No implementation blocker for this slice.
-- Formatting tooling is still not provided by this environment (`cargo fmt`/`rustfmt` absent from prior ABI-01 run), but the requested gates passed.
+- Formatting tooling is unavailable in this environment.
+- This slice intentionally does not implement int/string keys, keyed writes, append-key behavior, `isset`/`empty`, COW, or reference slots.
+- No compiler lowering uses the new array helpers yet.
 
 ## Latest Commit
 
-- Ported from `25cbc5a Add runtime boolean value ABI` and `86c95f6 Update ABI-01 boolean handoff`.
+- `Add runtime array value ABI` (current lane commit)
 
 ## Next Suggested Slice
 
-- Add the next smallest scalar ABI family or conversions only when the ownership and typed-read behavior can be covered with similarly focused tests.
-- Defer arrays, references, and COW cells until the ABI can expose mutation/aliasing semantics without broad untested surface area.
+- Add keyed array writes with int/string keys and ownership tests for copied keys and replaced values, or add a deterministic `compile --emit-ir` probe that declares/uses the new array helpers for a supported source shape.
