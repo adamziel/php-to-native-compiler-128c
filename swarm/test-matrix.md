@@ -17,7 +17,7 @@
 | CLI compile flag hygiene | `cargo test -p phpc --test bootstrap_cli cli_compile_rejects_conflicting_emit_flags` | passing | Conflicting compile emit flags fail explicitly with no stdout |
 | PHP oracle | `php fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |
 | `.phpt` parser | `cargo test -p phpc_core phpt::tests` | passing | Minimal TEST/FILE/FILEEOF/EXPECT/EXPECTF/EXPECTREGEX/SKIPIF parser plus static metadata-carrying harness input |
-| `.phpt` phpc runner | `cargo test -p phpc_core phpt::tests` | passing | Minimal FILE/FILEEOF exact-EXPECT and EXPECTF evaluator through `phpc run`; classifies pass/fail/xfail/unexpected-pass and explicit unsupported matcher/error outcomes |
+| `.phpt` phpc runner | `cargo test -p phpc_core phpt::tests` | passing | Minimal FILE/FILEEOF exact-EXPECT and EXPECTF evaluator through `phpc run`; classifies pass/fail/skip/xfail/unexpected-pass and explicit unsupported matcher/error outcomes |
 | PHPT-03 committed candidate review | `git merge-base --is-ancestor 0cbd609 main`; inspect `main:crates/phpc_core/src/phpt.rs`; run `scripts/local-gate.sh` on current `main` | verified | Current `main` already contains accepted parser-level `SKIPIF`/`XFAIL` metadata behavior; standalone `ea96852` candidate should not be reapplied |
 | Progress labels | `scripts/test-refresh-progress-labels.sh` | passing | Guards tool-neutral public status labels in generated progress output |
 | Status consistency negative fixture | `scripts/test-status-consistency.sh` | passing | Uses temporary generated-status files to prove stale WordPress bootstrap wording fails the consistency gate |

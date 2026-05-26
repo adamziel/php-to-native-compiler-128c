@@ -30,10 +30,11 @@ String literal support distinguishes PHP single-quoted and double-quoted escape 
 ## Current Harness Surface
 
 - Minimal `.phpt` parser for `TEST`, `FILE`, `FILEEOF`, `EXPECT`, `EXPECTF`, `EXPECTREGEX`, and `SKIPIF` sections.
-- Static `.phpt` metadata model for `SKIPIF` scripts and `XFAIL` reasons; `SKIPIF` is parsed but not executed yet.
+- Static `.phpt` metadata model for `SKIPIF` scripts and `XFAIL` reasons.
 - Parser-level `.phpt` harness input builder for tests with `FILE` or `FILEEOF` and one expectation section; metadata is carried forward without outcome classification.
 - `.phpt` files with both `FILE` and `FILEEOF` sections are rejected as ambiguous.
-- Minimal `phpc run` `.phpt` evaluator for parsed tests with `FILE` or `FILEEOF` plus literal `EXPECT` or `EXPECTF`; it normalizes line endings and classifies pass, fail, xfail, unexpected-pass, unsupported matcher, and interpreter-error outcomes.
+- Minimal `phpc run` `.phpt` evaluator for parsed tests with `FILE` or `FILEEOF` plus literal `EXPECT` or `EXPECTF`; it normalizes line endings and classifies pass, fail, skip, xfail, unexpected-pass, unsupported matcher, and interpreter-error outcomes.
+- `SKIPIF` execution is limited to scripts supported by `phpc run`; output beginning with `skip` classifies the test as skipped, empty or non-skip output continues to the main test, and unsupported `SKIPIF` scripts report interpreter errors.
 
 ## Explicitly Unsupported
 

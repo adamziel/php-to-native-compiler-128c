@@ -62,6 +62,7 @@ pub struct PhptHarnessInput {
 pub enum PhptRunStatus {
     Pass,
     Fail,
+    Skip { reason: String },
     Xfail,
     UnexpectedPass,
     Unsupported { reason: String },
@@ -174,6 +175,28 @@ impl PhptTest {
 
 pub fn run_phpt_with_phpc(test: &PhptTest) -> PhptRunReport {
     let metadata = test.metadata();
+    if let Some(skip) = metadata.skip.as_ref() {
+        match classify_skipif(&skip.script) {
+            Ok(Some(reason)) => {
+                return PhptRunReport {
+                    status: PhptRunStatus::Skip { reason },
+                    expected_stdout: None,
+                    actual_stdout: None,
+                    metadata,
+                }
+            }
+            Ok(None) => {}
+            Err(reason) => {
+                return PhptRunReport {
+                    status: PhptRunStatus::Error { reason },
+                    expected_stdout: None,
+                    actual_stdout: None,
+                    metadata,
+                }
+            }
+        }
+    }
+
     let file = match test.source_file() {
         Some(file) => file,
         None => {
@@ -240,6 +263,18 @@ pub fn run_phpt_with_phpc(test: &PhptTest) -> PhptRunReport {
         actual_stdout: Some(actual_stdout),
         metadata,
     }
+}
+
+fn classify_skipif(script: &str) -> Result<Option<String>, String> {
+    let output = normalize_phpt_output(&run_php(script)?);
+    let reason = output.trim();
+    if reason
+        .get(..4)
+        .is_some_and(|prefix| prefix.eq_ignore_ascii_case("skip"))
+    {
+        return Ok(Some(reason.to_string()));
+    }
+    Ok(None)
 }
 
 pub fn parse_phpt(source: &str) -> Result<PhptTest, String> {
@@ -665,6 +700,51 @@ mod tests {
                 script: "<?php if (!extension_loaded('foo')) die('skip foo missing'); ?>\n"
                     .to_string()
             })
+        );
+    }
+
+    #[test]
+    fn classifies_skipif_output_as_skipped() {
+        let phpt = parse_phpt(
+            "--TEST--\nskipped test\n--SKIPIF--\n<?php echo 'skip optional extension';\n--FILE--\n<?php var_dump(1);\n--EXPECT--\nint(1)\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt),
+            PhptRunReport {
+                status: PhptRunStatus::Skip {
+                    reason: "skip optional extension".to_string(),
+                },
+                expected_stdout: None,
+                actual_stdout: None,
+                metadata: phpt.metadata(),
+            }
+        );
+    }
+
+    #[test]
+    fn continues_when_skipif_output_is_empty() {
+        let phpt = parse_phpt(
+            "--TEST--\nnot skipped\n--SKIPIF--\n<?php echo '';\n--FILE--\n<?php echo 'ok';\n--EXPECT--\nok",
+        )
+        .unwrap();
+
+        assert_eq!(run_phpt_with_phpc(&phpt).status, PhptRunStatus::Pass);
+    }
+
+    #[test]
+    fn reports_skipif_phpc_errors_as_phpt_run_errors() {
+        let phpt = parse_phpt(
+            "--TEST--\nunsupported skipif\n--SKIPIF--\n<?php if (true) echo 'skip';\n--FILE--\n<?php echo 'ok';\n--EXPECT--\nok",
+        )
+        .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt).status,
+            PhptRunStatus::Error {
+                reason: "unsupported PHP statement near `if (true) echo 'skip';\n`".to_string(),
+            }
         );
     }
 
