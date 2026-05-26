@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
 launcher_log="${PHPC_SWARM_LAUNCHER_LOG:-/tmp/phpc-swarm-launcher.log}"
-expected_workers="${PHPC_EXPECT_SWARM_WORKERS:-50}"
+expected_workers="${PHPC_EXPECT_SWARM_WORKERS:-100}"
 expected_cadence="${PHPC_EXPECT_LAUNCH_STAGGER_SECONDS:-480}"
 
 bash -n scripts/launch-swarm.sh

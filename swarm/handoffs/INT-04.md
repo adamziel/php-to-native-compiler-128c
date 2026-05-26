@@ -12,7 +12,7 @@ Narrow denominator: supervisor status/worker observability only. No launcher beh
 
 - worker commands are launched through the interactive `swarm_codex_command` path;
 - `scripts/launch-swarm.sh` / `scripts/swarm-interactive.sh` do not start workers with `codex -p` or `codex exec`;
-- the latest supervised restart marker records `SWARM_WORKER_COUNT=50`;
+- the latest supervised restart marker records `SWARM_WORKER_COUNT=100`;
 - the latest supervised restart marker and stagger wait event record a 480-second cadence;
 - the live process table has zero active `codex -p` / `codex exec` worker processes;
 - `scripts/refresh-progress.sh --check` still renders the observability surface.
@@ -37,7 +37,7 @@ Added a focused shell fixture that supplies a temporary launcher log and proves 
 ## Pass/Fail State
 
 - Pass: focused launcher observability fixture rejects stale 60-second cadence.
-- Pass: live launcher observability check reports interactive-only, 50 workers, 480-second cadence, and zero `codex -p` / `codex exec` workers.
+- Pass: live launcher observability check reports interactive-only, 100 workers, 480-second cadence, and zero `codex -p` / `codex exec` workers.
 - Pass: local coordination gate.
 - Pass: diff whitespace check.
 

@@ -1,6 +1,6 @@
 # Swarm Agents
 
-Target: 50 implementation/research workers plus one auditor when enabled. The supervisor and dashboard windows are outside the count.
+Target: 100 implementation/research workers plus one auditor when enabled. The supervisor and dashboard windows are outside the count.
 
 Workers are launched in tmux session `phpc-swarm`. Each worker gets:
 

@@ -9,9 +9,9 @@ trap 'rm -rf "$tmpdir"' EXIT
 
 launcher_log="$tmpdir/phpc-swarm-launcher.log"
 cat > "$launcher_log" <<'LOG'
-=== supervised restart: 2026-05-26T01:51:27Z SWARM_WORKER_COUNT=50 SWARM_INCLUDE_AUDITOR=1 SWARM_AUDITOR_FIRST=1 SWARM_LAUNCH_STAGGER_SECONDS=480 ===
-2026-05-26T01:51:28Z launch: started Codex session 1/51 (AUD-01).
-2026-05-26T01:51:28Z launch: waiting 480s before starting Codex session 2/51.
+=== supervised restart: 2026-05-26T01:51:27Z SWARM_WORKER_COUNT=100 SWARM_INCLUDE_AUDITOR=1 SWARM_AUDITOR_FIRST=1 SWARM_LAUNCH_STAGGER_SECONDS=480 ===
+2026-05-26T01:51:28Z launch: started Codex session 1/101 (AUD-01).
+2026-05-26T01:51:28Z launch: waiting 480s before starting Codex session 2/101.
 LOG
 
 PHPC_SWARM_LAUNCHER_LOG="$launcher_log" scripts/check-launcher-observability.sh
