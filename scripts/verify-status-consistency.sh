@@ -106,7 +106,7 @@ html_state = html_table_fields(progress_html)
 published_status_pairs = (
     ("Branch", "Branch"),
     ("Report base HEAD", "Report base HEAD"),
-    ("Dirty entries", "Main dirty entries"),
+    ("Dirty entries", "Working tree dirty entries"),
 )
 for markdown_label, html_label in published_status_pairs:
     markdown_value = progress_state.get(markdown_label)
