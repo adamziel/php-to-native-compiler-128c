@@ -8,6 +8,24 @@
 4. Update progress and manifests.
 5. Integrate in small batches.
 
+## Lane Review Workflow
+
+Before reviewing or porting a `lane/*` candidate, fetch current `main` and run:
+
+```sh
+scripts/check-lane-integration.sh lane/<name> origin/main
+```
+
+Interpret the classification as follows:
+
+- `already-integrated`: do not merge or cherry-pick. Record the lane as integrated or stale against current `main`.
+- `stale-equivalent`: do not merge or cherry-pick. The patch-id already exists on `main` under different commit ids.
+- `unsafe-to-merge`: do not merge directly. Request a rebase or manually port only the coherent slice after inspecting conflicts and preserving current `main` behavior.
+- `review-required`: inspect the diff and `swarm/handoffs/<lane>.md`, then run focused tests for the changed area before merging.
+- `review-required-missing-handoff`: require a handoff before merging unless the artifact is explicitly research-only.
+
+Before any manual port or cherry-pick lands, run the focused tests named by the handoff, `scripts/local-gate.sh` when practical, and `git diff --check`. If `scripts/local-gate.sh` is not practical, record the reason and the narrower verification in the integration decision and lane handoff.
+
 ## Current Integration Queue
 
 Active integration work is follow-up only. The first M3 linked executable path is integrated for the literal echo denominator, and reviewed committed candidates are tracked below instead of being advertised as active work.
