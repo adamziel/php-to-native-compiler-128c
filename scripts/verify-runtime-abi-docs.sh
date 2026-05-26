@@ -136,6 +136,51 @@ else:
             )
         )
 
+classification_match = re.search(
+    r"## Runtime ABI Test Classification\n\n(?P<section>(?:- `[^`]+`: .+\n)+)",
+    doc,
+    flags=re.MULTILINE,
+)
+if not classification_match:
+    errors.append("docs/NATIVE_RUNTIME_ABI.md missing `Runtime ABI Test Classification` section")
+else:
+    classified_tests = {}
+    malformed_classifications = []
+    for line in classification_match.group("section").splitlines():
+        item = re.match(r"- `([A-Za-z_][A-Za-z0-9_]*)`: (.+)\.$", line)
+        if not item:
+            malformed_classifications.append(line)
+            continue
+        classified_tests[item.group(1)] = item.group(2)
+
+    if malformed_classifications:
+        errors.append(
+            "unparseable runtime ABI test classifications: "
+            + " | ".join(malformed_classifications)
+        )
+
+    missing_classifications = sorted(test_names - set(classified_tests))
+    stale_classifications = sorted(set(classified_tests) - test_names)
+    empty_classifications = sorted(
+        test for test, classification in classified_tests.items() if not classification.strip()
+    )
+
+    if missing_classifications:
+        errors.append(
+            "runtime ABI tests missing doc classification: "
+            + ", ".join(missing_classifications)
+        )
+    if stale_classifications:
+        errors.append(
+            "ABI doc test classifications missing from runtime tests: "
+            + ", ".join(stale_classifications)
+        )
+    if empty_classifications:
+        errors.append(
+            "runtime ABI test classifications are empty: "
+            + ", ".join(empty_classifications)
+        )
+
 if errors:
     for error in errors:
         print(f"runtime ABI documentation error: {error}", file=sys.stderr)
@@ -144,6 +189,6 @@ if errors:
 print(
     "runtime ABI docs ok: "
     f"{len(exported)} exported helpers, {len(source_constants)} constants, "
-    "and ownership test annotations documented"
+    f"{len(test_names)} classified tests, and ownership test annotations documented"
 )
 PY

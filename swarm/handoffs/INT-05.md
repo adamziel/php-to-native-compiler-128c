@@ -4,10 +4,10 @@
 
 - Time: 2026-05-26T01:11:00Z.
 - Milestone: Integration / M2 runtime ABI safety.
-- Fresh slice: extended the existing runtime ABI documentation verifier to require runtime-test annotations for documented value-handle ownership edge cases.
-- Annotated each `docs/NATIVE_RUNTIME_ABI.md` ownership claim with the focused `php_runtime` test that covers it.
-- Added regression coverage for a missing ownership test annotation and an annotation that names a nonexistent runtime test.
-- Narrow denominator: documentation/test coverage linkage for the current 8 value-handle ownership claims only; no new PHP/compiler behavior claimed.
+- Fresh slice: added a `Runtime ABI Test Classification` section to `docs/NATIVE_RUNTIME_ABI.md`.
+- Extended the runtime ABI docs verifier to require every current `php_runtime` unit test to be classified in the ABI docs and to reject stale classifications.
+- Added regression coverage for a missing runtime ABI test classification and a stale classification.
+- Narrow denominator: classification coverage for the current 5 `php_runtime` ABI tests only; no new PHP/compiler behavior claimed.
 
 ## Files Changed
 
@@ -26,7 +26,7 @@
 
 ## Pass/Fail State
 
-- Pass. The runtime ABI documentation gate reports 7 exported helpers, 6 constants, and ownership test annotations documented.
+- Pass. The runtime ABI documentation gate reports 7 exported helpers, 6 constants, 5 classified tests, and ownership test annotations documented.
 
 ## Blockers
 
@@ -34,8 +34,8 @@
 
 ## Latest Commit
 
-- Current lane HEAD: `6850d47 Gate runtime ABI ownership test annotations`
+- Current lane HEAD: `d15ca37 Classify runtime ABI tests in docs gate`
 
 ## Next Suggested Slice
 
-- Add an integration-safety check that fails if a new `php_runtime` ABI test is added without being classified in the ABI handoff or test matrix.
+- Split `scripts/verify-runtime-abi-docs.sh` into smaller verifier functions once the next runtime ABI family adds more sections, to keep diagnostics reviewable.

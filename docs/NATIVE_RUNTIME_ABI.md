@@ -37,6 +37,14 @@ Status codes:
 - `phpc_binary_string_new(NULL, nonzero_len)` fails and returns invalid handle `0`. Test: `binary_string_rejects_null_pointer_with_nonzero_len`.
 - `phpc_binary_string_data` returns a borrowed pointer valid until the handle is freed or runtime mutation invalidates the storage. Test: `binary_string_data_reports_invalid_handles`.
 
+## Runtime ABI Test Classification
+
+- `null_handle_is_runtime_owned_until_free`: value-handle ownership lifecycle.
+- `invalid_and_double_free_are_reported`: invalid-handle and double-free status behavior.
+- `binary_string_handle_owns_a_byte_copy`: binary-string ownership and byte preservation.
+- `binary_string_rejects_null_pointer_with_nonzero_len`: invalid binary-string constructor arguments.
+- `binary_string_data_reports_invalid_handles`: invalid binary-string data access.
+
 Required next ABI families:
 
 - Additional PHP scalar types and conversions.
