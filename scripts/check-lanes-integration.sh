@@ -65,7 +65,9 @@ resolve_target() {
   lane_commit="$(git rev-parse --verify --quiet "lane/${input}^{commit}" || true)"
 
   if [[ -n "$direct_commit" && -n "$lane_commit" && "$direct_commit" != "$lane_commit" ]]; then
-    return 1
+    echo "check-lanes-integration.sh: ambiguous target: ${input} matches both ${input} and lane/${input}" >&2
+    echo "check-lanes-integration.sh: use an explicit ref such as lane/${input}" >&2
+    return 2
   fi
   if [[ -n "$direct_commit" ]]; then
     printf '%s\n' "$input"
@@ -87,12 +89,16 @@ for target in "${targets[@]}"; do
   fi
   seen_input_targets[$target]=1
 
-  if target_ref="$(resolve_target "$target")"; then
+  target_ref_status=0
+  target_ref="$(resolve_target "$target")" || target_ref_status=$?
+  if [[ "$target_ref_status" -eq 0 ]]; then
     if [[ -n "${seen_resolved_targets[$target_ref]:-}" ]]; then
       echo "check-lanes-integration.sh: duplicate target: ${target} resolves to ${target_ref}" >&2
       exit 2
     fi
     seen_resolved_targets[$target_ref]=1
+  elif [[ "$target_ref_status" -eq 2 ]]; then
+    exit 2
   fi
 done
 

@@ -144,6 +144,24 @@ fi
 grep -F "ambiguous target ref: review matches both review and lane/review" ambiguous.err >/dev/null
 grep -F "use an explicit ref such as lane/review" ambiguous.err >/dev/null
 
+set +e
+scripts/check-lanes-integration.sh --main-ref main review lane/review > batch-ambiguous.out 2> batch-ambiguous.err
+batch_ambiguous_status=$?
+set -e
+if [[ "$batch_ambiguous_status" -ne 2 ]]; then
+  echo "check-lanes-integration.sh did not reject an ambiguous unqualified target with status 2" >&2
+  cat batch-ambiguous.out >&2
+  cat batch-ambiguous.err >&2
+  exit 1
+fi
+grep -F "ambiguous target: review matches both review and lane/review" batch-ambiguous.err >/dev/null
+grep -F "use an explicit ref such as lane/review" batch-ambiguous.err >/dev/null
+if grep -F "== review ==" batch-ambiguous.out >/dev/null; then
+  echo "check-lanes-integration.sh started lane checks before rejecting an ambiguous target" >&2
+  cat batch-ambiguous.out >&2
+  exit 1
+fi
+
 git switch -q -c lane/INT-02-fresh-0409 main
 printf 'fresh\n' > fresh.txt
 git add fresh.txt

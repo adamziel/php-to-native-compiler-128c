@@ -2,39 +2,37 @@
 
 ## Summary
 
-Milestone: Integration / status accuracy.
+Milestone: Integration / branch hygiene.
 
-Tightened `scripts/status-gate.sh` handoff validation so a `Latest Commit` section cannot point reviewers at an archived lane branch such as `lane/INT-05-archive-060010`. The check is scoped to latest-commit sections only, so historical archive references elsewhere in handoff notes remain allowed.
+Tightened `scripts/check-lanes-integration.sh` batch preflight so ambiguous unqualified targets are rejected before any per-lane checks begin. This now matches the existing duplicate-target preflight behavior and prevents a mixed batch from partially running when a target such as `review` resolves to both `review` and `lane/review`.
 
-Narrow denominator: status-gate validation of handoff metadata only. No compiler/runtime behavior, launcher behavior, WordPress behavior, or progress percentage changed.
+Narrow denominator: batch lane integration checker argument validation only. No compiler/runtime behavior, WordPress behavior, PHP core runnable subset, launcher behavior, or progress percentage changed.
 
 ## Files Changed
 
-- `scripts/status-gate.sh`
-- `scripts/test-status-gate.sh`
+- `scripts/check-lanes-integration.sh`
+- `scripts/test-check-lane-integration.sh`
 - `swarm/handoffs/INT-04.md`
 
 ## Tests Run
 
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-status-gate.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/status-gate.sh`
-- `git diff --check`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-check-lane-integration.sh`
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
+- `git diff --check`
 
 ## Pass/Fail State
 
-- PASS: focused status-gate fixture rejects archive branch references in `Latest Commit` sections.
-- PASS: live status gate still accepts current repository handoffs and manifests.
-- PASS: local gate completed status checks, runtime ABI doc checks, launcher observability checks, full workspace `cargo test --locked` with 119 tests, doc tests, and `git diff --check` under `/home/ubuntu/phpc-targets/INT-04`.
+- PASS: focused batch checker fixture rejects ambiguous unqualified targets with status 2 before starting lane checks.
+- PASS: local gate completed status consistency, runtime ABI docs, status-gate fixtures, launcher observability, lane review/checker fixtures, worker-env fixtures, full locked workspace tests, doc tests, and diff hygiene under `/home/ubuntu/phpc-targets/INT-04`.
 
 ## Blockers
 
-- No blocker for this status-accuracy slice.
+- No blocker for this integration-safety slice.
 
 ## Latest Commit
 
-- `Reject archive-branch handoff latest commits` on `lane/INT-04`.
+- `Reject ambiguous batch lane targets` on `lane/INT-04`.
 
 ## Next Suggested Slice
 
-- Add a focused lane-checker fixture that surfaces the resolved canonical handoff path for suffixed fresh branches in batch output, if reviewers need that extra audit detail.
+- Add a focused batch checker fixture that reports the resolved canonical handoff path for suffixed fresh branches in a machine-readable summary, if automation needs that audit detail.
