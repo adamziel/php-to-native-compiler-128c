@@ -1,40 +1,33 @@
 summary:
-- Integrated the compatible PHPT parser metadata behavior reviewed by INT-03 from source commit `ea96852`.
-- Added static `SKIPIF` and `XFAIL` metadata accessors on top of the existing `.phpt` parser.
-- Narrow denominator: pinned PHP-8.3 inventory remains 19,346 `.phpt` files; this slice is parser metadata only and does not execute `SKIPIF` or classify outcomes.
+- M5 integration slice reviewed PHPT-02 source commit `9ce60ac` and accepted only the compatible typed expectation parser behavior.
+- Added `PhptExpectationKind`, borrowed `PhptExpectation`, `EXPECTF`/`EXPECTREGEX` accessors, and ambiguous expectation rejection.
+- Updated `PhptHarnessInput` to carry expectation kind/body while preserving already-integrated `SKIPIF`/`XFAIL` metadata behavior.
+- No `SKIPIF` execution, `XFAIL` classification, php-src runnable count, or native progress was added.
 
 files changed:
 - `crates/phpc_core/src/phpt.rs`
 - `docs/SUPPORT.md`
 - `swarm/integration.md`
+- `swarm/test-matrix.md`
 - `swarm/handoffs/INT-03.md`
 
 tests run:
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core phpt::tests`
-- `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 scripts/status-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 scripts/local-gate.sh`
 - `git diff --check`
-- `cargo fmt --check -p phpc_core`
 
 pass/fail state:
-- PASS: focused PHPT parser tests.
-- PASS: status gate.
-- PASS: `git diff --check`.
-- BLOCKED: `cargo fmt --check -p phpc_core` failed because this environment has no `cargo fmt` subcommand.
+- PASS: `scripts/local-gate.sh`; focused PHPT parser tests, status gate, and whitespace check completed cleanly on the lane.
+- PASS: explicit `git diff --check`.
 
 blockers:
 - No `.phpt` runner exists yet, so `SKIPIF` scripts are not executed and `XFAIL` is not applied to result classification.
-- Formatting verification is limited until `rustfmt`/`cargo-fmt` is installed.
+- `EXPECTF` and `EXPECTREGEX` are parsed and carried, but no output matcher executes them yet.
 
 latest lane commit:
-- `6033bee` Integrate PHPT metadata slice.
+- `2601ca0` Integrate PHPT expectation variants.
 
 integration note:
-- Ported manually onto current `main` to preserve newer swarm progress, status-gate, and reporter-gate changes.
+- Ported onto current `main` while preserving the richer main `scripts/local-gate.sh`; the stale lane-local gate was not copied.
 
 next suggested slice:
-- PHPT-04/system PHP oracle runner can consume `PhptTest::metadata()` and record actual skip/XFAIL classification without inflating native compiler progress.
-
-follow-up integration:
-- Integrated `af79ce5 Add PHPT harness input builder` from INT-03.
-- `PhptTest::harness_input()` requires `FILE` and `EXPECT`, copies the test name, and carries `PhptTest::metadata()` without executing `SKIPIF`, applying `XFAIL`, or changing runnable/native progress counts.
-- Verification: `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core phpt::tests`.
+- Review PHPT-06 for `FILEEOF` compatibility or build a non-executing parser classification pass over a tiny pinned php-src sample using `PhptHarnessInput`, without changing `swarm/php-core-manifest.json` runnable counts.

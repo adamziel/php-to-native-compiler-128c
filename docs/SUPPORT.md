@@ -14,9 +14,9 @@ String literal support distinguishes PHP single-quoted and double-quoted escape 
 
 ## Current Harness Surface
 
-- Minimal `.phpt` parser for `TEST`, `FILE`, `EXPECT`, and `SKIPIF` sections.
+- Minimal `.phpt` parser for `TEST`, `FILE`, `EXPECT`, `EXPECTF`, `EXPECTREGEX`, and `SKIPIF` sections.
 - Static `.phpt` metadata model for `SKIPIF` scripts and `XFAIL` reasons; `SKIPIF` is parsed but not executed yet.
-- Parser-level `.phpt` harness input builder for tests with `FILE` and `EXPECT`; metadata is carried forward without outcome classification.
+- Parser-level `.phpt` harness input builder for tests with `FILE` and one expectation section; metadata is carried forward without outcome classification.
 
 ## Explicitly Unsupported
 
