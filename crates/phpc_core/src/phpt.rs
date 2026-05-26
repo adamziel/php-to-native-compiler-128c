@@ -202,15 +202,10 @@ pub fn run_phpt_with_phpc(test: &PhptTest) -> PhptRunReport {
         }
     };
 
-    if expectation.kind != PhptExpectationKind::Exact {
-        let section = match expectation.kind {
-            PhptExpectationKind::Exact => unreachable!(),
-            PhptExpectationKind::Format => "EXPECTF",
-            PhptExpectationKind::Regex => "EXPECTREGEX",
-        };
+    if expectation.kind == PhptExpectationKind::Regex {
         return PhptRunReport {
             status: PhptRunStatus::Unsupported {
-                reason: format!("{section} matching is not implemented for phpc .phpt runs"),
+                reason: "EXPECTREGEX matching is not implemented for phpc .phpt runs".to_string(),
             },
             expected_stdout: None,
             actual_stdout: None,
@@ -231,7 +226,7 @@ pub fn run_phpt_with_phpc(test: &PhptTest) -> PhptRunReport {
         }
     };
 
-    let matches = actual_stdout == expected_stdout;
+    let matches = expectation_matches(expectation.kind, &expected_stdout, &actual_stdout);
     let status = match (matches, metadata.xfail.is_some()) {
         (true, false) => PhptRunStatus::Pass,
         (false, false) => PhptRunStatus::Fail,
@@ -315,6 +310,193 @@ fn normalize_metadata_reason(reason: &str) -> String {
 
 fn normalize_phpt_output(output: &str) -> String {
     output.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+fn expectation_matches(kind: PhptExpectationKind, expected: &str, actual: &str) -> bool {
+    match kind {
+        PhptExpectationKind::Exact => actual == expected,
+        PhptExpectationKind::Format => expectf_matches(expected, actual),
+        PhptExpectationKind::Regex => false,
+    }
+}
+
+fn expectf_matches(pattern: &str, actual: &str) -> bool {
+    let tokens = expectf_tokens(pattern);
+    match_expectf_tokens(&tokens, 0, actual, 0)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ExpectfToken {
+    Literal(String),
+    AnyStringNoNewline,
+    AnyString,
+    Whitespace,
+    Digits,
+    Integer,
+    Hex,
+    Float,
+    Char,
+}
+
+fn expectf_tokens(pattern: &str) -> Vec<ExpectfToken> {
+    let mut tokens = Vec::new();
+    let mut literal = String::new();
+    let mut chars = pattern.chars().peekable();
+
+    while let Some(ch) = chars.next() {
+        if ch != '%' {
+            literal.push(ch);
+            continue;
+        }
+
+        let Some(specifier) = chars.next() else {
+            literal.push('%');
+            break;
+        };
+
+        let token = match specifier {
+            '%' => {
+                literal.push('%');
+                continue;
+            }
+            's' => ExpectfToken::AnyStringNoNewline,
+            'a' | 'A' => ExpectfToken::AnyString,
+            'w' => ExpectfToken::Whitespace,
+            'd' => ExpectfToken::Digits,
+            'i' => ExpectfToken::Integer,
+            'x' => ExpectfToken::Hex,
+            'f' => ExpectfToken::Float,
+            'c' => ExpectfToken::Char,
+            other => {
+                literal.push('%');
+                literal.push(other);
+                continue;
+            }
+        };
+
+        if !literal.is_empty() {
+            tokens.push(ExpectfToken::Literal(std::mem::take(&mut literal)));
+        }
+        tokens.push(token);
+    }
+
+    if !literal.is_empty() {
+        tokens.push(ExpectfToken::Literal(literal));
+    }
+
+    tokens
+}
+
+fn match_expectf_tokens(
+    tokens: &[ExpectfToken],
+    token_index: usize,
+    actual: &str,
+    actual_index: usize,
+) -> bool {
+    if token_index == tokens.len() {
+        return actual_index == actual.len();
+    }
+
+    match &tokens[token_index] {
+        ExpectfToken::Literal(literal) => actual[actual_index..]
+            .strip_prefix(literal)
+            .is_some_and(|_| {
+                match_expectf_tokens(
+                    tokens,
+                    token_index + 1,
+                    actual,
+                    actual_index + literal.len(),
+                )
+            }),
+        ExpectfToken::AnyStringNoNewline => match_variable_width(
+            tokens,
+            token_index,
+            actual,
+            actual_index,
+            |text| !text.contains('\n'),
+        ),
+        ExpectfToken::AnyString => {
+            match_variable_width(tokens, token_index, actual, actual_index, |_| true)
+        }
+        ExpectfToken::Whitespace => match_variable_width(
+            tokens,
+            token_index,
+            actual,
+            actual_index,
+            |text| text.chars().all(char::is_whitespace),
+        ),
+        ExpectfToken::Digits => match_variable_width(
+            tokens,
+            token_index,
+            actual,
+            actual_index,
+            |text| !text.is_empty() && text.chars().all(|ch| ch.is_ascii_digit()),
+        ),
+        ExpectfToken::Integer => match_variable_width(
+            tokens,
+            token_index,
+            actual,
+            actual_index,
+            |text| {
+                let digits = if let Some(rest) =
+                    text.strip_prefix('+').or_else(|| text.strip_prefix('-'))
+                {
+                    rest
+                } else {
+                    text
+                };
+                !digits.is_empty() && digits.chars().all(|ch| ch.is_ascii_digit())
+            },
+        ),
+        ExpectfToken::Hex => match_variable_width(
+            tokens,
+            token_index,
+            actual,
+            actual_index,
+            |text| !text.is_empty() && text.chars().all(|ch| ch.is_ascii_hexdigit()),
+        ),
+        ExpectfToken::Float => match_variable_width(
+            tokens,
+            token_index,
+            actual,
+            actual_index,
+            |text| !text.is_empty() && text.parse::<f64>().is_ok(),
+        ),
+        ExpectfToken::Char => actual[actual_index..].chars().next().is_some_and(|ch| {
+            match_expectf_tokens(
+                tokens,
+                token_index + 1,
+                actual,
+                actual_index + ch.len_utf8(),
+            )
+        }),
+    }
+}
+
+fn match_variable_width(
+    tokens: &[ExpectfToken],
+    token_index: usize,
+    actual: &str,
+    actual_index: usize,
+    accepts: impl Fn(&str) -> bool,
+) -> bool {
+    for end_index in char_boundary_indices_from(actual, actual_index) {
+        let candidate = &actual[actual_index..end_index];
+        if accepts(candidate) && match_expectf_tokens(tokens, token_index + 1, actual, end_index) {
+            return true;
+        }
+    }
+    false
+}
+
+fn char_boundary_indices_from(text: &str, start: usize) -> Vec<usize> {
+    let mut indices = text[start..]
+        .char_indices()
+        .skip(1)
+        .map(|(index, _)| start + index)
+        .collect::<Vec<_>>();
+    indices.push(text.len());
+    indices
 }
 
 fn validate_expectation_sections(sections: &BTreeMap<String, String>) -> Result<(), String> {
@@ -615,13 +797,63 @@ mod tests {
     #[test]
     fn reports_unsupported_expectation_matchers() {
         let phpt =
-            parse_phpt("--TEST--\nformat\n--FILE--\n<?php echo '1';\n--EXPECTF--\n%d\n").unwrap();
+            parse_phpt("--TEST--\nregex\n--FILE--\n<?php echo '1';\n--EXPECTREGEX--\n/[0-9]+/\n")
+                .unwrap();
 
         assert_eq!(
             run_phpt_with_phpc(&phpt).status,
             PhptRunStatus::Unsupported {
-                reason: "EXPECTF matching is not implemented for phpc .phpt runs".to_string(),
+                reason: "EXPECTREGEX matching is not implemented for phpc .phpt runs".to_string(),
             }
+        );
+    }
+
+    #[test]
+    fn runs_expectf_expectation_with_phpc() {
+        let phpt =
+            parse_phpt("--TEST--\nformat\n--FILE--\n<?php echo 'item 123';\n--EXPECTF--\n%s %d")
+                .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt),
+            PhptRunReport {
+                status: PhptRunStatus::Pass,
+                expected_stdout: Some("%s %d".to_string()),
+                actual_stdout: Some("item 123".to_string()),
+                metadata: phpt.metadata(),
+            }
+        );
+    }
+
+    #[test]
+    fn reports_expectf_mismatch_as_failure() {
+        let phpt =
+            parse_phpt("--TEST--\nformat fail\n--FILE--\n<?php echo 'item abc';\n--EXPECTF--\n%s %d")
+                .unwrap();
+
+        assert_eq!(run_phpt_with_phpc(&phpt).status, PhptRunStatus::Fail);
+    }
+
+    #[test]
+    fn classifies_mismatched_expectf_xfail() {
+        let phpt = parse_phpt(
+            "--TEST--\nformat xfail\n--XFAIL--\nknown format mismatch\n--FILE--\n<?php echo 'item abc';\n--EXPECTF--\n%s %d",
+        )
+        .unwrap();
+
+        assert_eq!(run_phpt_with_phpc(&phpt).status, PhptRunStatus::Xfail);
+    }
+
+    #[test]
+    fn classifies_matching_expectf_xfail_as_unexpected_pass() {
+        let phpt = parse_phpt(
+            "--TEST--\nformat unexpected pass\n--XFAIL--\nwas missing\n--FILE--\n<?php echo 'item 123';\n--EXPECTF--\n%s %d",
+        )
+        .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt).status,
+            PhptRunStatus::UnexpectedPass
         );
     }
 
