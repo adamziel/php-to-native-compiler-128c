@@ -79,6 +79,7 @@ if missing != 0:
 
 integration = Path("swarm/integration.md").read_text(encoding="utf-8")
 queue = Path("swarm/queue.md").read_text(encoding="utf-8")
+test_matrix = Path("swarm/test-matrix.md").read_text(encoding="utf-8")
 if "native executable support is still 0%" in integration:
     raise SystemExit("integration log contains obsolete pre-M3 native-support wording")
 if "Keep `--emit-exe` explicitly unsupported" in integration:
@@ -91,6 +92,26 @@ if (
     and "| Q-010 | ready " in queue
 ):
     raise SystemExit("queue advertises WordPress bootstrap-check design as ready after bootstrap_check exists")
+
+unisolated_cargo_rows = []
+for row in test_matrix.splitlines():
+    if not row.startswith("| "):
+        continue
+    columns = [column.strip() for column in row.strip("|").split("|")]
+    if len(columns) < 2 or columns[0] in {"Layer", "---"}:
+        continue
+    command_column = columns[1]
+    if (
+        re.search(r"\bcargo (test|run)\b", command_column)
+        and "CARGO_TARGET_DIR=" not in command_column
+    ):
+        unisolated_cargo_rows.append(columns[0])
+
+if unisolated_cargo_rows:
+    raise SystemExit(
+        "test matrix cargo verification commands missing CARGO_TARGET_DIR: "
+        + ", ".join(unisolated_cargo_rows)
+    )
 
 terminal_lanes = set()
 reviewed_lanes = set()

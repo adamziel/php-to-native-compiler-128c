@@ -7,7 +7,8 @@ cd "$repo_root"
 tmpdir="$(mktemp -d)"
 integration_backup="$(mktemp)"
 queue_backup="$(mktemp)"
-trap 'cp "$integration_backup" swarm/integration.md; cp "$queue_backup" swarm/queue.md; rm -rf "$tmpdir"; rm -f "$integration_backup" "$queue_backup"' EXIT
+test_matrix_backup="$(mktemp)"
+trap 'cp "$integration_backup" swarm/integration.md; cp "$queue_backup" swarm/queue.md; cp "$test_matrix_backup" swarm/test-matrix.md; rm -rf "$tmpdir"; rm -f "$integration_backup" "$queue_backup" "$test_matrix_backup"' EXIT
 
 php_core_fixture="$tmpdir/php-core-manifest.json"
 wordpress_fixture="$tmpdir/wordpress-manifest.json"
@@ -16,6 +17,7 @@ err_file="$tmpdir/status-gate.err"
 
 cp swarm/integration.md "$integration_backup"
 cp swarm/queue.md "$queue_backup"
+cp swarm/test-matrix.md "$test_matrix_backup"
 
 reset_fixtures() {
   cp swarm/php-core-manifest.json "$php_core_fixture"
@@ -28,6 +30,10 @@ restore_integration() {
 
 restore_queue() {
   cp "$queue_backup" swarm/queue.md
+}
+
+restore_test_matrix() {
+  cp "$test_matrix_backup" swarm/test-matrix.md
 }
 
 run_fixture_gate() {
@@ -232,4 +238,22 @@ expect_status_failure \
   "obsolete pre-M3 emit-exe wording"
 
 restore_integration
+
+python3 - <<'PY'
+from pathlib import Path
+
+path = Path("swarm/test-matrix.md")
+text = path.read_text(encoding="utf-8")
+text = text.replace(
+    "`CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-runtime-abi CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p php_runtime`",
+    "`cargo test -p php_runtime`",
+)
+path.write_text(text, encoding="utf-8")
+PY
+
+expect_status_failure \
+  "test matrix cargo verification commands missing CARGO_TARGET_DIR: Runtime ABI" \
+  "an unisolated cargo test command in the test matrix"
+
+restore_test_matrix
 scripts/status-gate.sh
