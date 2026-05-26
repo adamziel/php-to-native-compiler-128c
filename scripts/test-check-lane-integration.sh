@@ -107,9 +107,11 @@ grep -F "== lane/review ==" batch.out >/dev/null
 grep -F "classification: review-required" batch.out >/dev/null
 grep -F "== lane/missing-handoff ==" batch.out >/dev/null
 grep -F "classification: review-required-missing-handoff" batch.out >/dev/null
+grep -F "summary: passed=1 failed=1 total=2" batch.out >/dev/null
 
 scripts/check-lanes-integration.sh --main-ref main lane/integrated lane/stale-equivalent > batch-safe.out
 grep -F "== lane/integrated ==" batch-safe.out >/dev/null
 grep -F "classification: already-integrated" batch-safe.out >/dev/null
 grep -F "== lane/stale-equivalent ==" batch-safe.out >/dev/null
 grep -F "classification: stale-equivalent" batch-safe.out >/dev/null
+grep -F "summary: passed=2 failed=0 total=2" batch-safe.out >/dev/null

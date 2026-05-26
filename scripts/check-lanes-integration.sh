@@ -52,11 +52,18 @@ if [[ "${#targets[@]}" -eq 0 ]]; then
 fi
 
 status=0
+passed=0
+failed=0
 for target in "${targets[@]}"; do
   echo "== ${target} =="
   if ! scripts/check-lane-integration.sh "$target" "$main_ref"; then
     status=1
+    failed=$((failed + 1))
+  else
+    passed=$((passed + 1))
   fi
 done
+
+echo "summary: passed=${passed} failed=${failed} total=${#targets[@]}"
 
 exit "$status"

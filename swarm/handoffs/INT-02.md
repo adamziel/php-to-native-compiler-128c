@@ -3,36 +3,38 @@
 ## Summary
 
 - Milestone: Integration / coordination safety.
-- Started fresh from current `origin/main` on `lane/INT-02-checker-workflow`; did not build on the previous integration-checker branch.
-- Documented the supervisor workflow for `scripts/check-lane-integration.sh` in `swarm/integration.md`.
-- The workflow names when to run the checker, how to interpret each classification, and the verification required before manual ports or cherry-picks.
+- Started fresh from current `origin/main` on `lane/INT-02-fresh-0430`.
+- Added a batch summary line to `scripts/check-lanes-integration.sh` so multi-lane review runs report passed, failed, and total lane checks.
+- Extended the focused temp-repo regression to cover summary output for both mixed pass/fail and all-safe batches.
+- No compiler, runtime, native lowering, PHP-core denominator, or WordPress behavior changed.
 
 ## Files Changed
 
-- `swarm/integration.md`
+- `scripts/check-lanes-integration.sh`
+- `scripts/test-check-lane-integration.sh`
 - `swarm/handoffs/INT-02.md`
 
 ## Tests Run
 
-- `scripts/test-check-lane-integration.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-check-lane-integration.sh`
 - `git diff --check`
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 
 ## Pass/Fail State
 
-- PASS: focused checker regression test.
+- PASS: focused lane integration checker regression, including mixed and all-safe batch summaries.
 - PASS: `git diff --check`.
-- PASS: `scripts/local-gate.sh`, including status checks, ABI doc checks, checker tests, full workspace `cargo test`, and whitespace checks.
-- PASS: full workspace `cargo test` reported 75 passing tests: 19 runtime, 11 CLI, and 45 core.
+- PASS: `scripts/local-gate.sh`, including status checks, ABI doc checks, launcher observability, worker env checks, lane integration checker tests, full workspace `cargo test`, and diff hygiene.
+- PASS: full workspace `cargo test` reported 106 passing tests: 19 runtime, 11 CLI, and 76 core.
 
 ## Blockers
 
-- None for this documentation slice.
+- None for this slice.
 
 ## Latest Commit
 
-- `HEAD` Document lane integration checker workflow.
+- `6335a07` Summarize batch lane integration checks.
 
 ## Next Suggested Slice
 
-- Use the documented checker workflow before reviewing stale `lane/*` candidates; only add more automation if repeated manual decisions drift from the documented policy.
+- If long batch reviews remain hard to scan, add a stable machine-readable mode to the checker rather than parsing human text.
