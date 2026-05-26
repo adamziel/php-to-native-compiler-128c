@@ -8,6 +8,12 @@ lane_id="${PHPC_LANE_ID:-$(basename "$worktree_root")}"
 expected_target_dir="${target_root%/}/$lane_id"
 expected_branch="${PHPC_EXPECT_BRANCH:-}"
 require_clean_worktree="${PHPC_REQUIRE_CLEAN_WORKTREE:-0}"
+worktree_lane="$(basename "$worktree_root")"
+
+if [[ "${PHPC_ALLOW_WORKTREE_LANE_MISMATCH:-0}" != "1" && "$worktree_lane" != "$lane_id" ]]; then
+  echo "worker env error: PHPC_LANE_ID must match worktree basename $worktree_lane, got $lane_id" >&2
+  exit 1
+fi
 
 if [[ -z "${CARGO_TARGET_DIR:-}" ]]; then
   echo "worker env error: CARGO_TARGET_DIR must be set for lane $lane_id" >&2
