@@ -5,6 +5,12 @@
 - Lane: `lane/LINK-01`.
 - Milestone: M4/M6.
 - Queue item: Q-025 native truthfulness for include/require.
+- Latest slice: added `compile --emit-exe` coverage for non-literal
+  `include APP_DIR . '/included.php';`, matching the existing non-literal
+  `require` executable diagnostic behavior.
+- The new test asserts the parser-level `expected literal string path`
+  diagnostic is reported before runtime archive setup and stale native output is
+  removed, without claiming native include execution.
 - Current slice: added `include_once`/`require_once` native-mode diagnostic
   coverage without claiming once-only include semantics.
 - `compile --emit-ir` now has focused CLI coverage for
@@ -70,7 +76,10 @@
 - `cargo fmt` could not run because this toolchain has no `cargo fmt`
   subcommand.
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core`
-  passed: 84 tests.
+  passed: 85 tests.
+- Latest slice:
+  `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_exe_rejects_non_literal_include_before_runtime_link_setup`
+  passed.
 - Current slice:
   `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_ir_rejects_include_once_without_claiming_native_include_once`
   passed.
@@ -100,7 +109,7 @@
   `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_exe_rejects_require_before_runtime_link_setup`;
   passed.
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`
-  passed: 30 tests.
+  passed: 32 tests.
 
 ## Pass/Fail State
 
@@ -114,8 +123,8 @@
 
 ## Latest Commit
 
-- Current commit in `lane/LINK-01`: include_once/require_once native
-  diagnostic coverage.
+- Latest commit in `lane/LINK-01`: non-literal include executable diagnostic
+  coverage.
 
 ## Next Suggested Slice
 
