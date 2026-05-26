@@ -6,6 +6,33 @@ const BOOTSTRAP_HELLO: &str = "../../fixtures/bootstrap/hello.php";
 const BOOTSTRAP_BOOL_NULL: &str = "../../fixtures/bootstrap/bool_null_echo.php";
 
 #[test]
+fn cli_without_command_prints_help_and_usage_exit() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let output = Command::new(exe).output().expect("run phpc");
+
+    assert_eq!(output.status.code(), Some(2));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("phpc run <input.php>"));
+    assert!(stdout.contains("phpc compile <input.php> --emit-exe <output>"));
+    assert!(stdout.contains("phpc wordpress-bootstrap-check <wordpress-root>"));
+    assert_eq!(String::from_utf8_lossy(&output.stderr), "");
+}
+
+#[test]
+fn cli_rejects_unknown_command_without_stdout() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let output = Command::new(exe)
+        .arg("definitely-not-a-command")
+        .output()
+        .expect("run phpc unknown command");
+
+    assert!(!output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+    assert!(String::from_utf8_lossy(&output.stderr)
+        .contains("unknown command `definitely-not-a-command`"));
+}
+
+#[test]
 fn cli_runs_bootstrap_echo() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let output = Command::new(exe)
