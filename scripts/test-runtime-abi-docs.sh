@@ -33,3 +33,48 @@ fi
 
 cp "$abi_backup" docs/NATIVE_RUNTIME_ABI.md
 scripts/verify-runtime-abi-docs.sh
+
+python3 - <<'PY'
+from pathlib import Path
+
+path = Path("docs/NATIVE_RUNTIME_ABI.md")
+text = path.read_text(encoding="utf-8")
+text = text.replace("- `PHPC_STATUS_INVALID_ARGUMENT = -2`\n", "")
+path.write_text(text, encoding="utf-8")
+PY
+
+if scripts/verify-runtime-abi-docs.sh >/tmp/phpc-runtime-abi-docs-test.out 2>/tmp/phpc-runtime-abi-docs-test.err; then
+  echo "verify-runtime-abi-docs.sh accepted an undocumented runtime constant" >&2
+  exit 1
+fi
+
+if ! grep -F "runtime constants missing from ABI doc: PHPC_STATUS_INVALID_ARGUMENT" /tmp/phpc-runtime-abi-docs-test.err >/dev/null; then
+  echo "verify-runtime-abi-docs.sh failed without the expected missing-constant diagnostic" >&2
+  cat /tmp/phpc-runtime-abi-docs-test.err >&2
+  exit 1
+fi
+
+cp "$abi_backup" docs/NATIVE_RUNTIME_ABI.md
+
+python3 - <<'PY'
+from pathlib import Path
+
+path = Path("docs/NATIVE_RUNTIME_ABI.md")
+text = path.read_text(encoding="utf-8")
+text = text.replace("- `PHPC_VALUE_KIND_BINARY_STRING = 1`\n", "- `PHPC_VALUE_KIND_BINARY_STRING = 2`\n")
+path.write_text(text, encoding="utf-8")
+PY
+
+if scripts/verify-runtime-abi-docs.sh >/tmp/phpc-runtime-abi-docs-test.out 2>/tmp/phpc-runtime-abi-docs-test.err; then
+  echo "verify-runtime-abi-docs.sh accepted a runtime constant value mismatch" >&2
+  exit 1
+fi
+
+if ! grep -F "PHPC_VALUE_KIND_BINARY_STRING documented=2 source=1" /tmp/phpc-runtime-abi-docs-test.err >/dev/null; then
+  echo "verify-runtime-abi-docs.sh failed without the expected wrong-value diagnostic" >&2
+  cat /tmp/phpc-runtime-abi-docs-test.err >&2
+  exit 1
+fi
+
+cp "$abi_backup" docs/NATIVE_RUNTIME_ABI.md
+scripts/verify-runtime-abi-docs.sh

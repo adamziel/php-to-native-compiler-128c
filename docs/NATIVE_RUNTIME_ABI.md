@@ -12,6 +12,20 @@ Existing exported helpers:
 - `phpc_binary_string_data(handle, out_len) -> ptr`
 - `phpc_value_free(handle) -> status`
 
+## Runtime Constants
+
+Value kinds:
+
+- `PHPC_VALUE_KIND_INVALID = -1`
+- `PHPC_VALUE_KIND_NULL = 0`
+- `PHPC_VALUE_KIND_BINARY_STRING = 1`
+
+Status codes:
+
+- `PHPC_STATUS_OK = 0`
+- `PHPC_STATUS_INVALID_HANDLE = -1`
+- `PHPC_STATUS_INVALID_ARGUMENT = -2`
+
 ## Value Handle Ownership
 
 - `0` is an invalid handle and is never returned for a successful allocation.
