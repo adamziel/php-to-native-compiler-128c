@@ -6,7 +6,8 @@ cd "$repo_root"
 
 tmpdir="$(mktemp -d)"
 integration_backup="$(mktemp)"
-trap 'cp "$integration_backup" swarm/integration.md; rm -rf "$tmpdir"; rm -f "$integration_backup"' EXIT
+queue_backup="$(mktemp)"
+trap 'cp "$integration_backup" swarm/integration.md; cp "$queue_backup" swarm/queue.md; rm -rf "$tmpdir"; rm -f "$integration_backup" "$queue_backup"' EXIT
 
 php_core_fixture="$tmpdir/php-core-manifest.json"
 wordpress_fixture="$tmpdir/wordpress-manifest.json"
@@ -14,6 +15,7 @@ out_file="$tmpdir/status-gate.out"
 err_file="$tmpdir/status-gate.err"
 
 cp swarm/integration.md "$integration_backup"
+cp swarm/queue.md "$queue_backup"
 
 reset_fixtures() {
   cp swarm/php-core-manifest.json "$php_core_fixture"
@@ -22,6 +24,10 @@ reset_fixtures() {
 
 restore_integration() {
   cp "$integration_backup" swarm/integration.md
+}
+
+restore_queue() {
+  cp "$queue_backup" swarm/queue.md
 }
 
 run_fixture_gate() {
@@ -117,6 +123,43 @@ expect_fixture_failure \
 
 reset_fixtures
 restore_integration
+restore_queue
+
+python3 - <<'PY'
+from pathlib import Path
+
+path = Path("swarm/queue.md")
+text = path.read_text(encoding="utf-8")
+text = text.replace(
+    "| Q-008 | verified | M5 | PHPT-02/PHPT-06 | Implement minimal `.phpt` section parser | Verified on current `main`: parser covers TEST/FILE/FILEEOF/EXPECT/EXPECTF/EXPECTREGEX/SKIPIF metadata; exact-EXPECT execution remains the runnable subset |",
+    "| Q-008 | ready | M5 | PHPT-02 | Implement minimal `.phpt` section parser | Tests for TEST/FILE/EXPECT/SKIPIF |",
+)
+path.write_text(text, encoding="utf-8")
+PY
+
+expect_status_failure \
+  "queue contains obsolete pre-FILEEOF .phpt parser wording" \
+  "obsolete pre-FILEEOF queue wording"
+
+restore_queue
+
+python3 - <<'PY'
+from pathlib import Path
+
+path = Path("swarm/queue.md")
+text = path.read_text(encoding="utf-8")
+text = text.replace(
+    "| Q-010 | verified | M6 | WP-06/INT-04 | Build first WordPress bootstrap runner design | Verified on current `main`: `phpc wordpress-bootstrap-check` inventories pinned entrypoints and classifies the current `wp-settings.php` blocker as a general PHP parser gap |",
+    "| Q-010 | ready | M6 | WP-02 | Build first WordPress bootstrap runner design | First blocker classified as general compiler gap |",
+)
+path.write_text(text, encoding="utf-8")
+PY
+
+expect_status_failure \
+  "queue advertises WordPress bootstrap-check design as ready after bootstrap_check exists" \
+  "ready WordPress bootstrap-check design after manifest bootstrap_check"
+
+restore_queue
 
 python3 - <<'PY'
 from pathlib import Path

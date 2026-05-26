@@ -11,9 +11,9 @@ States: `ready`, `assigned`, `blocked`, `review`, `integration`, `verified`, `re
 | Q-005 | ready | M2 | ABI-01 | Define runtime value handle ownership model | Runtime tests for null/free/invalid handles |
 | Q-006 | verified | M3 | LINK-02 | Design and implement first linked native executable path | Verified on current `main`: `phpc compile <input.php> --emit-exe <output>` produces and runs a native executable for the bootstrap echo fixture |
 | Q-007 | ready | M5 | PHPT-01 | Pin php-src checkout and inventory `.phpt` denominator | `swarm/php-core-manifest.json` has source and counts |
-| Q-008 | ready | M5 | PHPT-02 | Implement minimal `.phpt` section parser | Tests for TEST/FILE/EXPECT/SKIPIF |
+| Q-008 | verified | M5 | PHPT-02/PHPT-06 | Implement minimal `.phpt` section parser | Verified on current `main`: parser covers TEST/FILE/FILEEOF/EXPECT/EXPECTF/EXPECTREGEX/SKIPIF metadata; exact-EXPECT execution remains the runnable subset |
 | Q-009 | ready | M6 | WP-01 | Pin WordPress source outside repo | `swarm/wordpress-manifest.json` has source/version/path |
-| Q-010 | ready | M6 | WP-02 | Build first WordPress bootstrap runner design | First blocker classified as general compiler gap |
+| Q-010 | verified | M6 | WP-06/INT-04 | Build first WordPress bootstrap runner design | Verified on current `main`: `phpc wordpress-bootstrap-check` inventories pinned entrypoints and classifies the current `wp-settings.php` blocker as a general PHP parser gap |
 | Q-011 | ready | M1 | SEM-01 | Specify RPR/DMB/CCA mechanisms from scratch | Architecture note and test plan |
 | Q-012 | ready | M4 | LOW-05 | Implement arrays roadmap and first fixtures | Failing tests or passing first slice |
 | Q-013 | ready | M4 | LOW-07 | Implement functions/call frame roadmap and first fixtures | Failing tests or passing first slice |

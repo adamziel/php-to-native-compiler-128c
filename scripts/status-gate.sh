@@ -78,10 +78,19 @@ if missing != 0:
     raise SystemExit("wordpress inventory must not report missing pinned entrypoints")
 
 integration = Path("swarm/integration.md").read_text(encoding="utf-8")
+queue = Path("swarm/queue.md").read_text(encoding="utf-8")
 if "native executable support is still 0%" in integration:
     raise SystemExit("integration log contains obsolete pre-M3 native-support wording")
 if "Keep `--emit-exe` explicitly unsupported" in integration:
     raise SystemExit("integration log contains obsolete pre-M3 emit-exe wording")
+if "Tests for TEST/FILE/EXPECT/SKIPIF" in queue:
+    raise SystemExit("queue contains obsolete pre-FILEEOF .phpt parser wording")
+if (
+    wordpress.get("results", {}).get("bootstrap_check")
+    and "Build first WordPress bootstrap runner design" in queue
+    and "| Q-010 | ready " in queue
+):
+    raise SystemExit("queue advertises WordPress bootstrap-check design as ready after bootstrap_check exists")
 
 terminal_lanes = set()
 reviewed_lanes = set()

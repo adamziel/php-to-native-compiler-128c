@@ -1,20 +1,21 @@
-summary: Rebased INT-01 onto current `main` with the first M3 linked executable plumbing, then tightened integration/status hygiene around that new baseline. `swarm/queue.md` now marks Q-016 verified instead of active integration work, `swarm/integration.md` no longer advertises reviewed committed candidates or pre-M3 `--emit-exe` unsupported wording, and `scripts/status-gate.sh` now fails if those stale states return.
+summary: Reviewed current `main` after the PHPT `FILEEOF` and WordPress bootstrap-check integrations and tightened queue/status hygiene. `swarm/queue.md` now marks the PHPT parser slice and first WordPress bootstrap-check design slice as verified against the current integrated behavior instead of advertising stale ready work. `scripts/status-gate.sh` now fails if the queue regresses to pre-`FILEEOF` parser wording or claims the first WordPress bootstrap-check design is still ready after `swarm/wordpress-manifest.json` has `results.bootstrap_check`.
 
 files changed:
 - `scripts/status-gate.sh`
 - `scripts/test-status-gate.sh`
-- `swarm/integration.md`
 - `swarm/queue.md`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/status-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/test-status-gate.sh`
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/local-gate.sh`
 - `git diff --check`
 
 pass/fail state: pass
 
-blockers: none for this integration-safety slice. M3 has first linked executable plumbing only for the tested literal echo denominator; broader native lowering, php-src execution, and WordPress bootstrap remain separate work.
+blockers: none for this integration-safety slice. M5 still has only the minimal exact-EXPECT runnable subset, and M6 remains blocked at the general PHP `define( 'WPINC', 'wp-includes' )` parser gap.
 
-latest commit: branch HEAD for this slice (`Retire stale integration review status`)
+latest commit: branch HEAD for this slice (`Retire stale PHPT and WordPress queue wording`)
 
-next suggested slice: Add a queue/status consistency check that verified or rejected queue items cannot also be advertised in active integration prose or active candidate tables.
+next suggested slice: Add a queue/status consistency check that reviewed lanes in `swarm/integration.md` cannot remain listed by exact lane id in active priority rows once their accepted subset has landed.
