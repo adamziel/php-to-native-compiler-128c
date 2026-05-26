@@ -185,12 +185,12 @@ tmp="$(mktemp)"
   echo "| Milestone | Denominator | Current | Status |"
   echo "| --- | --- | ---: | --- |"
   echo "| M1 COW shared mechanisms | RPR, DMB, CCA, regression matrix | 0% | Not started |"
-  echo "| M2 runtime value ABI | value kinds and ownership semantics | 3% | Runtime-owned null and binary-string handles integrated |"
+  echo "| M2 runtime value ABI | value kinds, ownership, and request state | 4% | Runtime-owned value handles plus request header storage integrated |"
   echo "| M3 linked native execution | compile, link, run, compare | 1% | First linked executable path for supported echo literals integrated |"
   echo "| M4 native lowering | interpreter-supported constructs lowered or rejected | 2% | String and integer echo literals; explicit variable diagnostic |"
   echo "| M5 PHP core .phpt harness | PHP-8.3 branch, ${php_phpt_total_display} \`.phpt\` files | 3% | PHP-8.3 inventory pinned; minimal parser and exact-EXPECT phpc runner integrated |"
   echo "| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress ${wp_version} pinned; ${wp_entrypoints} entrypoints present; ${wp_bootstrap_summary} |"
-  echo "| M7 object/SAPI/DB generality | required semantic families | 0% | Queued |"
+  echo "| M7 object/SAPI/DB generality | required semantic families | 1% | Request header runtime state integrated; PHP header() wiring queued |"
   echo "| M8 performance after correctness | truthful native benchmarks | 0% | Deferred |"
   echo
   echo "## Latest Verification"
@@ -266,7 +266,7 @@ tmp="$(mktemp)"
       <thead><tr><th>Milestone</th><th>Progress</th><th>Denominator</th><th>Status</th></tr></thead>
       <tbody>
         <tr><td>M1 COW mechanisms</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>RPR, DMB, CCA, regression matrix</td><td>Not started</td></tr>
-        <tr><td>M2 runtime ABI</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>PHP value kinds and ownership semantics</td><td>Runtime-owned null and binary-string handles integrated</td></tr>
+        <tr><td>M2 runtime ABI</td><td><div class="bar"><span style="width:4%"></span></div>4%</td><td>PHP value kinds, ownership, and request state</td><td>Runtime-owned value handles plus request header storage integrated</td></tr>
         <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>compile, link, run, compare</td><td>First linked executable path for supported echo literals integrated</td></tr>
         <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>interpreter-supported constructs</td><td>String and integer echo literals; explicit variable diagnostic</td></tr>
         <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files</td><td>Static inventory pinned; minimal parser and exact-EXPECT phpc runner integrated</td></tr>
