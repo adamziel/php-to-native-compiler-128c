@@ -24,6 +24,7 @@ php_core_manifest_path = os.environ.get(
 wordpress_manifest_path = os.environ.get(
     "WORDPRESS_MANIFEST_PATH", "swarm/wordpress-manifest.json"
 )
+handoff_dir = Path(os.environ.get("PHPC_HANDOFF_DIR", "swarm/handoffs"))
 
 php_core = load_json(php_core_manifest_path)
 denominator = php_core.get("denominator", {})
@@ -112,6 +113,18 @@ if unisolated_cargo_rows:
         "test matrix cargo verification commands missing CARGO_TARGET_DIR: "
         + ", ".join(unisolated_cargo_rows)
     )
+
+if handoff_dir.is_dir():
+    stale_handoffs = sorted(
+        path.name
+        for path in handoff_dir.glob("*.md")
+        if "Pending until commit" in path.read_text(encoding="utf-8")
+    )
+    if stale_handoffs:
+        raise SystemExit(
+            "handoffs contain unresolved latest-commit placeholders: "
+            + ", ".join(stale_handoffs)
+        )
 
 terminal_lanes = set()
 reviewed_lanes = set()

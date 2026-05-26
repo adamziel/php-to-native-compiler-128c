@@ -12,6 +12,7 @@ trap 'cp "$integration_backup" swarm/integration.md; cp "$queue_backup" swarm/qu
 
 php_core_fixture="$tmpdir/php-core-manifest.json"
 wordpress_fixture="$tmpdir/wordpress-manifest.json"
+handoff_fixture="$tmpdir/handoffs"
 out_file="$tmpdir/status-gate.out"
 err_file="$tmpdir/status-gate.err"
 
@@ -22,6 +23,9 @@ cp swarm/test-matrix.md "$test_matrix_backup"
 reset_fixtures() {
   cp swarm/php-core-manifest.json "$php_core_fixture"
   cp swarm/wordpress-manifest.json "$wordpress_fixture"
+  rm -rf "$handoff_fixture"
+  mkdir -p "$handoff_fixture"
+  cp swarm/handoffs/INT-06.md "$handoff_fixture/INT-06.md"
 }
 
 restore_integration() {
@@ -39,6 +43,7 @@ restore_test_matrix() {
 run_fixture_gate() {
   PHP_CORE_MANIFEST_PATH="$php_core_fixture" \
     WORDPRESS_MANIFEST_PATH="$wordpress_fixture" \
+    PHPC_HANDOFF_DIR="$handoff_fixture" \
     scripts/status-gate.sh
 }
 
@@ -92,6 +97,20 @@ PY
 expect_fixture_failure \
   "denominator.mapped must match denominator.total_phpt" \
   "a mismatched php-core denominator"
+
+reset_fixtures
+
+cat >"$handoff_fixture/INT-05.md" <<'EOF'
+# INT-05 Handoff
+
+## Latest Commit
+
+- Pending until commit.
+EOF
+
+expect_fixture_failure \
+  "handoffs contain unresolved latest-commit placeholders: INT-05.md" \
+  "a handoff with an unresolved latest-commit placeholder"
 
 reset_fixtures
 
