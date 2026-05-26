@@ -573,6 +573,17 @@ mod tests {
     }
 
     #[test]
+    fn rejects_literal_include_require_without_semicolon() {
+        for source in [
+            "<?php include 'bootstrap.php' echo 'after';",
+            "<?php require 'bootstrap.php' echo 'after';",
+        ] {
+            let err = parse_php(source).unwrap_err();
+            assert_eq!(err, "expected semicolon after include/require statement", "{source}");
+        }
+    }
+
+    #[test]
     fn rejects_include_once_with_precise_unsupported_diagnostic() {
         let err = parse_php("<?php include_once 'bootstrap.php';").unwrap_err();
         assert_eq!(
