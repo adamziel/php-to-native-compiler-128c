@@ -50,6 +50,8 @@ pub fn compile_php_executable(
     output_path: &Path,
     runtime_lib: &Path,
 ) -> Result<(), String> {
+    let _ = fs::remove_file(output_path);
+
     if !runtime_lib.is_file() {
         return Err(format!(
             "native runtime archive not found: {}",

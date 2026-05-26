@@ -1,31 +1,35 @@
 # INT-01 Handoff
 
 summary:
-- Milestone: Integration / coordination safety and small CLI test coverage.
-- Started from clean `lane/INT-01-fresh-0528`, which already contained the prior coherent CLI test slice.
-- Fixed branch hygiene for this worktree by preserving the stale inactive `lane/INT-01` ref as `lane/INT-01-legacy-0526` and renaming the active worktree branch to `lane/INT-01`.
-- Added focused CLI coverage proving `phpc compile <input> --emit-exe <output> <extra>` rejects the malformed argument list without producing stdout.
-- This slice is intentionally test-only and does not change compiler/runtime semantics, WordPress behavior, PHP-core denominator, launcher behavior, or generated progress output.
+- Milestone: Integration / coordination safety for linked native execution.
+- Preserved the stale prior lane state at `lane/INT-01-archive-0559`, then recreated and checked out `lane/INT-01` from current `origin/main`.
+- Added stale-output cleanup for `phpc compile <input> --emit-exe <output>`: a failed native compile with a missing runtime archive now removes any pre-existing output path before returning the error.
+- Added focused CLI coverage for the missing-runtime archive failure so old native executables are not left behind after a failed compile.
+- No WordPress behavior, PHP-core denominator, launcher behavior, generated progress output, or broad native support claim changed.
 
 files changed:
+- `crates/phpc_core/src/lib.rs`
 - `crates/phpc/tests/bootstrap_cli.rs`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_exe_rejects_extra_arguments_after_output_path`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh` first failed before the branch rename with `current branch must be lane/INT-01 for lane INT-01, got lane/INT-01-fresh-0528`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
+- `git status --short --branch`
+- `git fetch origin`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_exe_removes_stale_output_when_runtime_archive_is_missing`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`
+- `git diff --check`
 
 pass/fail state:
-- PASS: focused CLI regression rejects extra `compile --emit-exe` arguments with no stdout and the existing unsupported-flags diagnostic.
-- PASS after branch hygiene fix: local coordination gate, including worker-env lane check, status checks, runtime ABI docs, launcher observability, and full locked workspace tests.
-- PASS: full locked workspace tests reported 23 runtime, 18 CLI, and 76 core tests passing.
+- PASS: prior ahead state was preserved on `lane/INT-01-archive-0559` before recreating `lane/INT-01` from `origin/main`.
+- PASS: focused stale-output regression fails the compile on a missing runtime archive, emits no stdout, and removes the stale output path.
+- PASS: full `bootstrap_cli` test target reported 20 tests passing.
+- PASS: `git diff --check`.
 
 blockers:
 - None for this integration-safety slice.
 
 latest commit:
-- `HEAD` Cover emit-exe extra CLI args
+- `HEAD` after commit: Cover stale native output cleanup
 
 next suggested slice:
-- Keep INT-01 focused on gate hygiene and small CLI/test coverage gaps; candidate follow-up is checking whether the stale `lane/INT-01-*` refs should be archived in a documented integration pass.
+- Keep INT-01 focused on integration safety; a useful follow-up is checking whether failed native links after temporary IR creation also need explicit stale-output cleanup coverage.

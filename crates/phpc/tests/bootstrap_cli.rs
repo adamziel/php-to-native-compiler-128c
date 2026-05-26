@@ -151,6 +151,33 @@ fn cli_compile_emit_exe_rejects_extra_arguments_after_output_path() {
 }
 
 #[test]
+fn cli_compile_emit_exe_removes_stale_output_when_runtime_archive_is_missing() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let dir = unique_temp_dir("phpc-stale-native-output");
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let output_path = dir.join("stale-native");
+    std::fs::write(&output_path, "old executable contents").expect("write stale output");
+
+    let output = Command::new(exe)
+        .env("PHPC_RUNTIME_LIB", dir.join("missing-libphp_runtime.a"))
+        .args(["compile", BOOTSTRAP_HELLO, "--emit-exe"])
+        .arg(&output_path)
+        .output()
+        .expect("run phpc compile --emit-exe with missing runtime archive");
+
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("native runtime archive not found"));
+    assert!(output.stdout.is_empty());
+    assert!(
+        !output_path.exists(),
+        "failed compile left stale output at {}",
+        output_path.display()
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn cli_emits_linked_native_executable_for_bootstrap_echo() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let runtime_lib = build_runtime_archive();
