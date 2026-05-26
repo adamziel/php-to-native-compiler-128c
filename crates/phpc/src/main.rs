@@ -72,7 +72,7 @@ fn real_main() -> Result<ExitCode, String> {
                 .map_err(|err| format!("failed to parse {}: {err}", input.display()))?;
             let base_dir = input.parent().unwrap_or_else(|| Path::new("."));
             let report = run_phpt_with_phpc_in_dir(&test, base_dir);
-            print_phpt_run_report(&input, &report);
+            print_phpt_run_report(&input, test.test_name(), &report);
             Ok(ExitCode::SUCCESS)
         }
         "--help" | "-h" | "help" => {
@@ -176,9 +176,12 @@ fn wordpress_bootstrap_check(root: &Path) -> Result<String, String> {
     Ok(report)
 }
 
-fn print_phpt_run_report(input: &Path, report: &PhptRunReport) {
+fn print_phpt_run_report(input: &Path, test_name: Option<&str>, report: &PhptRunReport) {
     println!("phpt_run");
     println!("path={}", input.display());
+    if let Some(test_name) = test_name {
+        println!("test_name={}", escape_report_value(test_name));
+    }
     println!("runner=phpc_run");
     match &report.status {
         PhptRunStatus::Pass => println!("status=pass"),
@@ -210,6 +213,10 @@ fn print_phpt_run_report(input: &Path, report: &PhptRunReport) {
     if report.metadata.xfail.is_some() {
         println!("has_xfail=true");
     }
+}
+
+fn escape_report_value(value: &str) -> String {
+    value.replace('\\', "\\\\").replace('\r', "\\r").replace('\n', "\\n")
 }
 
 fn print_help() {

@@ -122,6 +122,7 @@ fn cli_runs_minimal_phpt_with_phpc_runner() {
     );
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("phpt_run\n"));
+    assert!(stdout.contains("test_name=Trivial \"Hello World\" test\n"));
     assert!(stdout.contains("runner=phpc_run\n"));
     assert!(stdout.contains("status=pass\n"));
     assert!(stdout.contains("expected_stdout_len=11\n"));
