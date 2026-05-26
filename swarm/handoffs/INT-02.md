@@ -3,9 +3,9 @@
 ## Summary
 
 - Milestone: Integration / coordination safety.
-- Started fresh from current `origin/main` on `lane/INT-02-fresh-0443`; fast-forwarded after `origin/main` advanced before commit.
-- Made `scripts/check-lane-integration.sh` classify unrelated-history lane candidates as `unsafe-to-merge` with a clear `merge-base: none` diagnostic instead of exiting early from `git merge-base` under `set -e`.
-- Extended the focused lane integration regression to cover an orphan `lane/unrelated-history` candidate.
+- Started fresh from current `origin/main` on `lane/INT-02-fresh-0454`.
+- Made `scripts/check-lane-integration.sh` reject ambiguous unqualified target names when both `<name>` and `lane/<name>` resolve to different commits, with a diagnostic that asks for an explicit ref.
+- Extended the focused lane integration regression to cover the ambiguous-ref branch hygiene case.
 - No compiler, runtime, native lowering, PHP-core denominator, or WordPress behavior changed.
 
 ## Files Changed
@@ -22,7 +22,7 @@
 
 ## Pass/Fail State
 
-- PASS: focused lane integration regression, including unrelated-history rejection.
+- PASS: focused lane integration regression, including ambiguous unqualified target rejection.
 - PASS: `scripts/local-gate.sh`, including status checks, ABI doc checks, launcher observability, worker env checks, lane integration checker tests, full workspace `cargo test`, and diff hygiene.
 - PASS: `git diff --check`.
 
@@ -32,7 +32,7 @@
 
 ## Latest Commit
 
-- This commit: `Classify unrelated lane histories`.
+- This commit: `Reject ambiguous lane integration targets`.
 
 ## Next Suggested Slice
 

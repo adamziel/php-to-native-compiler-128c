@@ -91,6 +91,16 @@ scripts/check-lane-integration.sh lane/review main > review.out
 grep -F "handoff: present swarm/handoffs/review.md" review.out >/dev/null
 grep -F "classification: review-required" review.out >/dev/null
 
+git branch review main
+if scripts/check-lane-integration.sh review main > ambiguous.out 2> ambiguous.err; then
+  echo "check-lane-integration.sh accepted an ambiguous unqualified target" >&2
+  cat ambiguous.out >&2
+  cat ambiguous.err >&2
+  exit 1
+fi
+grep -F "ambiguous target ref: review matches both review and lane/review" ambiguous.err >/dev/null
+grep -F "use an explicit ref such as lane/review" ambiguous.err >/dev/null
+
 git switch -q -c lane/INT-02-fresh-0409 main
 printf 'fresh\n' > fresh.txt
 git add fresh.txt

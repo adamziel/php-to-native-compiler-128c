@@ -23,13 +23,24 @@ main_ref="${2:-origin/main}"
 
 resolve_ref() {
   local input="$1"
-  if git rev-parse --verify --quiet "${input}^{commit}" >/dev/null; then
-    printf '%s\n' "$input"
-    return
+  local direct_commit=""
+  local lane_commit=""
+
+  direct_commit="$(git rev-parse --verify --quiet "${input}^{commit}" || true)"
+  lane_commit="$(git rev-parse --verify --quiet "lane/${input}^{commit}" || true)"
+
+  if [[ -n "$direct_commit" && -n "$lane_commit" && "$direct_commit" != "$lane_commit" ]]; then
+    echo "lane integration check: ambiguous target ref: ${input} matches both ${input} and lane/${input}" >&2
+    echo "lane integration check: use an explicit ref such as lane/${input}" >&2
+    return 2
   fi
-  if git rev-parse --verify --quiet "lane/${input}^{commit}" >/dev/null; then
+  if [[ -n "$direct_commit" ]]; then
+    printf '%s\n' "$input"
+    return 0
+  fi
+  if [[ -n "$lane_commit" ]]; then
     printf '%s\n' "lane/${input}"
-    return
+    return 0
   fi
   return 1
 }
@@ -39,7 +50,12 @@ if ! git rev-parse --verify --quiet "${main_ref}^{commit}" >/dev/null; then
   exit 2
 fi
 
-if ! target_ref="$(resolve_ref "$target_input")"; then
+target_ref_status=0
+target_ref="$(resolve_ref "$target_input")" || target_ref_status=$?
+if [[ "$target_ref_status" -ne 0 ]]; then
+  if [[ "$target_ref_status" -eq 2 ]]; then
+    exit 2
+  fi
   echo "lane integration check: target ref not found: ${target_input}" >&2
   exit 2
 fi
