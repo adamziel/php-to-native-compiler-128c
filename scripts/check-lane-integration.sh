@@ -62,6 +62,7 @@ fi
 
 main_commit="$(git rev-parse "${main_ref}^{commit}")"
 target_commit="$(git rev-parse "${target_ref}^{commit}")"
+target_full_ref="$(git rev-parse --symbolic-full-name --quiet "$target_ref" || true)"
 if [[ "$main_ref" == "$target_ref" ]]; then
   echo "lane integration check: main ref and target ref are identical: ${main_ref}" >&2
   echo "lane integration check: use the current integration base, usually origin/main, as main-ref" >&2
@@ -96,6 +97,27 @@ if [[ -f "$handoff" ]]; then
   echo "handoff: present ${handoff}"
 else
   echo "handoff: missing ${handoff}"
+fi
+
+if [[ "$target_full_ref" == refs/heads/* ]]; then
+  current_worktree=""
+  current_branch=""
+  while IFS= read -r line; do
+    if [[ "$line" == worktree\ * ]]; then
+      current_worktree="${line#worktree }"
+      current_branch=""
+      continue
+    fi
+    if [[ "$line" == branch\ * ]]; then
+      current_branch="${line#branch }"
+      if [[ "$current_branch" == "$target_full_ref" && -n "$(git -C "$current_worktree" status --porcelain)" ]]; then
+        echo "worktree: dirty ${current_worktree}"
+        echo "classification: unsafe-to-merge"
+        echo "action: finish, commit, or hand off dirty work in the checked-out lane worktree before integration."
+        exit 1
+      fi
+    fi
+  done < <(git worktree list --porcelain)
 fi
 
 if git merge-base --is-ancestor "$target_commit" "$main_commit"; then

@@ -45,6 +45,7 @@ grep -F "classification: stale-equivalent" stale.out >/dev/null
 
 git switch -q -c lane/no-net-diff main
 git commit -q --allow-empty -m no-net-diff
+git switch -q main
 scripts/check-lane-integration.sh lane/no-net-diff main > no-net-diff.out
 grep -F "classification: no-net-diff" no-net-diff.out >/dev/null
 
@@ -87,9 +88,27 @@ git add review.txt
 git commit -q -m review
 printf '# handoff\n' > swarm/handoffs/review.md
 
+git switch -q main
 scripts/check-lane-integration.sh lane/review main > review.out
 grep -F "handoff: present swarm/handoffs/review.md" review.out >/dev/null
 grep -F "classification: review-required" review.out >/dev/null
+
+printf '# dirty handoff\n' > swarm/handoffs/dirty.md
+git worktree add -q -b lane/dirty "$tmpdir/dirty-worktree" main
+printf 'dirty committed\n' > "$tmpdir/dirty-worktree/dirty.txt"
+git -C "$tmpdir/dirty-worktree" add dirty.txt
+git -C "$tmpdir/dirty-worktree" commit -q -m dirty-committed
+printf 'uncommitted\n' >> "$tmpdir/dirty-worktree/dirty.txt"
+
+if scripts/check-lane-integration.sh lane/dirty main > dirty-worktree.out 2> dirty-worktree.err; then
+  echo "check-lane-integration.sh accepted a checked-out dirty lane worktree" >&2
+  cat dirty-worktree.out >&2
+  cat dirty-worktree.err >&2
+  exit 1
+fi
+grep -F "worktree: dirty $tmpdir/dirty-worktree" dirty-worktree.out >/dev/null
+grep -F "classification: unsafe-to-merge" dirty-worktree.out >/dev/null
+grep -F "finish, commit, or hand off dirty work" dirty-worktree.out >/dev/null
 
 set +e
 scripts/check-lane-integration.sh lane/review lane/review > same-ref.out 2> same-ref.err
@@ -120,6 +139,7 @@ git add fresh.txt
 git commit -q -m fresh
 printf '# base worker handoff\n' > swarm/handoffs/INT-02.md
 
+git switch -q main
 scripts/check-lane-integration.sh lane/INT-02-fresh-0409 main > fresh.out
 grep -F "handoff: present swarm/handoffs/INT-02.md" fresh.out >/dev/null
 grep -F "classification: review-required" fresh.out >/dev/null
@@ -129,6 +149,7 @@ printf 'missing handoff\n' > missing-handoff.txt
 git add missing-handoff.txt
 git commit -q -m missing-handoff
 
+git switch -q main
 if scripts/check-lane-integration.sh lane/missing-handoff main > missing-handoff.out 2> missing-handoff.err; then
   echo "check-lane-integration.sh accepted a review lane without a handoff" >&2
   cat missing-handoff.out >&2
