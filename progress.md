@@ -1,13 +1,13 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T02:51:02Z
+Last refreshed: 2026-05-26T02:51:45Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `8cd2172`
-- Dirty entries: `0`
+- Report base HEAD: `5e8aa3b`
+- Dirty entries: `2`
 - tmux windows in `phpc-swarm`: `4`
 - Supervised agents target: `100 workers`
 - Interactive launch cadence: `480s`
@@ -27,12 +27,12 @@ Last refreshed: 2026-05-26T02:51:02Z
 | Milestone | Denominator | Current | Status |
 | --- | --- | ---: | --- |
 | M1 COW shared mechanisms | RPR, DMB, CCA, regression matrix | 0% | Not started |
-| M2 runtime value ABI | value kinds and ownership semantics | 3% | Runtime-owned null and binary-string handles integrated |
+| M2 runtime value ABI | value kinds, ownership, and request state | 4% | Runtime-owned value handles plus request header storage integrated |
 | M3 linked native execution | compile, link, run, compare | 1% | First linked executable path for supported echo literals integrated |
 | M4 native lowering | interpreter-supported constructs lowered or rejected | 2% | String and integer echo literals; explicit variable diagnostic |
 | M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files | 3% | PHP-8.3 inventory pinned; minimal parser and exact-EXPECT phpc runner integrated |
 | M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; 5 entrypoints present; bootstrap check blocked in wp-settings.php |
-| M7 object/SAPI/DB generality | required semantic families | 0% | Queued |
+| M7 object/SAPI/DB generality | required semantic families | 1% | Request header runtime state integrated; PHP header() wiring queued |
 | M8 performance after correctness | truthful native benchmarks | 0% | Deferred |
 
 ## Latest Verification
