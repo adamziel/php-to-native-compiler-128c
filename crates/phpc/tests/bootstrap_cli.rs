@@ -354,6 +354,20 @@ fn cli_reports_wordpress_bootstrap_general_php_gap() {
     );
 }
 
+#[test]
+fn cli_wordpress_bootstrap_check_rejects_trailing_arguments() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let output = Command::new(exe)
+        .args(["wordpress-bootstrap-check", "/tmp/nonexistent-wordpress", "--emit-ir"])
+        .output()
+        .expect("run phpc wordpress bootstrap check");
+
+    assert!(!output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+    assert!(String::from_utf8_lossy(&output.stderr)
+        .contains("unsupported trailing arguments: --emit-ir"));
+}
+
 fn system_php_output(path: impl AsRef<std::ffi::OsStr>) -> Option<std::process::Output> {
     Command::new("php").arg(path).output().ok()
 }
