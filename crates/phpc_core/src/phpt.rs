@@ -21,6 +21,14 @@ pub struct PhptMetadata {
     pub xfail: Option<PhptXfail>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PhptHarnessInput {
+    pub name: Option<String>,
+    pub file: String,
+    pub expect: String,
+    pub metadata: PhptMetadata,
+}
+
 impl PhptTest {
     pub fn section(&self, name: &str) -> Option<&str> {
         self.sections
@@ -57,6 +65,22 @@ impl PhptTest {
                 reason: normalize_metadata_reason(reason),
             }),
         }
+    }
+
+    pub fn harness_input(&self) -> Result<PhptHarnessInput, String> {
+        let file = self
+            .file()
+            .ok_or_else(|| "cannot build .phpt harness input without FILE section".to_string())?;
+        let expect = self
+            .expect()
+            .ok_or_else(|| "cannot build .phpt harness input without EXPECT section".to_string())?;
+
+        Ok(PhptHarnessInput {
+            name: self.test_name().map(str::to_string),
+            file: file.to_string(),
+            expect: expect.to_string(),
+            metadata: self.metadata(),
+        })
     }
 }
 
@@ -184,6 +208,41 @@ mod tests {
                 reason: "known upstream failure\nrequires ext/example".to_string()
             })
         );
+    }
+
+    #[test]
+    fn builds_harness_input_with_static_metadata() {
+        let phpt = parse_phpt(
+            "--TEST--\nharness input\n--SKIPIF--\n<?php die('skip optional extension'); ?>\n--XFAIL--\nknown gap\n--FILE--\n<?php echo \"ok\";\n--EXPECT--\nok\n",
+        )
+        .unwrap();
+
+        let input = phpt.harness_input().unwrap();
+
+        assert_eq!(input.name, Some("harness input".to_string()));
+        assert_eq!(input.file, "<?php echo \"ok\";\n");
+        assert_eq!(input.expect, "ok\n");
+        assert_eq!(
+            input.metadata.skip,
+            Some(PhptSkip {
+                script: "<?php die('skip optional extension'); ?>\n".to_string()
+            })
+        );
+        assert_eq!(
+            input.metadata.xfail,
+            Some(PhptXfail {
+                reason: "known gap".to_string()
+            })
+        );
+    }
+
+    #[test]
+    fn rejects_harness_input_without_expected_output() {
+        let phpt = parse_phpt("--TEST--\nmissing expect\n--FILE--\n<?php echo \"ok\";\n").unwrap();
+
+        let err = phpt.harness_input().unwrap_err();
+
+        assert!(err.contains("EXPECT section"));
     }
 
     #[test]

@@ -36,3 +36,8 @@ Narrow denominator: CLI-visible M3 unsupported-mode behavior for the bootstrap f
 ## Next Suggested Slice
 
 Add a matching CLI gate for `--emit-asm`, or review an existing LINK lane implementation slice and integrate only if it produces and runs an executable without shelling out to generated fixtures or counting scaffolding as native progress.
+
+follow-up integration:
+- Integrated `5ab2077 Gate unsupported native asm CLI mode` from INT-04.
+- `phpc compile --emit-asm` now has the same truthfulness coverage as `--emit-exe`: it must fail explicitly until real M3 native output exists and must not emit stdout.
+- Verification: `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`.

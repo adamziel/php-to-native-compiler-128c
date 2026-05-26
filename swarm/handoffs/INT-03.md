@@ -33,3 +33,8 @@ integration note:
 
 next suggested slice:
 - PHPT-04/system PHP oracle runner can consume `PhptTest::metadata()` and record actual skip/XFAIL classification without inflating native compiler progress.
+
+follow-up integration:
+- Integrated `af79ce5 Add PHPT harness input builder` from INT-03.
+- `PhptTest::harness_input()` requires `FILE` and `EXPECT`, copies the test name, and carries `PhptTest::metadata()` without executing `SKIPIF`, applying `XFAIL`, or changing runnable/native progress counts.
+- Verification: `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core phpt::tests`.

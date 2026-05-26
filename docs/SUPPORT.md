@@ -14,6 +14,7 @@
 
 - Minimal `.phpt` parser for `TEST`, `FILE`, `EXPECT`, and `SKIPIF` sections.
 - Static `.phpt` metadata model for `SKIPIF` scripts and `XFAIL` reasons; `SKIPIF` is parsed but not executed yet.
+- Parser-level `.phpt` harness input builder for tests with `FILE` and `EXPECT`; metadata is carried forward without outcome classification.
 
 ## Explicitly Unsupported
 
