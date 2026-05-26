@@ -582,6 +582,21 @@ mod tests {
     }
 
     #[test]
+    fn rejects_require_once_with_precise_unsupported_diagnostic() {
+        for source in [
+            "<?php require_once 'bootstrap.php';",
+            "<?php require_once APP_DIR . '/bootstrap.php';",
+        ] {
+            let err = parse_php(source).unwrap_err();
+            assert_eq!(
+                err,
+                "unsupported require_once statement: include_once/require_once execution is not implemented",
+                "{source}"
+            );
+        }
+    }
+
+    #[test]
     fn does_not_classify_include_keyword_prefixes_as_include_statements() {
         let err = parse_php("<?php include_path();").unwrap_err();
         assert_eq!(err, "unsupported PHP statement near `include_path();`");
