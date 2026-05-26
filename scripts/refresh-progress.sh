@@ -46,7 +46,16 @@ if tmux has-session -t =phpc-pages-reporter 2>/dev/null; then
 else
   pages_reporter="not running"
 fi
-if tmux has-session -t =phpc-swarm-launcher 2>/dev/null; then
+swarm_launcher_processes="$(
+  ps -eo args= |
+    awk '
+      index($0, "scripts/launch-swarm.sh phpc-swarm") &&
+      index($0, "awk") == 0 &&
+      index($0, "rg") == 0 { count++ }
+      END { print count + 0 }
+    '
+)"
+if tmux has-session -t =phpc-swarm-launcher 2>/dev/null || [ "$swarm_launcher_processes" != "0" ]; then
   swarm_launcher="running"
 else
   swarm_launcher="not running"
