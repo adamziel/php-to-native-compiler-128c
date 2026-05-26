@@ -2,7 +2,7 @@
 
 | Layer | Command | Current Status | Notes |
 | --- | --- | --- | --- |
-| Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-link02-port CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 42 tests passed on 2026-05-26: 12 runtime, 6 CLI, 24 core |
+| Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-phpt-run CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 48 tests passed on 2026-05-26: 12 runtime, 6 CLI, 30 core |
 | Bootstrap toolchain | `cargo --version`; `rustc --version`; `php --version`; `clang --version` | passing | cargo 1.75.0; rustc 1.75.0; PHP 8.3.6 CLI; Ubuntu clang 18.1.3 |
 | CLI run | `cargo run -p phpc -- run fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |
 | CLI compile IR | `cargo run -p phpc -- compile fixtures/bootstrap/hello.php --emit-ir` | passing | Emits placeholder IR |
@@ -12,6 +12,7 @@
 | CLI compile flag hygiene | `cargo test -p phpc --test bootstrap_cli cli_compile_rejects_conflicting_emit_flags` | passing | Conflicting compile emit flags fail explicitly with no stdout |
 | PHP oracle | `php fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |
 | `.phpt` parser | `cargo test -p phpc_core phpt::tests` | passing | Minimal TEST/FILE/EXPECT/EXPECTF/EXPECTREGEX/SKIPIF parser plus static metadata-carrying harness input |
+| `.phpt` phpc runner | `cargo test -p phpc_core phpt::tests` | passing | Minimal exact-EXPECT evaluator through `phpc run`; classifies pass/fail/xfail/unexpected-pass and explicit unsupported matcher/error outcomes |
 | PHPT-03 committed candidate review | `git merge-base --is-ancestor 0cbd609 main`; inspect `main:crates/phpc_core/src/phpt.rs`; run `scripts/local-gate.sh` on current `main` | verified | Current `main` already contains accepted parser-level `SKIPIF`/`XFAIL` metadata behavior; standalone `ea96852` candidate should not be reapplied |
 | Progress labels | `scripts/test-refresh-progress-labels.sh` | passing | Guards tool-neutral public status labels in generated progress output |
 | WP-12 committed candidate review | `git merge-base --is-ancestor 348ad3b main`; compare WP-12 manifest hashes with `/home/ubuntu/phpc-external/wordpress/wordpress` | verified | Current `main` lacks the per-entry byte/SHA inventory; WP-12 evidence matches all five pinned WordPress 7.0 entrypoints and adds no compiler behavior |

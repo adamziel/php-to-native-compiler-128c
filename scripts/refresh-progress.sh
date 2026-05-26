@@ -175,7 +175,7 @@ tmp="$(mktemp)"
   echo "| M2 runtime value ABI | value kinds and ownership semantics | 3% | Runtime-owned null and binary-string handles integrated |"
   echo "| M3 linked native execution | compile, link, run, compare | 1% | First linked executable path for supported echo literals integrated |"
   echo "| M4 native lowering | interpreter-supported constructs lowered or rejected | 2% | String and integer echo literals; explicit variable diagnostic |"
-  echo "| M5 PHP core .phpt harness | PHP-8.3 branch, ${php_phpt_total_display} \`.phpt\` files | 2% | PHP-8.3 inventory pinned and minimal .phpt parser integrated |"
+  echo "| M5 PHP core .phpt harness | PHP-8.3 branch, ${php_phpt_total_display} \`.phpt\` files | 3% | PHP-8.3 inventory pinned; minimal parser and exact-EXPECT phpc runner integrated |"
   echo "| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress ${wp_version} pinned; ${wp_entrypoints} entrypoints present; runner queued |"
   echo "| M7 object/SAPI/DB generality | required semantic families | 0% | Queued |"
   echo "| M8 performance after correctness | truthful native benchmarks | 0% | Deferred |"
@@ -256,7 +256,7 @@ tmp="$(mktemp)"
         <tr><td>M2 runtime ABI</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>PHP value kinds and ownership semantics</td><td>Runtime-owned null and binary-string handles integrated</td></tr>
         <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>compile, link, run, compare</td><td>First linked executable path for supported echo literals integrated</td></tr>
         <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>interpreter-supported constructs</td><td>String and integer echo literals; explicit variable diagnostic</td></tr>
-        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files</td><td>Static inventory pinned; minimal parser integrated</td></tr>
+        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files</td><td>Static inventory pinned; minimal parser and exact-EXPECT phpc runner integrated</td></tr>
         <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress ${wp_version} entrypoints</td><td>Source pinned; ${wp_entrypoints} entrypoints present; runner queued</td></tr>
       </tbody>
     </table>

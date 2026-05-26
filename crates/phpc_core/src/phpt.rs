@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use crate::run_php;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PhptTest {
     sections: BTreeMap<String, String>,
@@ -40,6 +42,24 @@ pub struct PhptHarnessInput {
     pub file: String,
     pub expectation_kind: PhptExpectationKind,
     pub expectation_body: String,
+    pub metadata: PhptMetadata,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PhptRunStatus {
+    Pass,
+    Fail,
+    Xfail,
+    UnexpectedPass,
+    Unsupported { reason: String },
+    Error { reason: String },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PhptRunReport {
+    pub status: PhptRunStatus,
+    pub expected_stdout: Option<String>,
+    pub actual_stdout: Option<String>,
     pub metadata: PhptMetadata,
 }
 
@@ -121,6 +141,81 @@ impl PhptTest {
     }
 }
 
+pub fn run_phpt_with_phpc(test: &PhptTest) -> PhptRunReport {
+    let metadata = test.metadata();
+    let file = match test.file() {
+        Some(file) => file,
+        None => {
+            return PhptRunReport {
+                status: PhptRunStatus::Error {
+                    reason: "cannot run .phpt without FILE section".to_string(),
+                },
+                expected_stdout: None,
+                actual_stdout: None,
+                metadata,
+            }
+        }
+    };
+    let expectation = match test.expectation() {
+        Some(expectation) => expectation,
+        None => {
+            return PhptRunReport {
+                status: PhptRunStatus::Error {
+                    reason: "cannot run .phpt without EXPECT, EXPECTF, or EXPECTREGEX section"
+                        .to_string(),
+                },
+                expected_stdout: None,
+                actual_stdout: None,
+                metadata,
+            }
+        }
+    };
+
+    if expectation.kind != PhptExpectationKind::Exact {
+        let section = match expectation.kind {
+            PhptExpectationKind::Exact => unreachable!(),
+            PhptExpectationKind::Format => "EXPECTF",
+            PhptExpectationKind::Regex => "EXPECTREGEX",
+        };
+        return PhptRunReport {
+            status: PhptRunStatus::Unsupported {
+                reason: format!("{section} matching is not implemented for phpc .phpt runs"),
+            },
+            expected_stdout: None,
+            actual_stdout: None,
+            metadata,
+        };
+    }
+
+    let expected_stdout = normalize_phpt_output(expectation.body);
+    let actual_stdout = match run_php(file) {
+        Ok(output) => normalize_phpt_output(&output),
+        Err(reason) => {
+            return PhptRunReport {
+                status: PhptRunStatus::Error { reason },
+                expected_stdout: Some(expected_stdout),
+                actual_stdout: None,
+                metadata,
+            }
+        }
+    };
+
+    let matches = actual_stdout == expected_stdout;
+    let status = match (matches, metadata.xfail.is_some()) {
+        (true, false) => PhptRunStatus::Pass,
+        (false, false) => PhptRunStatus::Fail,
+        (false, true) => PhptRunStatus::Xfail,
+        (true, true) => PhptRunStatus::UnexpectedPass,
+    };
+
+    PhptRunReport {
+        status,
+        expected_stdout: Some(expected_stdout),
+        actual_stdout: Some(actual_stdout),
+        metadata,
+    }
+}
+
 pub fn parse_phpt(source: &str) -> Result<PhptTest, String> {
     let mut sections = BTreeMap::new();
     let mut current_name: Option<String> = None;
@@ -184,6 +279,10 @@ fn normalize_metadata_reason(reason: &str) -> String {
         .filter(|line| !line.is_empty())
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+fn normalize_phpt_output(output: &str) -> String {
+    output.replace("\r\n", "\n").replace('\r', "\n")
 }
 
 fn validate_expectation_sections(sections: &BTreeMap<String, String>) -> Result<(), String> {
@@ -371,5 +470,92 @@ mod tests {
     fn rejects_duplicate_sections() {
         let err = parse_phpt("--TEST--\none\n--TEST--\ntwo\n").unwrap_err();
         assert!(err.contains("duplicate"));
+    }
+
+    #[test]
+    fn runs_exact_expectation_with_phpc() {
+        let phpt = parse_phpt(
+            "--TEST--\nrunnable echo\n--FILE--\n<?php echo 'hello'; echo \"\\n\";\n--EXPECT--\nhello\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt),
+            PhptRunReport {
+                status: PhptRunStatus::Pass,
+                expected_stdout: Some("hello\n".to_string()),
+                actual_stdout: Some("hello\n".to_string()),
+                metadata: phpt.metadata(),
+            }
+        );
+    }
+
+    #[test]
+    fn normalizes_line_endings_before_comparing_exact_expectation() {
+        let phpt = parse_phpt(
+            "--TEST--\ncrlf expectation\n--FILE--\n<?php echo \"hello\\n\";\n--EXPECT--\nhello\r\n",
+        )
+        .unwrap();
+
+        assert_eq!(run_phpt_with_phpc(&phpt).status, PhptRunStatus::Pass);
+    }
+
+    #[test]
+    fn reports_phpc_parse_errors_as_phpt_run_errors() {
+        let phpt = parse_phpt(
+            "--TEST--\nunsupported PHP\n--FILE--\n<?php var_dump(1);\n--EXPECT--\nint(1)\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt).status,
+            PhptRunStatus::Error {
+                reason: "unsupported PHP statement near `var_dump(1);\n`".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn reports_unsupported_expectation_matchers() {
+        let phpt =
+            parse_phpt("--TEST--\nformat\n--FILE--\n<?php echo '1';\n--EXPECTF--\n%d\n").unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt).status,
+            PhptRunStatus::Unsupported {
+                reason: "EXPECTF matching is not implemented for phpc .phpt runs".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn classifies_mismatched_xfail() {
+        let phpt = parse_phpt(
+            "--TEST--\nexpected fail\n--XFAIL--\nknown missing behavior\n--FILE--\n<?php echo \"actual\";\n--EXPECT--\nexpected\n",
+        )
+        .unwrap();
+
+        let report = run_phpt_with_phpc(&phpt);
+
+        assert_eq!(report.status, PhptRunStatus::Xfail);
+        assert_eq!(
+            report.metadata.xfail,
+            Some(PhptXfail {
+                reason: "known missing behavior".to_string()
+            })
+        );
+    }
+
+    #[test]
+    fn classifies_matching_xfail_as_unexpected_pass() {
+        let phpt = parse_phpt(
+            "--TEST--\nunexpected pass\n--XFAIL--\nwas missing\n--FILE--\n<?php echo \"ok\";\n--EXPECT--\nok",
+        )
+        .unwrap();
+
+        assert_eq!(
+            run_phpt_with_phpc(&phpt).status,
+            PhptRunStatus::UnexpectedPass
+        );
     }
 }
