@@ -79,7 +79,14 @@ resolve_target() {
 }
 
 declare -A seen_resolved_targets=()
+declare -A seen_input_targets=()
 for target in "${targets[@]}"; do
+  if [[ -n "${seen_input_targets[$target]:-}" ]]; then
+    echo "check-lanes-integration.sh: duplicate target: ${target}" >&2
+    exit 2
+  fi
+  seen_input_targets[$target]=1
+
   if target_ref="$(resolve_target "$target")"; then
     if [[ -n "${seen_resolved_targets[$target_ref]:-}" ]]; then
       echo "check-lanes-integration.sh: duplicate target: ${target} resolves to ${target_ref}" >&2

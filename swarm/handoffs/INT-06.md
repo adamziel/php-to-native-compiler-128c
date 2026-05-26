@@ -2,27 +2,29 @@
 
 ## Summary
 
-- Time: 2026-05-26T05:19:00Z.
-- Branch: `lane/INT-06-fresh-0519` from current `origin/main`.
+- Time: 2026-05-26T07:24:00Z.
+- Branch: `lane/INT-06`.
 - Milestone: Integration / branch hygiene.
-- Narrow denominator: focused detached-HEAD coverage for `scripts/lane-review.sh`.
-- Extended `scripts/test-lane-review.sh` to detach the temporary lane-review fixture repo at its current commit and verify the helper reports `branch: (detached)`, base `HEAD`, zero divergence, and clean dirty/untracked counts.
+- Narrow denominator: duplicate-target preflight for the batch lane integration checker.
+- `scripts/check-lanes-integration.sh` now rejects exact duplicate input targets before running any per-lane checks, including unresolved target names.
+- This avoids double-counting the same misspelled or missing lane as multiple batch failures.
 - No compiler, runtime, parser, PHPT, WordPress, or progress accounting semantics changed.
 
 ## Files Changed
 
-- `scripts/test-lane-review.sh`
+- `scripts/check-lanes-integration.sh`
+- `scripts/test-check-lane-integration.sh`
 - `swarm/handoffs/INT-06.md`
 
 ## Tests Run
 
-- `scripts/test-lane-review.sh`
+- `scripts/test-check-lane-integration.sh`
   - Pass.
 - `git diff --check`
   - Pass.
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-06 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
-  - Pass: status consistency, runtime ABI docs, launcher observability, lane-review gate, worker-env gate, and `cargo test --locked` passed.
-  - Rust tests passed: 19 `php_runtime`, 13 CLI integration, 76 `phpc_core`, and doc tests.
+  - Pass: status consistency, runtime ABI docs, launcher observability, lane integration checks, lane-review gate, worker-env gate, and `cargo test --locked` passed.
+  - Rust tests passed: 23 `php_runtime`, 21 CLI integration, 76 `phpc_core`, and doc tests.
 
 ## Pass/Fail State
 
@@ -30,12 +32,13 @@
 
 ## Blockers
 
-- None.
+- None for this slice.
+- Branch was behind `origin/main` during the slice; no history rewrite, rebase, or destructive git command was run.
 
 ## Latest Commit
 
-- This commit: `Test lane review detached head output`.
+- This commit: `Reject duplicate unresolved lane checks`.
 
 ## Next Suggested Slice
 
-- Add focused coverage that `scripts/lane-review.sh` reports dirty and untracked counts from an inspected fixture repository without mutating it.
+- Add a stable machine-readable per-target result mode for `scripts/check-lanes-integration.sh` if automation needs more than the current aggregate `summary-json` line.

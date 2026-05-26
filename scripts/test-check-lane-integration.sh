@@ -255,3 +255,20 @@ if grep -F "== lane/integrated ==" batch-duplicate.out >/dev/null; then
   cat batch-duplicate.out >&2
   exit 1
 fi
+
+set +e
+scripts/check-lanes-integration.sh --main-ref main lane/does-not-exist lane/does-not-exist > batch-missing-duplicate.out 2> batch-missing-duplicate.err
+batch_missing_duplicate_status=$?
+set -e
+if [[ "$batch_missing_duplicate_status" -ne 2 ]]; then
+  echo "check-lanes-integration.sh did not reject duplicate unresolved targets with status 2" >&2
+  cat batch-missing-duplicate.out >&2
+  cat batch-missing-duplicate.err >&2
+  exit 1
+fi
+grep -F "duplicate target: lane/does-not-exist" batch-missing-duplicate.err >/dev/null
+if grep -F "== lane/does-not-exist ==" batch-missing-duplicate.out >/dev/null; then
+  echo "check-lanes-integration.sh started lane checks before rejecting duplicate unresolved targets" >&2
+  cat batch-missing-duplicate.out >&2
+  exit 1
+fi
