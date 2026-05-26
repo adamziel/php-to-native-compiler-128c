@@ -20,7 +20,7 @@ pub fn parse_php(source: &str) -> Result<Vec<Statement>, String> {
 fn parse_statements(mut body: &str) -> Result<Vec<Statement>, String> {
     let mut statements = Vec::new();
     loop {
-        body = body.trim_start();
+        body = skip_trivia(body)?;
         if body.is_empty() || body == "?>" {
             break;
         }
@@ -44,6 +44,35 @@ fn parse_statements(mut body: &str) -> Result<Vec<Statement>, String> {
         ));
     }
     Ok(statements)
+}
+
+fn skip_trivia(mut input: &str) -> Result<&str, String> {
+    loop {
+        input = input.trim_start();
+        if let Some(rest) = input.strip_prefix("/*") {
+            let Some(end) = rest.find("*/") else {
+                return Err("unterminated block comment".to_string());
+            };
+            input = &rest[end + 2..];
+            continue;
+        }
+        if let Some(rest) = input.strip_prefix("//") {
+            input = skip_line_comment(rest);
+            continue;
+        }
+        if let Some(rest) = input.strip_prefix('#') {
+            input = skip_line_comment(rest);
+            continue;
+        }
+        return Ok(input);
+    }
+}
+
+fn skip_line_comment(input: &str) -> &str {
+    match input.find('\n') {
+        Some(index) => &input[index + 1..],
+        None => "",
+    }
 }
 
 fn parse_echo_expression(input: &str) -> Result<(Expression, &str), String> {
@@ -172,6 +201,30 @@ mod tests {
                 "hello".to_string()
             ))]
         );
+    }
+
+    #[test]
+    fn parses_echo_after_leading_block_comment() {
+        assert_eq!(
+            parse_php("<?php\n/** bootstrap docs */\necho 'hello';").unwrap(),
+            vec![Statement::Echo(Expression::StringLiteral(
+                "hello".to_string()
+            ))]
+        );
+    }
+
+    #[test]
+    fn parses_echo_after_line_comments() {
+        assert_eq!(
+            parse_php("<?php\n// line comment\n# shell-style comment\necho 123;").unwrap(),
+            vec![Statement::Echo(Expression::IntegerLiteral(123))]
+        );
+    }
+
+    #[test]
+    fn rejects_unterminated_block_comment() {
+        let err = parse_php("<?php /* missing end echo 'hello';").unwrap_err();
+        assert_eq!(err, "unterminated block comment");
     }
 
     #[test]

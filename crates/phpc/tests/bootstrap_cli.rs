@@ -259,7 +259,9 @@ fn cli_reports_wordpress_bootstrap_general_php_gap() {
     assert!(stdout.contains("entrypoint_present=wp-admin/admin-ajax.php"));
     assert!(stdout.contains("status=blocked"));
     assert!(stdout.contains("bootstrap=wp-settings.php"));
-    assert!(stdout.contains("general_php_gap=unsupported PHP statement near `/**"));
+    assert!(
+        stdout.contains("general_php_gap=unsupported PHP statement near `define( 'WPINC', 'wp-includes' )`")
+    );
 }
 
 fn system_php_output(path: impl AsRef<std::ffi::OsStr>) -> Option<std::process::Output> {

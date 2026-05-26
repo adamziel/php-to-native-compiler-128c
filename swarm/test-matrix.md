@@ -2,7 +2,7 @@
 
 | Layer | Command | Current Status | Notes |
 | --- | --- | --- | --- |
-| Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 58 tests passed on 2026-05-26: 12 runtime, 9 CLI, 37 core |
+| Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-comment-trivia CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 61 tests passed on 2026-05-26: 12 runtime, 9 CLI, 40 core |
 | Bootstrap toolchain | `cargo --version`; `rustc --version`; `php --version`; `clang --version` | passing | cargo 1.75.0; rustc 1.75.0; PHP 8.3.6 CLI; Ubuntu clang 18.1.3 |
 | CLI run | `cargo run -p phpc -- run fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |
 | CLI compile IR | `cargo run -p phpc -- compile fixtures/bootstrap/hello.php --emit-ir` | passing | Emits placeholder IR |
@@ -22,4 +22,4 @@
 | Local coordination gate | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-local-gate scripts/local-gate.sh` | passing | Runs non-generating status checks and diff hygiene |
 | Status gate | `scripts/status-gate.sh` | passing | Non-mutating progress check plus manifest, WordPress inventory, and integration-priority consistency |
 | php-src `.phpt` | `find /home/ubuntu/phpc-external/php-src/php-src-PHP-8.3 -name '*.phpt'` | inventory only | 19,346 tests pinned; runner not implemented |
-| WordPress bootstrap check | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap cargo run -p phpc -- wordpress-bootstrap-check /home/ubuntu/phpc-external/wordpress/wordpress` | blocked | All five pinned entrypoints present; `wp-settings.php` reports a general PHP parser gap at the opening docblock |
+| WordPress bootstrap check | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-comment-trivia cargo run -p phpc -- wordpress-bootstrap-check /home/ubuntu/phpc-external/wordpress/wordpress` | blocked | All five pinned entrypoints present; `wp-settings.php` now passes leading comments/docblocks and reports the next general PHP parser gap at `define( 'WPINC', 'wp-includes' )` |

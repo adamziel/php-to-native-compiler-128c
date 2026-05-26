@@ -7,6 +7,7 @@
 - `<?php echo 123;`
 - A final supported `echo` statement may omit the semicolon when it is immediately
   followed by the closing PHP tag, for example `<?php echo "literal" ?>`.
+- Whitespace and PHP comments (`/* ... */`, `// ...`, `# ...`) before supported statements.
 
 String literal support distinguishes PHP single-quoted and double-quoted escape handling for committed escapes: single-quoted strings only unescape `\\` and `\'`, while double-quoted strings support the existing `\n`, `\r`, and `\t` escapes.
 
