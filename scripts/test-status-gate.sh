@@ -186,6 +186,44 @@ cat >"$handoff_fixture/INT-05.md" <<'EOF'
 
 ## Summary
 
+- Has required structure but stale archive branch latest-commit wording.
+
+## Files Changed
+
+- `example`
+
+## Tests Run
+
+- `example`
+
+## Pass/Fail State
+
+- PASS: example.
+
+## Blockers
+
+- None.
+
+## Latest Commit
+
+- `Tighten old worker gate` on `lane/INT-05-archive-060010`.
+
+## Next Suggested Slice
+
+- Continue.
+EOF
+
+expect_fixture_failure \
+  "handoffs contain archive branch references in latest-commit sections: INT-05.md" \
+  "a handoff whose latest commit points at an archive branch"
+
+reset_fixtures
+
+cat >"$handoff_fixture/INT-05.md" <<'EOF'
+# INT-05 Handoff
+
+## Summary
+
 - Missing the required remaining handoff sections.
 EOF
 

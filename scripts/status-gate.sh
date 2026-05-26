@@ -134,20 +134,31 @@ if handoff_dir.is_dir():
     )
     incomplete_handoffs = []
     stale_handoffs = []
+    archive_branch_handoffs = []
     pending_commit_re = re.compile(r"\bpending\b|\bcommit\b.*\bpending\b", re.IGNORECASE)
+    archive_branch_re = re.compile(r"\blane/[A-Z]+-[0-9]+-[A-Za-z0-9._-]*archive[A-Za-z0-9._-]*\b")
     latest_commit_section_re = re.compile(
         r"(?ims)^(?:##\s+Latest Commit|latest commit(?: if any)?):?[ \t]*(?:\n|$)(.*?)(?=^## |\n[a-z][a-z /-]*:\s*|\Z)"
     )
     for path in sorted(handoff_dir.glob("*.md")):
         text = path.read_text(encoding="utf-8")
         for match in latest_commit_section_re.finditer(text):
-            if pending_commit_re.search(match.group(1)):
+            latest_commit_section = match.group(1)
+            if pending_commit_re.search(latest_commit_section):
                 stale_handoffs.append(path.name)
+                break
+            if archive_branch_re.search(latest_commit_section):
+                archive_branch_handoffs.append(path.name)
                 break
     if stale_handoffs:
         raise SystemExit(
             "handoffs contain unresolved latest-commit pending markers: "
             + ", ".join(stale_handoffs)
+        )
+    if archive_branch_handoffs:
+        raise SystemExit(
+            "handoffs contain archive branch references in latest-commit sections: "
+            + ", ".join(archive_branch_handoffs)
         )
     for path in sorted(handoff_dir.glob("*.md")):
         text = path.read_text(encoding="utf-8")
