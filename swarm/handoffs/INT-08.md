@@ -37,8 +37,7 @@
 
 ## Latest Commit
 
-- Pending main commit after verification.
-- Follow-up helper port: `Gate CLI command hygiene`.
+- Follow-up helper port: `77df869 Gate CLI command hygiene`.
 
 ## Next Suggested Slice
 

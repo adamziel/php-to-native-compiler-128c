@@ -125,14 +125,19 @@ if handoff_dir.is_dir():
         ("Next Suggested Slice", ("## Next Suggested Slice", "next suggested slice:")),
     )
     incomplete_handoffs = []
-    stale_handoffs = sorted(
-        path.name
-        for path in handoff_dir.glob("*.md")
-        if "Pending until commit" in path.read_text(encoding="utf-8")
-    )
+    stale_handoffs = []
+    pending_commit_re = re.compile(r"\bpending\b.*\bcommit\b|\bcommit\b.*\bpending\b", re.IGNORECASE)
+    for path in sorted(handoff_dir.glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        match = re.search(
+            r"(?ims)^## Latest Commit\s*(.*?)(?=^## |\Z)",
+            text,
+        )
+        if match and pending_commit_re.search(match.group(1)):
+            stale_handoffs.append(path.name)
     if stale_handoffs:
         raise SystemExit(
-            "handoffs contain unresolved latest-commit placeholders: "
+            "handoffs contain unresolved latest-commit pending markers: "
             + ", ".join(stale_handoffs)
         )
     for path in sorted(handoff_dir.glob("*.md")):

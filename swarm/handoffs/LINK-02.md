@@ -36,7 +36,7 @@
 
 ## Latest Commit
 
-- Pending commit for current-main port.
+- Current-main port: `3e99347 Add linked native executable path`.
 
 ## Next Suggested Slice
 

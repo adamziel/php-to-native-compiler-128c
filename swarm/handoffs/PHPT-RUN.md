@@ -33,7 +33,7 @@
 
 ## Latest Commit
 
-- Pending commit for current-main port.
+- Current-main port: `974b5f5 Add minimal PHPT phpc runner`.
 
 ## Next Suggested Slice
 

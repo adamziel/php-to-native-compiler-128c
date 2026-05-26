@@ -109,8 +109,46 @@ cat >"$handoff_fixture/INT-05.md" <<'EOF'
 EOF
 
 expect_fixture_failure \
-  "handoffs contain unresolved latest-commit placeholders: INT-05.md" \
+  "handoffs contain unresolved latest-commit pending markers: INT-05.md" \
   "a handoff with an unresolved latest-commit placeholder"
+
+reset_fixtures
+
+cat >"$handoff_fixture/INT-05.md" <<'EOF'
+# INT-05 Handoff
+
+## Summary
+
+- Has required structure but unresolved commit wording.
+
+## Files Changed
+
+- `example`
+
+## Tests Run
+
+- `example`
+
+## Pass/Fail State
+
+- PASS: example.
+
+## Blockers
+
+- None.
+
+## Latest Commit
+
+- Main port pending commit.
+
+## Next Suggested Slice
+
+- Continue.
+EOF
+
+expect_fixture_failure \
+  "handoffs contain unresolved latest-commit pending markers: INT-05.md" \
+  "a handoff with alternate unresolved latest-commit wording"
 
 reset_fixtures
 
