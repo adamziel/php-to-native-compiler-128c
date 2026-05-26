@@ -5,6 +5,22 @@ pub struct PhptTest {
     sections: BTreeMap<String, String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PhptSkip {
+    pub script: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PhptXfail {
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PhptMetadata {
+    pub skip: Option<PhptSkip>,
+    pub xfail: Option<PhptXfail>,
+}
+
 impl PhptTest {
     pub fn section(&self, name: &str) -> Option<&str> {
         self.sections
@@ -26,6 +42,21 @@ impl PhptTest {
 
     pub fn skipif(&self) -> Option<&str> {
         self.section("SKIPIF")
+    }
+
+    pub fn xfail(&self) -> Option<&str> {
+        self.section("XFAIL")
+    }
+
+    pub fn metadata(&self) -> PhptMetadata {
+        PhptMetadata {
+            skip: self.skipif().map(|script| PhptSkip {
+                script: script.to_string(),
+            }),
+            xfail: self.xfail().map(|reason| PhptXfail {
+                reason: normalize_metadata_reason(reason),
+            }),
+        }
     }
 }
 
@@ -84,6 +115,15 @@ fn normalize_section_name(name: &str) -> String {
     name.trim().to_ascii_uppercase()
 }
 
+fn normalize_metadata_reason(reason: &str) -> String {
+    reason
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -109,6 +149,41 @@ mod tests {
         .unwrap();
 
         assert_eq!(phpt.skipif(), Some("<?php die('skip reason'); ?>\n"));
+    }
+
+    #[test]
+    fn exposes_skip_metadata_without_executing_skipif() {
+        let phpt = parse_phpt(
+            "--TEST--\nskip metadata\n--SKIPIF--\n<?php if (!extension_loaded('foo')) die('skip foo missing'); ?>\n--FILE--\n<?php echo \"ok\";\n--EXPECT--\nok\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            phpt.metadata().skip,
+            Some(PhptSkip {
+                script: "<?php if (!extension_loaded('foo')) die('skip foo missing'); ?>\n"
+                    .to_string()
+            })
+        );
+    }
+
+    #[test]
+    fn parses_xfail_metadata_reason() {
+        let phpt = parse_phpt(
+            "--TEST--\nxfail example\n--XFAIL--\n  known upstream failure\n\n  requires ext/example\n--FILE--\n<?php echo \"ok\";\n--EXPECT--\nok\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            phpt.xfail(),
+            Some("  known upstream failure\n\n  requires ext/example\n")
+        );
+        assert_eq!(
+            phpt.metadata().xfail,
+            Some(PhptXfail {
+                reason: "known upstream failure\nrequires ext/example".to_string()
+            })
+        );
     }
 
     #[test]

@@ -21,6 +21,12 @@ Several worker branches now contain reviewable dirty slices, and four lanes have
 | `WP-12` | `348ad3b` | WordPress inventory | Inventory scripts, manifest update, handoff | Prefer if it improves reproducible WordPress denominator; reject if it duplicates existing manifest generation without added checks. |
 | `DOC-03` | `4ebe2ab` | Reporting | Progress/dashboard refresh and handoff | Review cautiously because the dedicated Pages reporter now owns this surface. |
 
+## Reviewed Candidates
+
+| Lane | Source Commit | Result | Evidence |
+| --- | --- | --- | --- |
+| `PHPT-03` | `ea96852` | Accepted compatible parser-level `SKIPIF`/`XFAIL` metadata into `INT-03`; no runner semantics or skip execution added. | `cargo test -p phpc_core phpt::tests` and `scripts/status-gate.sh` in INT-03 handoff. |
+
 | Priority | Lane(s) | Area | Current artifact | Integration instruction |
 | --- | --- | --- | --- | --- |
 | P1 | `LINK-01`, `LINK-02`, `LINK-08`, `LINK-09`, `LINK-11` | M3 linked/native path | Core compile/link diffs | Review first because native executable support is still 0%; accept only a narrow compile/link/run slice with tests. |

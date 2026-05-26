@@ -13,6 +13,7 @@
 ## Current Harness Surface
 
 - Minimal `.phpt` parser for `TEST`, `FILE`, `EXPECT`, and `SKIPIF` sections.
+- Static `.phpt` metadata model for `SKIPIF` scripts and `XFAIL` reasons; `SKIPIF` is parsed but not executed yet.
 
 ## Explicitly Unsupported
 
