@@ -1,6 +1,13 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
     Echo(Expression),
+    Call(CallExpression),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CallExpression {
+    pub name: String,
+    pub arguments: Vec<Expression>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -39,6 +46,15 @@ fn parse_statements(mut body: &str) -> Result<Vec<Statement>, String> {
                 break;
             };
             return Err("expected semicolon after echo expression".to_string());
+        }
+        if let Some((call, after_call)) = parse_call_expression(body)? {
+            let after_call = after_call.trim_start();
+            if let Some(after_semicolon) = after_call.strip_prefix(';') {
+                statements.push(Statement::Call(call));
+                body = after_semicolon;
+                continue;
+            }
+            return Err("expected semicolon after function call statement".to_string());
         }
         return Err(format!(
             "unsupported PHP statement near `{}`",
@@ -102,6 +118,64 @@ fn parse_echo_expression(input: &str) -> Result<(Expression, &str), String> {
         return Ok((Expression::NullLiteral, rest));
     }
     Err("expected echo expression literal".to_string())
+}
+
+fn parse_call_expression(input: &str) -> Result<Option<(CallExpression, &str)>, String> {
+    let Some((name, rest)) = parse_identifier(input) else {
+        return Ok(None);
+    };
+    if !name.eq_ignore_ascii_case("define") {
+        return Ok(None);
+    }
+    let Some(mut rest) = rest.strip_prefix('(') else {
+        return Ok(None);
+    };
+    let mut arguments = Vec::new();
+    loop {
+        rest = rest.trim_start();
+        if let Some(after_close) = rest.strip_prefix(')') {
+            return Ok(Some((
+                CallExpression {
+                    name: name.to_string(),
+                    arguments,
+                },
+                after_close,
+            )));
+        }
+
+        let (argument, after_argument) = parse_echo_expression(rest)?;
+        arguments.push(argument);
+        rest = after_argument.trim_start();
+
+        if let Some(after_comma) = rest.strip_prefix(',') {
+            rest = after_comma;
+            continue;
+        }
+        if let Some(after_close) = rest.strip_prefix(')') {
+            return Ok(Some((
+                CallExpression {
+                    name: name.to_string(),
+                    arguments,
+                },
+                after_close,
+            )));
+        }
+        return Err("expected comma or closing parenthesis after function call argument".to_string());
+    }
+}
+
+fn parse_identifier(input: &str) -> Option<(&str, &str)> {
+    let mut chars = input.char_indices();
+    let (_, first) = chars.next()?;
+    if !(first == '_' || first.is_ascii_alphabetic()) {
+        return None;
+    }
+    let end = chars
+        .find_map(|(index, ch)| {
+            (!(ch == '_' || ch.is_ascii_alphanumeric())).then_some(index)
+        })
+        .unwrap_or(input.len());
+    Some((&input[..end], &input[end..]))
 }
 
 fn parse_string_literal(input: &str) -> Result<(String, &str), String> {
@@ -282,6 +356,40 @@ mod tests {
             parse_php("<?php\n// line comment\n# shell-style comment\necho 123;").unwrap(),
             vec![Statement::Echo(Expression::IntegerLiteral(123))]
         );
+    }
+
+    #[test]
+    fn parses_top_level_define_call_with_string_literals() {
+        assert_eq!(
+            parse_php("<?php define( 'WPINC', 'wp-includes' );").unwrap(),
+            vec![Statement::Call(CallExpression {
+                name: "define".to_string(),
+                arguments: vec![
+                    Expression::StringLiteral("WPINC".to_string()),
+                    Expression::StringLiteral("wp-includes".to_string()),
+                ],
+            })]
+        );
+    }
+
+    #[test]
+    fn parses_define_after_leading_block_comment() {
+        assert_eq!(
+            parse_php("<?php\n/** bootstrap docs */\ndefine( 'WPINC', 'wp-includes' );").unwrap(),
+            vec![Statement::Call(CallExpression {
+                name: "define".to_string(),
+                arguments: vec![
+                    Expression::StringLiteral("WPINC".to_string()),
+                    Expression::StringLiteral("wp-includes".to_string()),
+                ],
+            })]
+        );
+    }
+
+    #[test]
+    fn rejects_function_call_without_semicolon() {
+        let err = parse_php("<?php define('WPINC', 'wp-includes') echo 'x';").unwrap_err();
+        assert_eq!(err, "expected semicolon after function call statement");
     }
 
     #[test]

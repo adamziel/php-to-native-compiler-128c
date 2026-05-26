@@ -1,13 +1,14 @@
 mod parser;
 pub mod phpt;
 
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub use parser::{parse_php, Expression, Statement};
+pub use parser::{parse_php, CallExpression, Expression, Statement};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompileMode {
@@ -18,6 +19,7 @@ pub enum CompileMode {
 
 pub fn run_php(source: &str) -> Result<String, String> {
     let program = parse_php(source)?;
+    let mut constants = HashMap::new();
     let mut output = String::new();
     for statement in program {
         match statement {
@@ -27,6 +29,7 @@ pub fn run_php(source: &str) -> Result<String, String> {
                 Expression::BooleanLiteral(true) => output.push('1'),
                 Expression::BooleanLiteral(false) | Expression::NullLiteral => {}
             },
+            Statement::Call(call) => interpret_call_statement(call, &mut constants)?,
         }
     }
     Ok(output)
@@ -82,6 +85,12 @@ fn emit_ir(program: &[Statement]) -> Result<String, String> {
     ir.push_str("define i32 @main() {\n");
     for (index, statement) in program.iter().enumerate() {
         match statement {
+            Statement::Call(call) => {
+                let (name, value) = define_string_literal(call)?;
+                ir.push_str(&format!(
+                    "  ; define_string[{index}] name={name:?} value={value:?}\n"
+                ));
+            }
             Statement::Echo(Expression::StringLiteral(text)) => {
                 ir.push_str(&format!(
                     "  ; echo_string[{index}] len={} text={:?}\n",
@@ -110,6 +119,10 @@ fn emit_linkable_ir(program: &[Statement]) -> Result<String, String> {
 
     for (index, statement) in program.iter().enumerate() {
         let bytes = match statement {
+            Statement::Call(call) => {
+                define_string_literal(call)?;
+                continue;
+            }
             Statement::Echo(Expression::StringLiteral(text)) => text.as_bytes().to_vec(),
             Statement::Echo(Expression::IntegerLiteral(value)) => value.to_string().into_bytes(),
             Statement::Echo(Expression::BooleanLiteral(true)) => b"1".to_vec(),
@@ -137,6 +150,38 @@ fn emit_linkable_ir(program: &[Statement]) -> Result<String, String> {
            ret i32 0\n\
          }}\n"
     ))
+}
+
+fn interpret_call_statement(
+    call: CallExpression,
+    constants: &mut HashMap<String, String>,
+) -> Result<(), String> {
+    if call.name.eq_ignore_ascii_case("define") {
+        let (name, value) = define_string_literal(&call)?;
+        constants.insert(name.to_string(), value.to_string());
+        return Ok(());
+    }
+    Err(format!(
+        "unsupported function call statement: {}",
+        call.name
+    ))
+}
+
+fn define_string_literal(call: &CallExpression) -> Result<(&str, &str), String> {
+    if !call.name.eq_ignore_ascii_case("define") {
+        return Err(format!(
+            "unsupported function call statement: {}",
+            call.name
+        ));
+    }
+    match call.arguments.as_slice() {
+        [Expression::StringLiteral(name), Expression::StringLiteral(value)] => {
+            Ok((name.as_str(), value.as_str()))
+        }
+        _ => Err(
+            "unsupported define() statement: expected string literal name and value".to_string(),
+        ),
+    }
 }
 
 fn llvm_c_string(bytes: &[u8]) -> String {
@@ -227,6 +272,35 @@ mod tests {
     }
 
     #[test]
+    fn run_interprets_define_string_literal_statement_without_output() {
+        assert_eq!(
+            run_php("<?php define( 'WPINC', 'wp-includes' ); echo 'ok';").unwrap(),
+            "ok"
+        );
+    }
+
+    #[test]
+    fn compile_emits_ir_for_define_string_literal_statement() {
+        let ir = compile_php(
+            "<?php define( 'WPINC', 'wp-includes' ); echo 'ok';",
+            CompileMode::EmitIr,
+        )
+        .unwrap();
+
+        assert!(ir.contains("define_string[0] name=\"WPINC\" value=\"wp-includes\""));
+        assert!(ir.contains("echo_string[1] len=2 text=\"ok\""));
+    }
+
+    #[test]
+    fn rejects_define_with_non_string_value() {
+        let err = run_php("<?php define( 'WP_DEBUG', true );").unwrap_err();
+        assert_eq!(
+            err,
+            "unsupported define() statement: expected string literal name and value"
+        );
+    }
+
+    #[test]
     fn linkable_ir_calls_runtime_echo_for_supported_literals() {
         let program =
             parse_php("<?php echo \"hi\\n\"; echo 42; echo true; echo false; echo null;").unwrap();
@@ -251,5 +325,15 @@ mod tests {
 
         assert!(ir.contains("c\"native\""));
         assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.0, i64 6)"));
+    }
+
+    #[test]
+    fn linkable_ir_accepts_define_string_literal_statement_as_no_output() {
+        let program = parse_php("<?php define('WPINC', 'wp-includes'); echo \"native\";").unwrap();
+        let ir = emit_linkable_ir(&program).unwrap();
+
+        assert!(!ir.contains("wp-includes"));
+        assert!(ir.contains("c\"native\""));
+        assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.1, i64 6)"));
     }
 }

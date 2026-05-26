@@ -8,6 +8,8 @@
 - `<?php echo true;`
 - `<?php echo false;`
 - `<?php echo null;`
+- `<?php define('NAME', 'literal');` as a top-level statement that records a
+  string constant and produces no output in `phpc run`.
 - A final supported `echo` statement may omit the semicolon when it is immediately
   followed by the closing PHP tag, for example `<?php echo "literal" ?>`.
 - Whitespace and PHP comments (`/* ... */`, `// ...`, `# ...`) before supported statements.
@@ -17,6 +19,8 @@ String literal support distinguishes PHP single-quoted and double-quoted escape 
 ## Current Native Compiler Surface
 
 - `phpc compile --emit-ir` emits bootstrap LLVM-like comments for string, integer, boolean, and null echo literals.
+- `phpc compile --emit-ir` accepts top-level `define('NAME', 'literal');`
+  statements and reports them as string-constant definitions.
 - `phpc compile <input.php> --emit-exe <output>` links a native executable for string, integer, boolean, and null echo literals through `php_runtime::phpc_echo`.
 
 ## Current Harness Surface
