@@ -41,6 +41,9 @@ String literal support distinguishes PHP single-quoted and double-quoted escape 
   `require APP_DIR . '/file.php';` or `include APP_DIR . '/file.php';`, are
   rejected before native lowering with
   `expected literal string path`; linked-native support must not be inferred.
+- `include_once` and `require_once` are rejected before native lowering with an
+  explicit unsupported diagnostic; once-only include semantics are not
+  implemented.
 
 ## Current Harness Surface
 
