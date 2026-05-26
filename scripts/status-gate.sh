@@ -145,6 +145,14 @@ for row in integration.splitlines():
     if len(columns) < 2:
         continue
     priority_lane_column = columns[1]
+    reviewed_priority_lanes = sorted(
+        lane for lane in reviewed_lanes if f"`{lane}`" in priority_lane_column
+    )
+    if reviewed_priority_lanes:
+        raise SystemExit(
+            "integration priority table lists already reviewed lanes: "
+            + ", ".join(reviewed_priority_lanes)
+        )
     stale_lanes = sorted(
         lane for lane in terminal_lanes if f"`{lane}`" in priority_lane_column
     )

@@ -203,6 +203,24 @@ from pathlib import Path
 path = Path("swarm/integration.md")
 text = path.read_text(encoding="utf-8")
 text = text.replace(
+    "| P1 | PHPT follow-up lanes | M5 `.phpt` harness | `phpt.rs`, module exports, and harness diffs | Compare against already-integrated minimal parser; keep only net-new parser/runner behavior with tests. Do not reapply reviewed PHPT parser metadata slices. |",
+    "| P1 | `PHPT-03`, PHPT follow-up lanes | M5 `.phpt` harness | `phpt.rs`, module exports, and harness diffs | Compare against already-integrated minimal parser; keep only net-new parser/runner behavior with tests. |",
+)
+path.write_text(text, encoding="utf-8")
+PY
+
+expect_status_failure \
+  "integration priority table lists already reviewed lanes: PHPT-03" \
+  "an already reviewed lane in the priority table"
+
+restore_integration
+
+python3 - <<'PY'
+from pathlib import Path
+
+path = Path("swarm/integration.md")
+text = path.read_text(encoding="utf-8")
+text = text.replace(
     "Preserve the current `phpc compile <input.php> --emit-exe <output>` executable path and keep any broader native claims tied to tested fixture denominators.",
     "Keep `--emit-exe` explicitly unsupported until a real linked executable path exists.",
 )
