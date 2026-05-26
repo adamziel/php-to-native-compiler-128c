@@ -24,4 +24,4 @@ latest lane commit: `f5dc051 Gate pages reporter before publish`
 
 integration note: Ported onto current `main` after the status-gate slice was already integrated and after newer manifest-sourced progress reporting landed.
 
-next suggested slice: Wire `scripts/status-gate.sh` into the supervisor's chosen CI or integration entrypoint once that runner is selected, keeping manifest denominator refresh work with INT-02.
+next suggested slice: If the supervisor selects a canonical CI entrypoint, wire `scripts/local-gate.sh` there; keep php-src metadata and parser changes with the PHPT lanes.
