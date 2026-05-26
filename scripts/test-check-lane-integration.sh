@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+git init -q "$tmpdir/repo"
+mkdir -p "$tmpdir/repo/scripts"
+cp scripts/check-lane-integration.sh "$tmpdir/repo/scripts/check-lane-integration.sh"
+cd "$tmpdir/repo"
+
+git config user.email test@example.invalid
+git config user.name "Integration Test"
+mkdir -p swarm/handoffs
+
+printf 'base\n' > file.txt
+git add file.txt
+git commit -q -m base
+git branch main
+
+git switch -q -c lane/integrated main
+printf 'integrated\n' >> file.txt
+git commit -q -am integrated
+git switch -q main
+git merge -q --ff-only lane/integrated
+
+scripts/check-lane-integration.sh lane/integrated main > integrated.out
+grep -F "classification: already-integrated" integrated.out >/dev/null
+
+git switch -q -c lane/stale-equivalent HEAD~1
+printf 'equivalent\n' > equivalent.txt
+git add equivalent.txt
+git commit -q -m equivalent-lane
+git switch -q main
+printf 'equivalent\n' > equivalent.txt
+git add equivalent.txt
+git commit -q -m equivalent-main
+
+scripts/check-lane-integration.sh lane/stale-equivalent main > stale.out
+grep -F "classification: stale-equivalent" stale.out >/dev/null
+
+git switch -q -c lane/conflict HEAD~1
+printf 'lane-conflict\n' > file.txt
+git commit -q -am lane-conflict
+git switch -q main
+printf 'main-conflict\n' > file.txt
+git commit -q -am main-conflict
+
+if scripts/check-lane-integration.sh lane/conflict main > conflict.out 2> conflict.err; then
+  echo "check-lane-integration.sh accepted a conflicting lane" >&2
+  cat conflict.out >&2
+  cat conflict.err >&2
+  exit 1
+fi
+grep -F "classification: unsafe-to-merge" conflict.out >/dev/null
+
+git switch -q -c lane/review main
+printf 'review\n' > review.txt
+git add review.txt
+git commit -q -m review
+printf '# handoff\n' > swarm/handoffs/review.md
+
+scripts/check-lane-integration.sh lane/review main > review.out
+grep -F "handoff: present swarm/handoffs/review.md" review.out >/dev/null
+grep -F "classification: review-required" review.out >/dev/null
