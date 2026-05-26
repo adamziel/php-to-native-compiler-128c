@@ -38,6 +38,17 @@ Several worker branches now contain reviewable dirty slices, and four lanes have
 | 2026-05-26 | `LINK-08` | `767e9ea` | Reject as-is; salvage cleanup after preferred path lands | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-08-review CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test native_link` passed in the LINK-08 worktree, proving its CLI can link and run the bootstrap fixture and that stale output executables are removed when `--runtime-lib` is missing. `git merge-tree $(git merge-base HEAD lane/LINK-08) HEAD lane/LINK-08` reports a conflict in `crates/phpc_core/src/lib.rs`; LINK-08 changes `CompileMode::EmitExe` into a C-source emission mode, which conflicts with current main's explicit unsupported gate and with the cleaner LINK-02 design where executable linking is a separate CLI path. | Do not integrate LINK-08 as the primary M3 path. After LINK-02 rebases or another link path lands, consider porting only the stale-output cleanup regression and helper behavior if still applicable. Do not count LINK-08 as integrated M3 progress. |
 | 2026-05-26 | `LINK-09` | `fa436cb` | Reject as-is; prefer LINK-02 design | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-09-review CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core compile_emit_exe_produces_linked_echo_binary -- --nocapture` and `cargo test -p phpc cli_compile_emit_exe_runs_linked_echo_binary -- --nocapture` passed in the LINK-09 worktree. `git merge-tree $(git merge-base HEAD lane/LINK-09) HEAD lane/LINK-09` reports conflicts in `crates/phpc/tests/bootstrap_cli.rs`, `progress.md`, and `docs/progress.html`; LINK-09 routes executable behavior through `CompileMode::EmitExe` in core like LINK-08. LINK-11 was inspected but has uncommitted `crates/phpc_core/src/lib.rs` changes and is not review-ready. | Do not integrate LINK-09 as the primary M3 path. Keep LINK-02 as the preferred rebase target with a separate executable CLI path, and mine LINK-09 diagnostics only after the accepted executable-linking shape lands. |
 
+## Parser/Lowering Lane Review
+
+Reviewed for this slice:
+
+| Source | Decision | Evidence |
+| --- | --- | --- |
+| MINE-03 dirty test | accepted | Ported the single-quoted string escape defect as a general M4 parser/runtime fix with focused tests. |
+| LOW-10 dirty parser diff | rejected for this slice | Boolean literal parsing needs coordinated interpreter/IR/docs support; not the smallest compatible parser-only improvement. |
+| LOW-12 dirty parser diff | rejected for this slice | Mixes boolean literal parsing with signed-integer work; current main already has integer echo support and this would broaden scope. |
+| LOW-07 function diffs | rejected for this slice | Function declaration/call handling is broader M4 lowering work and not a small diagnostic/parser safety fix. |
+
 ## Recently Integrated Coordination Slices
 
 | Lane | Status | Evidence | Notes |

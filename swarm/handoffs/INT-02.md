@@ -2,49 +2,45 @@
 
 ## Summary
 
-- Milestone: Integration.
-- Ported the INT-02 denominator-sourcing slice onto current `main`.
-- `scripts/refresh-progress.sh` now reads PHP core and WordPress denominators from `swarm/php-core-manifest.json` and `swarm/wordpress-manifest.json` instead of duplicating them as literals.
-- Regenerated `progress.md` and `docs/progress.html` from the updated script after integration.
-- Integrated the follow-up generated-output consistency gate from INT-02: `scripts/verify-status-consistency.sh` now cross-checks `progress.md`, `docs/progress.html`, and `swarm/test-matrix.md` against manifest values.
+- Milestone: Integration/M4.
+- Ported the INT-02 single-quoted string escape fix onto current `main`.
+- Single-quoted strings now preserve `\n` literally while still unescaping `\\` and `\'`, matching PHP single-quoted string behavior for this supported subset.
+- Rejected broader boolean/function candidates for this slice because they require wider parser/interpreter/IR/docs coordination.
 
 ## Files Changed
 
-- `scripts/refresh-progress.sh`
-- `scripts/verify-status-consistency.sh`
-- `progress.md`
-- `docs/progress.html`
+- `crates/phpc_core/src/parser.rs`
+- `crates/phpc_core/src/lib.rs`
+- `docs/SUPPORT.md`
+- `swarm/integration.md`
 - `swarm/handoffs/INT-02.md`
 
 ## Tests Run
 
-- `bash -n scripts/refresh-progress.sh`
-- `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 scripts/refresh-progress.sh --check`
-- `SWARM_WORKER_COUNT=100 SWARM_LAUNCH_STAGGER_SECONDS=480 scripts/status-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core run_preserves_single_quoted_backslash_n`
+- `php -r "echo 'a\\nb';" | od -An -tx1`
 - `scripts/verify-status-consistency.sh`
 - `git diff --check`
 
 ## Pass/Fail State
 
-- PASS: syntax check.
-- PASS: non-mutating progress check.
-- PASS: manifest status gate.
-- PASS: generated-output status consistency gate.
-- PASS: diff hygiene.
-
-## Blockers
-
-- None for this slice.
+- PASS: `phpc_core` focused tests on the lane.
+- PASS: focused runtime regression `run_preserves_single_quoted_backslash_n`.
+- PASS: system PHP oracle bytes for `'a\\nb'` are `61 5c 6e 62`.
+- PASS: status consistency gate on the lane.
+- PASS: diff hygiene on the lane.
+- BLOCKED on the lane only: `scripts/local-gate.sh` was absent before this stale lane was ported to current `main`.
+- BLOCKED: `cargo fmt --all` cannot run because this toolchain lacks `cargo-fmt`/`rustfmt`.
 
 ## Latest Lane Commit
 
-- `7018c0f` - Source progress denominators from manifests.
-- `e6d009a` - Cross-check generated progress denominators.
+- `b7d5ad1` - Fix single quoted string escape parsing.
 
 ## Integration Note
 
-- Ported manually instead of cherry-picking because current `main` had newer interactive-swarm, status-gate, and launcher-health reporting changes.
+- Cherry-picked only the substantive parser/runtime/docs slice from the stale INT-02 branch; did not merge the full stale branch.
 
 ## Next Suggested Slice
 
-- Add a lightweight CI/local gate target that runs `bash -n`, `scripts/refresh-progress.sh --check`, `scripts/status-gate.sh`, and `scripts/verify-status-consistency.sh` together.
+- Verify the port on current `main` with `phpc_core`, `scripts/local-gate.sh`, and diff hygiene before integrating additional INT-02 work.

@@ -72,15 +72,25 @@ fn parse_string_literal(input: &str) -> Result<(String, &str), String> {
     let mut escaped = false;
     for (index, ch) in chars {
         if escaped {
-            value.push(match ch {
-                'n' => '\n',
-                'r' => '\r',
-                't' => '\t',
-                '\\' => '\\',
-                '"' => '"',
-                '\'' => '\'',
-                other => other,
-            });
+            if quote == '\'' {
+                match ch {
+                    '\\' | '\'' => value.push(ch),
+                    other => {
+                        value.push('\\');
+                        value.push(other);
+                    }
+                }
+            } else {
+                value.push(match ch {
+                    'n' => '\n',
+                    'r' => '\r',
+                    't' => '\t',
+                    '\\' => '\\',
+                    '"' => '"',
+                    '\'' => '\'',
+                    other => other,
+                });
+            }
             escaped = false;
             continue;
         }
@@ -118,6 +128,26 @@ mod tests {
             parse_php("<?php echo 'hello';").unwrap(),
             vec![Statement::Echo(Expression::StringLiteral(
                 "hello".to_string()
+            ))]
+        );
+    }
+
+    #[test]
+    fn parses_single_quoted_string_escapes_like_php() {
+        assert_eq!(
+            parse_php("<?php echo 'a\\nb \\\\ \\' c';").unwrap(),
+            vec![Statement::Echo(Expression::StringLiteral(
+                "a\\nb \\ ' c".to_string()
+            ))]
+        );
+    }
+
+    #[test]
+    fn parses_double_quoted_string_newline_escape() {
+        assert_eq!(
+            parse_php("<?php echo \"a\\nb\";").unwrap(),
+            vec![Statement::Echo(Expression::StringLiteral(
+                "a\nb".to_string()
             ))]
         );
     }

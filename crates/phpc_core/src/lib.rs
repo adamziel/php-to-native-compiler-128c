@@ -65,6 +65,11 @@ mod tests {
     }
 
     #[test]
+    fn run_preserves_single_quoted_backslash_n() {
+        assert_eq!(run_php("<?php echo 'a\\nb';").unwrap(), "a\\nb");
+    }
+
+    #[test]
     fn compile_emits_ir_for_echo() {
         let ir = compile_php("<?php echo \"hello\";", CompileMode::EmitIr).unwrap();
         assert!(ir.contains("phpc bootstrap LLVM-like IR"));

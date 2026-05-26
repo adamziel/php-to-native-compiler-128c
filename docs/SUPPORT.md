@@ -6,6 +6,8 @@
 - `<?php echo 'literal';`
 - `<?php echo 123;`
 
+String literal support distinguishes PHP single-quoted and double-quoted escape handling for committed escapes: single-quoted strings only unescape `\\` and `\'`, while double-quoted strings support the existing `\n`, `\r`, and `\t` escapes.
+
 ## Current Native Compiler Surface
 
 - `phpc compile --emit-ir` emits bootstrap LLVM-like comments for string and integer echo literals.
