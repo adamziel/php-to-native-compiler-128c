@@ -1,23 +1,23 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T07:30:51Z
+Last refreshed: 2026-05-26T07:32:19Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `f24d47b`
+- Report base HEAD: `55acd4a`
 - Dirty entries: `0`
-- tmux windows in `phpc-swarm`: `24`
-- Supervised agents target: `100 workers + auditor`
-- Interactive launch cadence: `480s`
+- tmux windows in `phpc-swarm`: `23`
+- Supervised agents target: `20 workers + auditor`
+- Interactive launch cadence: `0s`
 - Staggered swarm launcher: `not running`
-- Latest launcher event: `2026-05-26T07:27:52Z launch: waiting 480s before starting Codex session 11/101.`
-- Interactive Codex panes: `29`
+- Latest launcher event: `2026-05-26T07:31:42Z launch: waiting 0s before starting Codex session 21/21.`
+- Interactive Codex panes: `28`
 - Active worker command processes: `0`
 - Active agent slot cap: `interactive`
 - Active slot locks: `0`
-- Dirty lane worktrees preserved for review: `5`
+- Dirty lane worktrees preserved for review: `9`
 - Worker state files: `101`
 - Expected backend retry/rate-limit states: `101`
 - GitHub Pages reporter: `running`
