@@ -17,6 +17,23 @@ LOG
 PHPC_SWARM_LAUNCHER_LOG="$launcher_log" scripts/check-launcher-observability.sh
 PHPC_EXPECT_INCLUDE_AUDITOR=1 PHPC_SWARM_LAUNCHER_LOG="$launcher_log" scripts/check-launcher-observability.sh
 
+worker_command="$(bash -c 'source scripts/swarm-interactive.sh; swarm_codex_command /repo /targets INT-05 /worktrees/INT-05')"
+for expected in \
+  "CARGO_TARGET_DIR='/targets/INT-05'" \
+  "PHPC_REQUIRE_WORKER_ENV=1" \
+  "PHPC_WORKTREE_ROOT='/worktrees/INT-05'" \
+  "PHPC_TARGET_ROOT='/targets'" \
+  "PHPC_LANE_ID='INT-05'" \
+  "PHPC_EXPECT_BRANCH='lane/INT-05'" \
+  "codex --cd '/worktrees/INT-05'"
+do
+  if ! printf '%s\n' "$worker_command" | grep -F "$expected" >/dev/null; then
+    echo "swarm_codex_command missing expected worker preflight export: $expected" >&2
+    printf '%s\n' "$worker_command" >&2
+    exit 1
+  fi
+done
+
 sed 's/SWARM_LAUNCH_STAGGER_SECONDS=480/SWARM_LAUNCH_STAGGER_SECONDS=60/' "$launcher_log" > "$tmpdir/bad-cadence.log"
 if PHPC_SWARM_LAUNCHER_LOG="$tmpdir/bad-cadence.log" scripts/check-launcher-observability.sh >"$tmpdir/out" 2>"$tmpdir/err"; then
   echo "check-launcher-observability.sh accepted a stale launcher cadence" >&2

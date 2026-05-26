@@ -15,8 +15,8 @@ swarm_codex_command() {
   local effort
   effort="$(swarm_lane_effort "$lane")"
 
-  printf "export CARGO_TARGET_DIR='%s/%s' CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 CODEX_SERVICE_TIER='fast' CODEX_MODEL='gpt-5.5' CODEX_REASONING_EFFORT='%s'; codex --cd '%s' --model 'gpt-5.5' --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'service_tier=\"fast\"' -c 'model_reasoning_effort=\"%s\"'" \
-    "$target_root" "$lane" "$effort" "$worktree" "$effort"
+  printf "export CARGO_TARGET_DIR='%s/%s' CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 PHPC_REQUIRE_WORKER_ENV=1 PHPC_WORKTREE_ROOT='%s' PHPC_TARGET_ROOT='%s' PHPC_LANE_ID='%s' PHPC_EXPECT_BRANCH='lane/%s' CODEX_SERVICE_TIER='fast' CODEX_MODEL='gpt-5.5' CODEX_REASONING_EFFORT='%s'; codex --cd '%s' --model 'gpt-5.5' --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'service_tier=\"fast\"' -c 'model_reasoning_effort=\"%s\"'" \
+    "$target_root" "$lane" "$worktree" "$target_root" "$lane" "$lane" "$effort" "$worktree" "$effort"
 }
 
 swarm_paste_prompt() {
