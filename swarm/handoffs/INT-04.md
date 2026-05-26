@@ -2,77 +2,54 @@
 
 ## Summary
 
-Milestone: Integration / M6 WordPress bootstrap truthfulness and status accuracy.
+Milestone: Integration / supervisor safety.
 
-Accepted a narrowed WP-06-style bootstrap check on current `main`: `phpc wordpress-bootstrap-check <wordpress-root>` inventories the five pinned entrypoints, runs the existing general compiler IR path on `wp-settings.php`, and reports the first general PHP blocker. No WordPress-specific compiler semantics were added.
+Started a fresh slice from `origin/main` on `lane/INT-04-launcher-observability` to avoid building on the prior INT-04 status-consistency fixture. Added a non-mutating launcher observability check for the staggered interactive launcher.
 
-Follow-up status slice: `scripts/refresh-progress.sh` derives the M6 WordPress bootstrap phrase from `swarm/wordpress-manifest.json` instead of hardcoding `runner queued`, so generated progress reports the current blocker: bootstrap check blocked in `wp-settings.php`.
+Narrow denominator: supervisor status/worker observability only. No launcher behavior, compiler behavior, or worker launch behavior changed.
+
+`scripts/check-launcher-observability.sh` verifies:
+
+- worker commands are launched through the interactive `swarm_codex_command` path;
+- `scripts/launch-swarm.sh` / `scripts/swarm-interactive.sh` do not start workers with `codex -p` or `codex exec`;
+- the latest supervised restart marker records `SWARM_WORKER_COUNT=100`;
+- the latest supervised restart marker and stagger wait event record a 480-second cadence;
+- the live process table has zero active `codex -p` / `codex exec` worker processes;
+- `scripts/refresh-progress.sh --check` still renders the observability surface.
+
+Added a focused shell fixture that supplies a temporary launcher log and proves cadence drift fails with a precise diagnostic.
 
 ## Files Changed
 
-- `crates/phpc/src/main.rs`
-- `crates/phpc/tests/bootstrap_cli.rs`
-- `docs/WORDPRESS_COMPATIBILITY.md`
-- `scripts/refresh-progress.sh`
-- `scripts/test-refresh-progress-labels.sh`
-- `swarm/blockers.md`
-- `swarm/handoffs/INT-04.md`
-- `swarm/integration.md`
+- `scripts/check-launcher-observability.sh`
+- `scripts/test-launcher-observability.sh`
+- `scripts/local-gate.sh`
 - `swarm/test-matrix.md`
-- `swarm/wordpress-manifest.json`
-- `progress.md`
-- `docs/progress.html`
+- `swarm/handoffs/INT-04.md`
 
 ## Tests Run
 
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_reports_wordpress_bootstrap_general_php_gap -- --nocapture`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 cargo run -p phpc -- wordpress-bootstrap-check /home/ubuntu/phpc-external/wordpress/wordpress`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-refresh-progress-labels.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-wp-bootstrap CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-launcher-observability.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/check-launcher-observability.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 - `git diff --check`
 
 ## Pass/Fail State
 
-- Pass: focused `phpc` bootstrap CLI integration test.
-- Pass: real pinned WordPress bootstrap check reports all five entrypoints present and blocks in `wp-settings.php` with a general parser gap at the opening docblock.
-- Pass: full workspace `cargo test`, 58 passed.
-- Pass: focused progress-label gate catches stale WordPress bootstrap `queued` text and raw launch-cadence rendering.
-- Pass: status gate and manifest consistency checks.
+- Pass: focused launcher observability fixture rejects stale 60-second cadence.
+- Pass: live launcher observability check reports interactive-only, 100 workers, 480-second cadence, and zero `codex -p` / `codex exec` workers.
 - Pass: local coordination gate.
 - Pass: diff whitespace check.
 
 ## Blockers
 
-- M6 remains blocked on general PHP parser/compiler support for comments/docblocks before WordPress bootstrap can reach includes or request setup.
+- No blocker for this supervisor-safety slice.
+- The live check depends on `/tmp/phpc-swarm-launcher.log` containing a supervised restart marker; tests use `PHPC_SWARM_LAUNCHER_LOG` with a temporary fixture so the check remains non-mutating.
 
 ## Latest Commit
 
-- Main port pending: WordPress bootstrap blocker check plus generated status-label derivation.
+- Current HEAD for this slice: `Add launcher observability gate`.
 
 ## Next Suggested Slice
 
-- Reduce the reported WordPress blocker through a general M4 parser fixture for PHP comments/docblocks before statements, then re-run `phpc wordpress-bootstrap-check` to classify the next general PHP gap.
-
-## Follow-Up Status Fixture
-
-Summary:
-- Ported the useful status-consistency fixture from `lane/INT-04` onto current `main` without taking stale lane history.
-- `scripts/verify-status-consistency.sh` now supports test-only path overrides for generated status inputs.
-- Added `scripts/test-status-consistency.sh`, which mutates temporary `progress.md` and `docs/progress.html` copies to prove stale WordPress bootstrap wording is rejected without touching checked-in generated files.
-- The local coordination gate now includes this regression, and `swarm/test-matrix.md` records it.
-
-Files changed:
-- `scripts/verify-status-consistency.sh`
-- `scripts/test-status-consistency.sh`
-- `scripts/local-gate.sh`
-- `swarm/test-matrix.md`
-- `swarm/handoffs/INT-04.md`
-
-Tests run:
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-status-consistency CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-status-consistency.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-status-consistency CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
-- `git diff --check`
-
-Latest commit:
-- Pending supervisor commit for the manual main port.
+- Add a small status/reporting note that distinguishes target sessions from started sessions when the auditor is included, if the operator wants the `1/101` vs `1/100` launcher-log wording made more explicit without changing launcher behavior.
