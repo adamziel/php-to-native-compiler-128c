@@ -453,6 +453,34 @@ fn cli_compile_emit_ir_rejects_include_once_without_claiming_native_include_once
 }
 
 #[test]
+fn cli_compile_emit_ir_rejects_require_once_without_claiming_native_require_once() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let dir = unique_temp_dir("phpc-require-once-emit-ir");
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let input_path = dir.join("main.php");
+    std::fs::write(
+        &input_path,
+        "<?php require_once 'included.php'; echo 'after require_once';",
+    )
+    .expect("write php fixture");
+
+    let output = Command::new(exe)
+        .arg("compile")
+        .arg(&input_path)
+        .arg("--emit-ir")
+        .output()
+        .expect("run phpc compile --emit-ir");
+
+    let _ = std::fs::remove_dir_all(&dir);
+
+    assert!(!output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+    assert!(String::from_utf8_lossy(&output.stderr).contains(
+        "unsupported require_once statement: include_once/require_once execution is not implemented"
+    ));
+}
+
+#[test]
 fn cli_compile_emit_exe_rejects_require_before_runtime_link_setup() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let dir = unique_temp_dir("phpc-require-emit-exe");
@@ -525,6 +553,48 @@ fn cli_compile_emit_exe_rejects_require_once_before_runtime_link_setup() {
     assert_eq!(String::from_utf8_lossy(&output.stdout), "");
     assert!(String::from_utf8_lossy(&output.stderr).contains(
         "unsupported require_once statement: include_once/require_once execution is not implemented"
+    ));
+    assert!(
+        !String::from_utf8_lossy(&output.stderr).contains("native runtime archive not found"),
+        "unsupported source was masked by runtime setup failure:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        !output_path.exists(),
+        "failed unsupported compile left stale output at {}",
+        output_path.display()
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn cli_compile_emit_exe_rejects_include_once_before_runtime_link_setup() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let dir = unique_temp_dir("phpc-include-once-emit-exe");
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let input_path = dir.join("main.php");
+    let output_path = dir.join("native-output");
+    std::fs::write(&output_path, "stale native output").expect("write stale output");
+    std::fs::write(
+        &input_path,
+        "<?php include_once 'included.php'; echo 'after include_once';",
+    )
+    .expect("write php fixture");
+
+    let output = Command::new(exe)
+        .env("PHPC_RUNTIME_LIB", dir.join("missing-libphp_runtime.a"))
+        .arg("compile")
+        .arg(&input_path)
+        .arg("--emit-exe")
+        .arg(&output_path)
+        .output()
+        .expect("run phpc compile --emit-exe");
+
+    assert!(!output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+    assert!(String::from_utf8_lossy(&output.stderr).contains(
+        "unsupported include_once statement: include_once/require_once execution is not implemented"
     ));
     assert!(
         !String::from_utf8_lossy(&output.stderr).contains("native runtime archive not found"),
