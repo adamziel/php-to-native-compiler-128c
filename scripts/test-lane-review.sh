@@ -45,3 +45,35 @@ if scripts/lane-review.sh --base refs/heads/definitely-missing-lane-review-base 
   exit 1
 fi
 grep -F "base ref not found" "$tmpdir/missing.err" >/dev/null
+
+fixture_repo="$tmpdir/diverged-lane"
+git init -q "$fixture_repo"
+git -C "$fixture_repo" config user.email test@example.invalid
+git -C "$fixture_repo" config user.name "Integration Test"
+printf 'root\n' >"$fixture_repo/file.txt"
+git -C "$fixture_repo" add file.txt
+git -C "$fixture_repo" commit -q -m root
+git -C "$fixture_repo" branch integration-base
+git -C "$fixture_repo" switch -q -c lane-under-review
+printf 'lane\n' >>"$fixture_repo/file.txt"
+git -C "$fixture_repo" commit -q -am lane
+git -C "$fixture_repo" switch -q integration-base
+printf 'base\n' >>"$fixture_repo/file.txt"
+git -C "$fixture_repo" commit -q -am base
+git -C "$fixture_repo" switch -q lane-under-review
+
+scripts/lane-review.sh --repo "$fixture_repo" --base integration-base >"$tmpdir/diverged.out"
+for expected in \
+  "repo: $fixture_repo" \
+  "branch: lane-under-review" \
+  "base: integration-base" \
+  "divergence: ahead 1, behind 1" \
+  "dirty entries: 0" \
+  "untracked entries: 0"
+do
+  if ! grep -F "$expected" "$tmpdir/diverged.out" >/dev/null; then
+    echo "lane-review.sh output missing expected diverged fixture field: $expected" >&2
+    cat "$tmpdir/diverged.out" >&2
+    exit 1
+  fi
+done
