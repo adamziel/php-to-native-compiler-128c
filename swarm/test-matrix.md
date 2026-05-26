@@ -16,6 +16,6 @@
 | WP-12 committed candidate review | `git merge-base --is-ancestor 348ad3b main`; compare WP-12 manifest hashes with `/home/ubuntu/phpc-external/wordpress/wordpress` | verified | Current `main` lacks the per-entry byte/SHA inventory; WP-12 evidence matches all five pinned WordPress 7.0 entrypoints and adds no compiler behavior |
 | DOC-03 committed candidate review | `git merge-base --is-ancestor 4ebe2ab main`; inspect current `main` Pages reporter and refresh-progress label gate | rejected | DOC-03 is a stale lane-local generated progress refresh; current `main` has later reporter-owned published progress commits and a dedicated label-hygiene gate |
 | Local coordination gate | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-local-gate scripts/local-gate.sh` | passing | Runs non-generating status checks and diff hygiene |
-| Status gate | `scripts/status-gate.sh` | passing | Non-mutating progress check plus manifest and WordPress inventory consistency |
+| Status gate | `scripts/status-gate.sh` | passing | Non-mutating progress check plus manifest, WordPress inventory, and integration-priority consistency |
 | php-src `.phpt` | `find /home/ubuntu/phpc-external/php-src/php-src-PHP-8.3 -name '*.phpt'` | inventory only | 19,346 tests pinned; runner not implemented |
 | WordPress | entrypoint file inventory under `/home/ubuntu/phpc-external/wordpress/wordpress` | inventory only | WordPress 7.0 pinned; bootstrap runner not implemented |

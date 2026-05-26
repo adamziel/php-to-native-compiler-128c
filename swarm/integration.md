@@ -78,7 +78,7 @@ Out of scope:
 
 | Priority | Lane(s) | Area | Current artifact | Integration instruction |
 | --- | --- | --- | --- | --- |
-| P1 | `LINK-01`, `LINK-02`, `LINK-08`, `LINK-09`, `LINK-11` | M3 linked/native path | Core compile/link diffs | Review first because native executable support is still 0%; accept only a narrow compile/link/run slice with tests. |
+| P1 | LINK lanes after rebase or coherent handoff | M3 linked/native path | No current unreviewed committed candidate | Prefer a LINK-02-style resubmission because native executable support is still 0%; accept only a narrow compile/link/run slice with tests. |
 | P1 | `LOW-03`, `LOW-04`, `LOW-07`, `LOW-12`, `LOW-15`, `LOW-16`, `MINE-02` | M4 parser/lowering | Parser and related lib diffs | Deduplicate overlapping parser work; pick the smallest compatible token/parser improvement and require unsupported diagnostics tests. |
 | P1 | `PHPT-01`, `PHPT-02`, `PHPT-03`, `PHPT-06`, `PHPT-07`, `PHPT-09`, `PHPT-10`, `PHPT-13`, `PHPT-16` | M5 `.phpt` harness | `phpt.rs`, module exports, and harness diffs | Compare against already-integrated minimal parser; keep only net-new parser/runner behavior with tests. |
 | P2 | `WP-01`, `WP-02`, `WP-04`, `WP-06`, `WP-12` | M6 WordPress harness | WordPress harness scripts, manifests, and CLI entry changes | Prefer inventory/bootstrap harnesses that minimize general PHP blockers; reject WordPress-specific compiler hacks. |

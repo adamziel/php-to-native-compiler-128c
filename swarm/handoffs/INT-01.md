@@ -1,8 +1,10 @@
-summary: Tightened the status gate for M5 accounting. `scripts/status-gate.sh` now requires `system_php`, `phpc_run`, and `native` `.phpt` pass/fail counts to be non-negative integers and to stay within `denominator.runnable`, preventing status from claiming more results than the pinned runnable subset supports.
+summary: Tightened integration status hygiene for the M3 review queue. `scripts/status-gate.sh` now fails when `swarm/integration.md` keeps lanes with terminal Reject/Blocked decisions in the active priority lane list, preventing stale reviewed LINK candidates from being advertised as current integration work. Updated the LINK priority row to require a rebase or coherent handoff before further review.
 
 files changed:
 - `scripts/status-gate.sh`
 - `scripts/test-status-gate.sh`
+- `swarm/integration.md`
+- `swarm/test-matrix.md`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
@@ -10,8 +12,8 @@ tests run:
 
 pass/fail state: pass
 
-blockers: none for this integration-safety slice; broader M5 remains blocked on an actual `.phpt` runner, so `denominator.runnable` remains `0`.
+blockers: none for this integration-safety slice. M3 linked native execution remains blocked on a rebased/coherent LINK candidate; do not count LINK-01, LINK-02, LINK-08, LINK-09, LINK-11, or LINK-12 as integrated M3 progress from the reviewed artifacts.
 
-latest commit: lane/INT-01 HEAD, `Tighten phpt status gate accounting`
+latest commit: branch HEAD for this slice (`Tighten integration priority status gate`)
 
-next suggested slice: Add a status gate for stale or inconsistent queue/review state, or continue reviewing committed integration candidates only when they include focused tests and coherent handoffs.
+next suggested slice: Add a queue/status check that completed review tasks have matching follow-up queue states, or review the next committed candidate only after it has a coherent handoff and focused verification.

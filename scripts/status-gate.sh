@@ -8,6 +8,7 @@ scripts/refresh-progress.sh --check
 
 python3 - <<'PY'
 import json
+import re
 from pathlib import Path
 
 
@@ -67,4 +68,35 @@ if present != len(entrypoints):
     raise SystemExit("wordpress inventory entrypoints_present must match entrypoints length")
 if missing != 0:
     raise SystemExit("wordpress inventory must not report missing pinned entrypoints")
+
+integration = Path("swarm/integration.md").read_text(encoding="utf-8")
+terminal_lanes = set()
+for row in integration.splitlines():
+    if not row.startswith("| 202"):
+        continue
+    columns = [column.strip() for column in row.strip("|").split("|")]
+    if len(columns) < 4:
+        continue
+    lane_column = columns[1]
+    decision = columns[3]
+    if not re.match(r"^(Reject|Blocked)\b", decision):
+        continue
+    for lane in re.findall(r"`([^`]+)`", lane_column):
+        terminal_lanes.add(lane)
+
+for row in integration.splitlines():
+    if not row.startswith("| P"):
+        continue
+    columns = [column.strip() for column in row.strip("|").split("|")]
+    if len(columns) < 2:
+        continue
+    priority_lane_column = columns[1]
+    stale_lanes = sorted(
+        lane for lane in terminal_lanes if f"`{lane}`" in priority_lane_column
+    )
+    if stale_lanes:
+        raise SystemExit(
+            "integration priority table lists lanes with terminal decisions: "
+            + ", ".join(stale_lanes)
+        )
 PY
