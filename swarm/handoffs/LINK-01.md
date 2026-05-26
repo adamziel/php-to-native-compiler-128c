@@ -5,6 +5,18 @@
 - Lane: `lane/LINK-01`.
 - Milestone: M4/M6.
 - Queue item: Q-025 native truthfulness for include/require.
+- Continue slice: added include-side native diagnostic coverage without
+  claiming native include execution.
+- `compile --emit-ir` now has focused CLI coverage for non-literal
+  `include APP_DIR . '/included.php';`, asserting the parser-level
+  `expected literal string path` rejection.
+- `compile --emit-exe` now has focused CLI coverage for literal
+  `include 'missing.php';`, asserting the linked-native unsupported diagnostic
+  is reported before include file execution or runtime archive setup.
+- Updated `docs/SUPPORT.md` to clarify that native literal include/require
+  rejection does not check target file existence, and that non-literal
+  `include` path expressions share the same unsupported expression-path status
+  as `require`.
 - Recycle slice: verified non-literal `require` path expressions remain
   truthfully unsupported before linked-native setup while parser support is
   still literal-path only.
@@ -39,6 +51,12 @@
   subcommand.
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core`
   passed: 84 tests.
+- Continue slice:
+  `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_ir_rejects_non_literal_include_path_expression`
+  passed.
+- Continue slice:
+  `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_exe_rejects_missing_literal_include_before_file_execution`
+  passed.
 - Recycle slice:
   `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_exe_rejects_non_literal_require_before_runtime_link_setup`
   passed.
@@ -50,7 +68,7 @@
   `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_exe_rejects_require_before_runtime_link_setup`;
   passed.
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`
-  passed: 25 tests.
+  passed: 27 tests.
 
 ## Pass/Fail State
 
@@ -64,8 +82,8 @@
 
 ## Latest Commit
 
-- Recycle commit in `lane/LINK-01`: non-literal require native diagnostic
-  coverage.
+- Continue commit in `lane/LINK-01`: include missing-path/expression-path
+  native diagnostic coverage.
 
 ## Next Suggested Slice
 

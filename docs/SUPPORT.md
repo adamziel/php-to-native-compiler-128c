@@ -33,8 +33,11 @@ String literal support distinguishes PHP single-quoted and double-quoted escape 
 - `phpc compile <input.php> --emit-exe <output>` links a native executable for string, integer, boolean, and null echo literals through `php_runtime::phpc_echo`.
 - `phpc compile --emit-exe` rejects literal-path `require`/`include` before
   runtime link setup with an explicit linked-native unsupported diagnostic.
+  This rejection does not execute the include or check whether the target file
+  exists.
 - Non-literal `require`/`include` path expressions, for example
-  `require APP_DIR . '/file.php';`, are rejected before native lowering with
+  `require APP_DIR . '/file.php';` or `include APP_DIR . '/file.php';`, are
+  rejected before native lowering with
   `expected literal string path`; linked-native support must not be inferred.
 
 ## Current Harness Surface
