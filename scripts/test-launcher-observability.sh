@@ -15,6 +15,7 @@ cat > "$launcher_log" <<'LOG'
 LOG
 
 PHPC_SWARM_LAUNCHER_LOG="$launcher_log" scripts/check-launcher-observability.sh
+PHPC_EXPECT_INCLUDE_AUDITOR=1 PHPC_SWARM_LAUNCHER_LOG="$launcher_log" scripts/check-launcher-observability.sh
 
 sed 's/SWARM_LAUNCH_STAGGER_SECONDS=480/SWARM_LAUNCH_STAGGER_SECONDS=60/' "$launcher_log" > "$tmpdir/bad-cadence.log"
 if PHPC_SWARM_LAUNCHER_LOG="$tmpdir/bad-cadence.log" scripts/check-launcher-observability.sh >"$tmpdir/out" 2>"$tmpdir/err"; then
@@ -23,6 +24,28 @@ if PHPC_SWARM_LAUNCHER_LOG="$tmpdir/bad-cadence.log" scripts/check-launcher-obse
 fi
 if ! grep -F "launcher cadence drift" "$tmpdir/err" >/dev/null; then
   echo "check-launcher-observability.sh failed without the expected cadence diagnostic" >&2
+  cat "$tmpdir/err" >&2
+  exit 1
+fi
+
+sed 's/SWARM_INCLUDE_AUDITOR=1/SWARM_INCLUDE_AUDITOR=0/' "$launcher_log" > "$tmpdir/no-auditor.log"
+if PHPC_EXPECT_INCLUDE_AUDITOR=1 PHPC_SWARM_LAUNCHER_LOG="$tmpdir/no-auditor.log" scripts/check-launcher-observability.sh >"$tmpdir/out" 2>"$tmpdir/err"; then
+  echo "check-launcher-observability.sh accepted a launcher without the expected auditor" >&2
+  exit 1
+fi
+if ! grep -F "launcher auditor target drift" "$tmpdir/err" >/dev/null; then
+  echo "check-launcher-observability.sh failed without the expected auditor diagnostic" >&2
+  cat "$tmpdir/err" >&2
+  exit 1
+fi
+
+sed 's/session 2\/101/session 2\/100/' "$launcher_log" > "$tmpdir/bad-denominator.log"
+if PHPC_SWARM_LAUNCHER_LOG="$tmpdir/bad-denominator.log" scripts/check-launcher-observability.sh >"$tmpdir/out" 2>"$tmpdir/err"; then
+  echo "check-launcher-observability.sh accepted a stale launcher session denominator" >&2
+  exit 1
+fi
+if ! grep -F "launcher session denominator drift" "$tmpdir/err" >/dev/null; then
+  echo "check-launcher-observability.sh failed without the expected session denominator diagnostic" >&2
   cat "$tmpdir/err" >&2
   exit 1
 fi
