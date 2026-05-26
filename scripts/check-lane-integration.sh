@@ -53,6 +53,12 @@ case "$target_ref" in
   lane/*) lane_name="${target_ref#lane/}" ;;
 esac
 handoff="swarm/handoffs/${lane_name}.md"
+if [[ ! -f "$handoff" && "$lane_name" =~ ^([A-Z]+-[0-9]+)- ]]; then
+  base_handoff="swarm/handoffs/${BASH_REMATCH[1]}.md"
+  if [[ -f "$base_handoff" ]]; then
+    handoff="$base_handoff"
+  fi
+fi
 
 echo "main: ${main_ref} $(git rev-parse --short "$main_commit")"
 echo "target: ${target_ref} $(git rev-parse --short "$target_commit")"

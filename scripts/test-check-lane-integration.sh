@@ -72,6 +72,16 @@ scripts/check-lane-integration.sh lane/review main > review.out
 grep -F "handoff: present swarm/handoffs/review.md" review.out >/dev/null
 grep -F "classification: review-required" review.out >/dev/null
 
+git switch -q -c lane/INT-02-fresh-0409 main
+printf 'fresh\n' > fresh.txt
+git add fresh.txt
+git commit -q -m fresh
+printf '# base worker handoff\n' > swarm/handoffs/INT-02.md
+
+scripts/check-lane-integration.sh lane/INT-02-fresh-0409 main > fresh.out
+grep -F "handoff: present swarm/handoffs/INT-02.md" fresh.out >/dev/null
+grep -F "classification: review-required" fresh.out >/dev/null
+
 git switch -q -c lane/missing-handoff main
 printf 'missing handoff\n' > missing-handoff.txt
 git add missing-handoff.txt
