@@ -187,8 +187,8 @@ tmp="$(mktemp)"
   echo "| M1 COW shared mechanisms | RPR, DMB, CCA, regression matrix | 0% | Not started |"
   echo "| M2 runtime value ABI | value kinds, ownership, and request state | 4% | Runtime-owned value handles plus request header storage integrated |"
   echo "| M3 linked native execution | compile, link, run, compare | 2% | Linked executable path covers string, integer, boolean, and null echo literals |"
-  echo "| M4 native lowering | interpreter-supported constructs lowered or rejected | 3% | String, integer, boolean, and null echo literals; explicit variable diagnostic |"
-  echo "| M5 PHP core .phpt harness | PHP-8.3 branch, ${php_phpt_total_display} \`.phpt\` files | 4% | PHP-8.3 inventory pinned; minimal parser and exact-EXPECT/EXPECTF phpc runner integrated |"
+  echo "| M4 native lowering | interpreter-supported constructs lowered or rejected | 4% | String, integer, boolean, and null echo literals; top-level string define/global no-output statements; explicit variable diagnostic |"
+  echo "| M5 PHP core .phpt harness | PHP-8.3 branch, ${php_phpt_total_display} \`.phpt\` files | 5% | PHP-8.3 inventory pinned; minimal FILE/FILEEOF exact-EXPECT/EXPECTF phpc runner integrated |"
   echo "| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress ${wp_version} pinned; ${wp_entrypoints} entrypoints present; ${wp_bootstrap_summary} |"
   echo "| M7 object/SAPI/DB generality | required semantic families | 1% | Request header runtime state integrated; PHP header() wiring queued |"
   echo "| M8 performance after correctness | truthful native benchmarks | 0% | Deferred |"
@@ -268,8 +268,8 @@ tmp="$(mktemp)"
         <tr><td>M1 COW mechanisms</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>RPR, DMB, CCA, regression matrix</td><td>Not started</td></tr>
         <tr><td>M2 runtime ABI</td><td><div class="bar"><span style="width:4%"></span></div>4%</td><td>PHP value kinds, ownership, and request state</td><td>Runtime-owned value handles plus request header storage integrated</td></tr>
         <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>compile, link, run, compare</td><td>Linked executable path covers string, integer, boolean, and null echo literals</td></tr>
-        <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>interpreter-supported constructs</td><td>String, integer, boolean, and null echo literals; explicit variable diagnostic</td></tr>
-        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:4%"></span></div>4%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files</td><td>Static inventory pinned; minimal parser and exact-EXPECT/EXPECTF phpc runner integrated</td></tr>
+        <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:4%"></span></div>4%</td><td>interpreter-supported constructs</td><td>String, integer, boolean, and null echo literals; top-level string define/global no-output statements; explicit variable diagnostic</td></tr>
+        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:5%"></span></div>5%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files</td><td>Static inventory pinned; minimal FILE/FILEEOF exact-EXPECT/EXPECTF phpc runner integrated</td></tr>
         <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress ${wp_version} entrypoints</td><td>Source pinned; ${wp_entrypoints} entrypoints present; ${wp_bootstrap_summary}</td></tr>
       </tbody>
     </table>
