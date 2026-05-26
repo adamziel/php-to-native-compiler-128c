@@ -1,6 +1,6 @@
 # Auditor Notes
 
-Cycle: 2026-05-26T06:25:00Z
+Cycle: 2026-05-26T06:45:00Z
 Auditor: AUD-01
 
 Evidence inspected: `progress.md`, `docs/progress.html`, `swarm/queue.md`,
@@ -12,111 +12,116 @@ CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/status-gate.s
 
 ## What is going right
 
-- The status gate passes locally, and the current reports are guarded by
-  non-mutating consistency checks rather than hand-edited dashboard claims.
-- M3 now has a real but narrow integrated executable path: `phpc compile
-  <input.php> --emit-exe <output>` is reported and tested for literal echo
-  fixtures, including string, integer, boolean, null, no-final-semicolon, and
-  no-trailing-newline cases.
-- Runtime ABI work is moving through tested ownership slices. Boolean values,
-  existing scalar handles, cloning/free/error behavior, and request-header
-  storage are documented and covered by runtime tests.
-- WordPress work is currently framed correctly as a pressure test for general PHP
-  behavior. The manifest pins WordPress 7.0, inventories five entrypoints, and
-  records the present general blocker as unsupported `require` execution.
-- PHP core accounting still names the denominator: PHP-8.3 branch snapshot,
-  19,346 `.phpt` files. The runner claims remain narrow enough to distinguish
-  parser metadata from runnable coverage.
-- Integration notes reject stale or conflicting LINK candidates instead of
-  merging every lane-local executable experiment.
+- The checked coordination status gate passes locally. The report/dashboard
+  surface is now protected by non-mutating checks, label checks, launcher
+  observability checks, and manifest consistency checks.
+- M3 has real first execution plumbing: `phpc compile <input.php> --emit-exe
+  <output>` can build and run a linked executable for the current literal echo
+  denominator. The docs correctly keep this claim narrow.
+- M4 has made small but useful general PHP progress: comments/docblocks,
+  string/integer/boolean/null echo literals, top-level string `define`, top-level
+  `global` no-output declarations, and explicit unsupported-variable diagnostics
+  are represented in current reporting.
+- WordPress is still being used correctly as a pressure test for general PHP
+  semantics. The current blocker is no longer the opening docblock or `define`;
+  it is general `require`/include execution in `wp-settings.php`.
+- Runtime ABI work has focused ownership tests and documentation. Boolean values,
+  scalar handles, clone/free/error behavior, and request-header storage are
+  covered as runtime behavior rather than claimed as full SAPI support.
+- Integration notes are increasingly disciplined about rejecting stale lane
+  branches, no-net-diff candidates, missing handoffs, and duplicated LINK shapes.
 
 ## What is going wrong
 
-- AUD-01 was behind `origin/main` when this audit was handed off (`HEAD`
-  `5e5736e`, supervisor `origin/main` `d71b1c5`). This audit checked the remote
-  versions of the major coordination files, but the lane itself should be
-  refreshed before any further local verification is treated as current-main
-  evidence.
-- `swarm/agents.md` still says the target is 100 implementation/research workers
-  plus auditor, while the checked-out `progress.md` says 50 workers. `origin/main`
-  progress has the cleaner `100 workers + auditor` wording. This is a concrete
-  stale-lane drift signal.
-- `swarm/queue.md` still has old `ready` rows whose work is already represented
-  by verified rows: Q-001/Q-002, Q-005 versus integrated ABI work, Q-007 versus
-  the pinned PHP core manifest, and Q-009 versus the WordPress manifest. The queue
-  is partly a backlog and partly history, which weakens scheduling.
-- The test matrix is ahead of the PHP core manifest: it describes a minimal
-  `.phpt` runner, while `swarm/php-core-manifest.json` still says `runnable: 0`
-  and "No .phpt runner is implemented yet." The manifest needs a truthful
-  runnable-subset count or sharper wording that separates library-level runner
-  capability from php-src inventory execution.
-- Several handoffs still say "pending commit" or report older pass counts. That
-  makes handoff evidence less useful for auditing what is actually integrated.
+- AUD-01 itself was stale at handoff time: `git status` reported
+  `lane/AUD-01...origin/main [behind 1]`. The audit checked remote copies for
+  the major coordination files, but further AUD work should be refreshed before
+  treating lane-local files as current.
+- The queue is no longer a clean scheduler. It still lists ready bootstrap tasks
+  whose evidence already exists elsewhere: Q-001/Q-002, Q-005, Q-007, and Q-009
+  are stale or duplicated by verified rows/manifests.
+- The queue and integration log are over-weighted toward coordination/gate
+  slices. Many recent INT handoffs improve review safety, but they do not move
+  PHP semantics, native coverage, PHP core runnable counts, or WordPress
+  execution.
+- `swarm/php-core-manifest.json` still reports `runnable: 0` and says no `.phpt`
+  runner exists, while `swarm/test-matrix.md` describes a minimal `.phpt` runner
+  and pass/fail/xfail classification. The distinction may be "library helper
+  exists, pinned php-src subset has not run," but the manifest wording is now
+  misleading.
+- Handoffs still mix current and stale language. Several say "pending commit" or
+  report older full-suite counts, while later test-matrix rows show larger
+  counts. This weakens handoffs as integration evidence.
+- Progress percentages are plausible only if read as early plumbing. Without
+  named fixture denominators, M4 at 4% and M5 at 6% can easily be overread.
 
 ## Idle, Stuck, Duplicated, Drifting Lanes
 
-- The active swarm was still mostly idle from a compiler-progress standpoint at
-  audit time: progress reported one interactive pane, zero active worker command
-  processes, zero active slot locks, and all 101 worker state files in expected
-  retry or rate-limit state.
-- LINK lanes are duplicated. LINK-02-style execution is the accepted shape now;
-  LINK-08/LINK-09-style core `CompileMode::EmitExe` rewrites should remain
-  rejected unless mined for focused diagnostics or stale-output cleanup.
-- LOW/MINE parser work is still the main duplicate pool. It should be integrated
-  as small general PHP parser/lowering slices only, not as broad parser rewrites.
-- PHPT lanes risk drifting into metadata or matcher breadth without increasing
-  the pinned php-src runnable subset. Future PHPT work should produce a small
-  counted php-src subset run, not just more parser metadata.
-- WordPress lanes are acceptable only while reducing the current blocker through
-  general `require`/include, constants, globals, function-call, and request
-  semantics. Any WordPress-path special case should be rejected.
+- The swarm is active as a launcher, but idle as compiler execution capacity:
+  progress reports zero active worker command processes, zero active slot locks,
+  and 101 worker state files in expected retry/rate-limit states.
+- INT lanes are drifting into repeated hygiene work. The checker/local-gate
+  improvements are useful, but they should not consume the next integration
+  window unless a concrete reporting failure appears.
+- LINK duplication is mostly resolved. LINK-02-style executable emission is the
+  accepted shape; LINK-08/LINK-09-style core `CompileMode::EmitExe` rewrites
+  should stay rejected except for small mined regressions such as stale-output
+  cleanup.
+- LOW/MINE parser lanes remain the main duplicate pool. They need one small
+  accepted semantic slice at a time, with unsupported-diagnostic tests, not a
+  broad parser replacement.
+- PHPT lanes risk drifting into parser metadata and matcher breadth while the
+  pinned php-src denominator stays at zero runnable tests.
+- WP lanes must stay tied to general PHP behavior. The next blocker is
+  `require`/include; any WordPress-path special case would be roadmap drift.
 
 ## Weak Progress Claims
 
-- M3 at 2% is defensible only as "first linked executable plumbing for literal
-  echo fixtures." It is not broad native lowering and should not imply a reusable
-  differential harness yet.
-- M4 at 4% is still literal and top-level-statement support plus diagnostics.
-  It does not yet cover arrays, functions, control flow, includes, classes,
-  references, or normal PHP call frames.
-- M5 at 6% is high unless tied to the exact runnable subset. The global manifest
-  still reports 19,346 mapped tests and zero runnable php-src tests.
-- M6 at 1% is inventory plus blocker classification only. WordPress bootstrap
-  still cannot execute through `wp-settings.php`.
-- M7 at 1% is request-header storage, not PHP `header()` semantics, SAPI lifecycle
-  integration, sessions, streams, filesystem, database, or object behavior.
+- M3 at 2% is justified only for linked executable plumbing over literal echo
+  fixtures. It is not a reusable native differential harness and does not cover
+  real PHP control flow, includes, arrays, functions, objects, or request state.
+- M4 at 4% is still a very small language surface. Comments, literals, top-level
+  string `define`, and no-output `global` declarations are useful, but they are
+  not a token-stream foundation or general lowering layer.
+- M5 at 6% is weak until the manifest records exact pinned php-src files that
+  were actually run. Inventory over 19,346 `.phpt` files is not runnable
+  compiler progress.
+- M6 at 1% remains inventory plus blocker classification. The bootstrap check
+  cannot execute through `require`/include in `wp-settings.php`.
+- M7 at 1% is runtime request-header storage only. PHP `header()` calls,
+  lifecycle integration, sessions, streams, filesystem, database, and object
+  behavior are still absent.
+- M1 remains correctly at 0%; no RPR/DMB/CCA mechanism tests exist.
 
 ## Missing Tests
 
-- No committed php-src subset run records concrete `.phpt` pass/fail/skip/xfail
-  counts against the 19,346-test denominator.
-- No shared differential runner compares system PHP, `phpc run`, and native
-  executable stdout, stderr, and exit status across a named fixture set.
-- `.phpt` execution still lacks broad `SKIPIF`, `EXPECTREGEX`, full `EXPECTF`,
+- No committed php-src subset run records concrete pass/fail/skip/xfail counts
+  against the 19,346-test denominator.
+- No shared fixture runner compares system PHP, `phpc run`, and native
+  executable stdout, stderr, and exit status across a named denominator.
+- `.phpt` execution still lacks full `SKIPIF`, `EXPECTREGEX`, full `EXPECTF`,
   stderr, exit status, `INI`, `ENV`, `ARGS`, `CLEAN`, and native execution.
-- WordPress has no executable bootstrap step past `require`/include, and no
-  general include/require fixture proves the next slice.
+- There is no focused general `require`/include fixture proving parse and
+  execution behavior independent of WordPress.
 - Runtime/SAPI tests do not yet prove compiler-facing PHP `header()` behavior.
-- M1 has no RPR/DMB/CCA mechanism tests, so COW/reference progress remains zero.
+- COW/reference/object semantics have no mechanism-level tests.
 
 ## Next Integration Target
 
-The next best integration target is a general `require`/include slice driven by
-the WordPress blocker, but reduced to small PHP fixtures first. Acceptance should
-be: parse and execute a literal-path `require` or `include` in `phpc run`, define
-the failure behavior for missing files, add focused tests independent of
-WordPress paths, and then update the WordPress bootstrap check to report the next
-general blocker.
+The next integration target should be a minimal, general `require`/include slice,
+driven by the WordPress blocker but proven without WordPress paths. Acceptance:
+parse a literal-path `require` and/or `include`, execute it in `phpc run`, define
+missing-file behavior, add focused fixtures, preserve native unsupported
+diagnostics where native execution cannot handle the feature yet, and then update
+the WordPress bootstrap check to report the next general blocker.
 
-The second integration target is a tiny php-src `.phpt` runnable subset manifest
-update. It should name exact test files, run them through the existing minimal
-runner, and update `swarm/php-core-manifest.json` from `runnable: 0` only if
-those tests are actually executed.
+The second target is PHP core accounting: run a tiny named php-src `.phpt` subset
+through the existing minimal runner and update `swarm/php-core-manifest.json`
+only with counts that were actually executed.
 
 ## Single Best Supervisor Intervention
 
-Refresh AUD and other stale lanes onto current `origin/main`, then force the
-queue to pick one compiler-semantic integration lane: general `require`/include
-execution. Pause new coordination-gate work unless it fixes a demonstrated
-reporting inconsistency, because the roadmap now needs fewer launcher/status
-slices and more tested PHP semantics.
+Refresh stale auditor/worker lanes onto `origin/main`, then freeze routine
+coordination-gate intake for one cycle and assign integration to one semantic
+slice: general `require`/include execution. The project needs the next report to
+show a new tested PHP behavior, not another launcher/checker improvement.
