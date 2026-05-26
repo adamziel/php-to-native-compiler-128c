@@ -36,4 +36,28 @@ fi
 
 cp "$php_core_backup" swarm/php-core-manifest.json
 cp "$wordpress_backup" swarm/wordpress-manifest.json
+
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+path = Path("swarm/php-core-manifest.json")
+manifest = json.loads(path.read_text(encoding="utf-8"))
+manifest["results"]["native"]["pass"] = manifest["denominator"]["runnable"] + 1
+path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+PY
+
+if scripts/status-gate.sh >/tmp/phpc-status-gate-test.out 2>/tmp/phpc-status-gate-test.err; then
+  echo "status-gate.sh accepted php-core results above the runnable denominator" >&2
+  exit 1
+fi
+
+if ! grep -F "results.native pass/fail total must not exceed denominator.runnable" /tmp/phpc-status-gate-test.err >/dev/null; then
+  echo "status-gate.sh failed without the expected runnable-results diagnostic" >&2
+  cat /tmp/phpc-status-gate-test.err >&2
+  exit 1
+fi
+
+cp "$php_core_backup" swarm/php-core-manifest.json
+cp "$wordpress_backup" swarm/wordpress-manifest.json
 scripts/status-gate.sh

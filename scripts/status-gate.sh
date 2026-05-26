@@ -29,6 +29,22 @@ if mapped != total_phpt:
 if not isinstance(runnable, int) or runnable < 0 or runnable > total_phpt:
     raise SystemExit("php-core manifest denominator.runnable must be between 0 and total_phpt")
 
+results = php_core.get("results", {})
+for runner in ("system_php", "phpc_run", "native"):
+    runner_results = results.get(runner)
+    if not isinstance(runner_results, dict):
+        raise SystemExit(f"php-core manifest missing results.{runner}")
+    passed = runner_results.get("pass")
+    failed = runner_results.get("fail")
+    if not isinstance(passed, int) or passed < 0:
+        raise SystemExit(f"php-core manifest results.{runner}.pass must be a non-negative integer")
+    if not isinstance(failed, int) or failed < 0:
+        raise SystemExit(f"php-core manifest results.{runner}.fail must be a non-negative integer")
+    if passed + failed > runnable:
+        raise SystemExit(
+            f"php-core manifest results.{runner} pass/fail total must not exceed denominator.runnable"
+        )
+
 php_src = php_core.get("php_src", {})
 for key in ("path", "source", "branch", "commit", "version"):
     if not php_src.get(key):
