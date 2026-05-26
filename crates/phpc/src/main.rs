@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use phpc_core::phpt::{parse_phpt, run_phpt_with_phpc, PhptRunReport, PhptRunStatus};
-use phpc_core::{compile_php, compile_php_executable, run_php, CompileMode};
+use phpc_core::{compile_php, compile_php_executable, run_php_file, CompileMode};
 
 const WORDPRESS_BOOTSTRAP_ENTRYPOINTS: &[&str] = &[
     "wp-settings.php",
@@ -35,9 +35,7 @@ fn real_main() -> Result<ExitCode, String> {
         "run" => {
             let input = input_path(args.next())?;
             reject_trailing_args(args.collect::<Vec<_>>().as_slice())?;
-            let source = fs::read_to_string(&input)
-                .map_err(|err| format!("failed to read {}: {err}", input.display()))?;
-            let output = run_php(&source)?;
+            let output = run_php_file(&input)?;
             print!("{output}");
             Ok(ExitCode::SUCCESS)
         }

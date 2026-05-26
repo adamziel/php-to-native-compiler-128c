@@ -19,9 +19,12 @@ Bootstrap check:
 
 - Command: `phpc wordpress-bootstrap-check /home/ubuntu/phpc-external/wordpress/wordpress`
 - Current result: blocked in `wp-settings.php`
-- Normalized blocker: unsupported general PHP `require` execution after leading
-  comments/docblocks, `define( 'WPINC', 'wp-includes' )`, and the top-level
-  `global $wp_version, ...` declaration are handled.
+- Normalized blocker: unsupported general PHP non-literal `require` expression
+  after leading comments/docblocks, `define( 'WPINC', 'wp-includes' )`, and the
+  top-level `global $wp_version, ...` declaration are handled. Literal-path
+  sibling `require`/`include` now executes in `phpc run`, but WordPress reaches
+  `require ABSPATH . WPINC . '/version.php';`, which still needs constant
+  expression/path evaluation.
 
 The harness must keep WordPress source outside the repo unless a size/license/update policy is approved. Track:
 

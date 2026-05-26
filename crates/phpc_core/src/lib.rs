@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub use parser::{parse_php, CallExpression, Expression, Statement};
+pub use parser::{parse_php, CallExpression, Expression, IncludeKind, IncludeStatement, Statement};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompileMode {
@@ -18,6 +18,16 @@ pub enum CompileMode {
 }
 
 pub fn run_php(source: &str) -> Result<String, String> {
+    run_php_with_base_dir(source, None)
+}
+
+pub fn run_php_file(path: &Path) -> Result<String, String> {
+    let source = fs::read_to_string(path)
+        .map_err(|err| format!("failed to read included PHP file {}: {err}", path.display()))?;
+    run_php_with_base_dir(&source, path.parent())
+}
+
+fn run_php_with_base_dir(source: &str, base_dir: Option<&Path>) -> Result<String, String> {
     let program = parse_php(source)?;
     let mut constants = HashMap::new();
     let mut output = String::new();
@@ -31,6 +41,9 @@ pub fn run_php(source: &str) -> Result<String, String> {
             },
             Statement::Call(call) => interpret_call_statement(call, &mut constants)?,
             Statement::Global(_) => {}
+            Statement::Include(include) => {
+                output.push_str(&interpret_include_statement(include, base_dir)?);
+            }
         }
     }
     Ok(output)
@@ -97,6 +110,12 @@ fn emit_ir(program: &[Statement]) -> Result<String, String> {
             Statement::Global(names) => {
                 ir.push_str(&format!("  ; global[{index}] names={names:?}\n"));
             }
+            Statement::Include(include) => {
+                return Err(format!(
+                    "native include/require lowering is not implemented for literal path {:?}",
+                    include.path
+                ));
+            }
             Statement::Echo(Expression::StringLiteral(text)) => {
                 ir.push_str(&format!(
                     "  ; echo_string[{index}] len={} text={:?}\n",
@@ -130,6 +149,12 @@ fn emit_linkable_ir(program: &[Statement]) -> Result<String, String> {
                 continue;
             }
             Statement::Global(_) => continue,
+            Statement::Include(include) => {
+                return Err(format!(
+                    "linked native include/require execution is not implemented for literal path {:?}",
+                    include.path
+                ));
+            }
             Statement::Echo(Expression::StringLiteral(text)) => text.as_bytes().to_vec(),
             Statement::Echo(Expression::IntegerLiteral(value)) => value.to_string().into_bytes(),
             Statement::Echo(Expression::BooleanLiteral(true)) => b"1".to_vec(),
@@ -157,6 +182,36 @@ fn emit_linkable_ir(program: &[Statement]) -> Result<String, String> {
            ret i32 0\n\
          }}\n"
     ))
+}
+
+fn interpret_include_statement(
+    include: IncludeStatement,
+    base_dir: Option<&Path>,
+) -> Result<String, String> {
+    let include_path = Path::new(&include.path);
+    let resolved = if include_path.is_absolute() {
+        include_path.to_path_buf()
+    } else if let Some(base_dir) = base_dir {
+        base_dir.join(include_path)
+    } else {
+        include_path.to_path_buf()
+    };
+
+    let source = fs::read_to_string(&resolved).map_err(|err| {
+        format!(
+            "failed to {} literal path {}: {err}",
+            include_kind_name(include.kind),
+            include.path
+        )
+    })?;
+    run_php_with_base_dir(&source, resolved.parent())
+}
+
+fn include_kind_name(kind: IncludeKind) -> &'static str {
+    match kind {
+        IncludeKind::Include => "include",
+        IncludeKind::Require => "require",
+    }
 }
 
 fn interpret_call_statement(
@@ -316,6 +371,54 @@ mod tests {
     }
 
     #[test]
+    fn run_requires_literal_sibling_file() {
+        let dir = unique_temp_dir("phpc-core-require-sibling");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let main = dir.join("main.php");
+        let sibling = dir.join("sibling.php");
+        fs::write(&main, "<?php echo 'before-'; require 'sibling.php'; echo '-after';")
+            .unwrap();
+        fs::write(&sibling, "<?php echo 'sibling';").unwrap();
+
+        let output = run_php_file(&main);
+
+        let _ = fs::remove_dir_all(&dir);
+        assert_eq!(output.unwrap(), "before-sibling-after");
+    }
+
+    #[test]
+    fn run_includes_literal_sibling_file() {
+        let dir = unique_temp_dir("phpc-core-include-sibling");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let main = dir.join("main.php");
+        let sibling = dir.join("sibling.php");
+        fs::write(&main, "<?php echo 'before-'; include 'sibling.php'; echo '-after';")
+            .unwrap();
+        fs::write(&sibling, "<?php echo 'sibling';").unwrap();
+
+        let output = run_php_file(&main);
+
+        let _ = fs::remove_dir_all(&dir);
+        assert_eq!(output.unwrap(), "before-sibling-after");
+    }
+
+    #[test]
+    fn run_reports_missing_literal_require_path() {
+        let dir = unique_temp_dir("phpc-core-missing-require");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let main = dir.join("main.php");
+        fs::write(&main, "<?php require 'missing.php';").unwrap();
+
+        let err = run_php_file(&main).unwrap_err();
+
+        let _ = fs::remove_dir_all(&dir);
+        assert!(err.contains("failed to require literal path missing.php"));
+    }
+
+    #[test]
     fn compile_emits_ir_for_global_declaration_no_op() {
         let ir = compile_php(
             "<?php define('APP_DIR', 'app'); global $first, $second; echo 'ok';",
@@ -326,6 +429,15 @@ mod tests {
         assert!(ir.contains("define_string[0] name=\"APP_DIR\" value=\"app\""));
         assert!(ir.contains("global[1] names=[\"first\", \"second\"]"));
         assert!(ir.contains("echo_string[2] len=2 text=\"ok\""));
+    }
+
+    #[test]
+    fn compile_rejects_literal_include_with_truthful_native_diagnostic() {
+        let err = compile_php("<?php include 'sibling.php';", CompileMode::EmitIr).unwrap_err();
+        assert_eq!(
+            err,
+            "native include/require lowering is not implemented for literal path \"sibling.php\""
+        );
     }
 
     #[test]
@@ -374,5 +486,13 @@ mod tests {
         assert!(!ir.contains("second"));
         assert!(ir.contains("c\"native\""));
         assert!(ir.contains("call void @phpc_echo(ptr @.phpc.echo.1, i64 6)"));
+    }
+
+    fn unique_temp_dir(name: &str) -> PathBuf {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("{name}-{}-{nanos}", std::process::id()))
     }
 }

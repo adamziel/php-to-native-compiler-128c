@@ -25,11 +25,11 @@
       "entrypoints_missing": 0,
       "status": "blocked",
       "bootstrap": "wp-settings.php",
-      "general_php_gap": "unsupported require statement: include/require execution is not implemented"
+      "general_php_gap": "unsupported require statement: expected literal string path"
     }
   },
   "blockers": [
-    "WordPress wp-settings.php bootstrap reaches a general parser gap before executable bootstrap: unsupported require/include execution."
+    "WordPress wp-settings.php bootstrap reaches a general parser gap before executable bootstrap: unsupported non-literal require expression."
   ],
-  "last_run": "2026-05-26T03:30:00Z"
+  "last_run": "2026-05-26T07:27:35Z"
 }

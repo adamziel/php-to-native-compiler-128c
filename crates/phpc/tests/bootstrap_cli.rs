@@ -4,6 +4,7 @@ use std::{env, fs};
 
 const BOOTSTRAP_HELLO: &str = "../../fixtures/bootstrap/hello.php";
 const BOOTSTRAP_BOOL_NULL: &str = "../../fixtures/bootstrap/bool_null_echo.php";
+const BOOTSTRAP_REQUIRE_SIBLING: &str = "../../fixtures/bootstrap/require_sibling_main.php";
 
 #[test]
 fn cli_without_command_prints_help_and_usage_exit() {
@@ -72,6 +73,27 @@ fn cli_runs_bootstrap_echo() {
         .expect("run phpc");
     assert!(output.status.success());
     assert_eq!(String::from_utf8_lossy(&output.stdout), "hello from phpc\n");
+}
+
+#[test]
+fn cli_run_executes_literal_require_sibling_file() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let output = Command::new(exe)
+        .args(["run", BOOTSTRAP_REQUIRE_SIBLING])
+        .output()
+        .expect("run phpc");
+
+    assert!(
+        output.status.success(),
+        "phpc run failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        "main-before|sibling|main-after"
+    );
+    assert_eq!(String::from_utf8_lossy(&output.stderr), "");
 }
 
 #[test]
@@ -489,9 +511,8 @@ fn cli_reports_wordpress_bootstrap_general_php_gap() {
     assert!(stdout.contains("entrypoint_present=wp-admin/admin-ajax.php"));
     assert!(stdout.contains("status=blocked"));
     assert!(stdout.contains("bootstrap=wp-settings.php"));
-    assert!(
-        stdout.contains("general_php_gap=unsupported require statement: include/require execution is not implemented")
-    );
+    assert!(stdout
+        .contains("general_php_gap=unsupported require statement: expected literal string path"));
 }
 
 #[test]

@@ -12,6 +12,9 @@
   string constant and produces no output in `phpc run`.
 - `<?php global $name, $other;` as a top-level declaration that is a no-op in
   the current non-function/global execution model.
+- `<?php require 'sibling.php';` and `<?php include 'sibling.php';` as top-level
+  literal-path statements in `phpc run`, resolved relative to the executing PHP
+  file's directory.
 - A final supported `echo` statement may omit the semicolon when it is immediately
   followed by the closing PHP tag, for example `<?php echo "literal" ?>`.
 - Whitespace and PHP comments (`/* ... */`, `// ...`, `# ...`) before supported statements.
@@ -25,6 +28,8 @@ String literal support distinguishes PHP single-quoted and double-quoted escape 
   statements and reports them as string-constant definitions.
 - `phpc compile --emit-ir` accepts top-level `global $name, $other;`
   declarations and reports them as no-output global declarations.
+- `phpc compile --emit-ir` rejects literal-path `require`/`include` with an
+  explicit native lowering diagnostic.
 - `phpc compile <input.php> --emit-exe <output>` links a native executable for string, integer, boolean, and null echo literals through `php_runtime::phpc_echo`.
 
 ## Current Harness Surface
