@@ -61,7 +61,7 @@ while true; do
 
   windows="$(tmux list-windows -t "$session" 2>/dev/null | wc -l)"
   codex="$(swarm_interactive_codex_count "$session")"
-  execs="$(pgrep -fc 'codex exec' || true)"
+  execs="$(swarm_codex_exec_count)"
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog: windows=${windows} interactive_codex=${codex} codex_exec=${execs} missing_windows=${missing}"
   sleep "$interval"
 done

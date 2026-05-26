@@ -30,6 +30,8 @@ swarm_paste_prompt() {
   tmux paste-buffer -t "${session}:${lane}" -b "prompt-${lane}"
   sleep 1
   tmux send-keys -t "${session}:${lane}" C-m
+  sleep 1
+  tmux send-keys -t "${session}:${lane}" C-m
 }
 
 swarm_pane_has_interactive_codex() {
@@ -71,6 +73,16 @@ swarm_interactive_codex_count() {
       ($1 in pane || $2 in pane) &&
       index($0, "codex") &&
       index($0, "codex exec") == 0 { count++ }
+      END { print count + 0 }
+    '
+}
+
+swarm_codex_exec_count() {
+  ps -eo args= |
+    awk '
+      index($0, "codex exec") &&
+      index($0, "pgrep") == 0 &&
+      index($0, "awk") == 0 { count++ }
       END { print count + 0 }
     '
 }

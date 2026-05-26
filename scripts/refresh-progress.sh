@@ -3,6 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
+source "$repo_root/scripts/swarm-interactive.sh"
 
 head="$(git rev-parse --short HEAD 2>/dev/null || echo none)"
 branch="$(git branch --show-current 2>/dev/null || echo none)"
@@ -38,7 +39,7 @@ if tmux has-session -t phpc-pages-reporter 2>/dev/null; then
 else
   pages_reporter="not running"
 fi
-active_codex="$(pgrep -fc 'codex exec' || true)"
+active_codex="$(swarm_codex_exec_count)"
 slot_locks="$(find /tmp/phpc-swarm-codex-slots -maxdepth 1 -type d -name '*.lock' 2>/dev/null | wc -l)"
 dirty_lanes="0"
 if [ -d /home/ubuntu/phpc-worktrees ]; then
