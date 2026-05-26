@@ -24,6 +24,14 @@ case "$CARGO_TARGET_DIR" in
     ;;
 esac
 
+case "${PHPC_REQUIRE_WORKER_ENV:-0}" in
+  0|1) ;;
+  *)
+    echo "local-gate.sh requires PHPC_REQUIRE_WORKER_ENV to be 0 or 1, got ${PHPC_REQUIRE_WORKER_ENV}" >&2
+    exit 2
+    ;;
+esac
+
 if [ "${PHPC_REQUIRE_WORKER_ENV:-0}" = "1" ]; then
   scripts/verify-worker-env.sh
 fi

@@ -84,6 +84,17 @@ expect_failure \
   "a worktree-local target directory" \
   env PHPC_TARGET_ROOT="$fixture_root" CARGO_TARGET_DIR="$fixture_root/INT-05" scripts/verify-worker-env.sh
 
+if PHPC_REQUIRE_WORKER_ENV=yes CARGO_TARGET_DIR="$fixture_target_dir" scripts/local-gate.sh >"$out_file" 2>"$err_file"; then
+  echo "local-gate.sh accepted a non-boolean PHPC_REQUIRE_WORKER_ENV" >&2
+  exit 1
+fi
+
+if ! grep -F "PHPC_REQUIRE_WORKER_ENV to be 0 or 1, got yes" "$err_file" >/dev/null; then
+  echo "local-gate.sh failed without the expected PHPC_REQUIRE_WORKER_ENV diagnostic" >&2
+  cat "$err_file" >&2
+  exit 1
+fi
+
 run_fixture env CARGO_TARGET_DIR="$fixture_target_dir" scripts/verify-worker-env.sh >"$out_file"
 grep -F "worker env ok: lane=INT-05 CARGO_TARGET_DIR=$fixture_target_dir" "$out_file" >/dev/null
 
