@@ -66,6 +66,11 @@ fn parse_statements(mut body: &str) -> Result<Vec<Statement>, String> {
             }
             return Err("expected semicolon after global declaration".to_string());
         }
+        if let Some(keyword) = parse_include_or_require_keyword(body) {
+            return Err(format!(
+                "unsupported {keyword} statement: include/require execution is not implemented"
+            ));
+        }
         return Err(format!(
             "unsupported PHP statement near `{}`",
             body.chars().take(32).collect::<String>()
@@ -200,6 +205,15 @@ fn parse_variable_name(input: &str) -> Option<(&str, &str)> {
     let rest = input.strip_prefix('$')?;
     let (name, after_name) = parse_identifier(rest)?;
     Some((name, after_name))
+}
+
+fn parse_include_or_require_keyword(input: &str) -> Option<&'static str> {
+    for keyword in ["require_once", "include_once", "require", "include"] {
+        if parse_keyword(input, keyword).is_some() {
+            return Some(keyword);
+        }
+    }
+    None
 }
 
 fn parse_identifier(input: &str) -> Option<(&str, &str)> {
@@ -471,6 +485,30 @@ mod tests {
     fn rejects_function_call_without_semicolon() {
         let err = parse_php("<?php define('WPINC', 'wp-includes') echo 'x';").unwrap_err();
         assert_eq!(err, "expected semicolon after function call statement");
+    }
+
+    #[test]
+    fn rejects_require_with_precise_unsupported_diagnostic() {
+        let err = parse_php("<?php require APP_DIR . '/bootstrap.php';").unwrap_err();
+        assert_eq!(
+            err,
+            "unsupported require statement: include/require execution is not implemented"
+        );
+    }
+
+    #[test]
+    fn rejects_include_once_with_precise_unsupported_diagnostic() {
+        let err = parse_php("<?php include_once 'bootstrap.php';").unwrap_err();
+        assert_eq!(
+            err,
+            "unsupported include_once statement: include/require execution is not implemented"
+        );
+    }
+
+    #[test]
+    fn does_not_classify_include_keyword_prefixes_as_include_statements() {
+        let err = parse_php("<?php include_path();").unwrap_err();
+        assert_eq!(err, "unsupported PHP statement near `include_path();`");
     }
 
     #[test]

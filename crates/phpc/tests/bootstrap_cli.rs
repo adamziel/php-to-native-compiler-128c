@@ -330,7 +330,7 @@ fn cli_reports_wordpress_bootstrap_general_php_gap() {
     assert!(stdout.contains("status=blocked"));
     assert!(stdout.contains("bootstrap=wp-settings.php"));
     assert!(
-        stdout.contains("general_php_gap=unsupported PHP statement near `require ABSPATH . WPINC . '/vers`")
+        stdout.contains("general_php_gap=unsupported require statement: include/require execution is not implemented")
     );
 }
 
