@@ -2,32 +2,31 @@
 
 ## Summary
 
-Milestone: Integration / launcher observability.
+Milestone: Integration / coordination-safety.
 
-Started a fresh slice from current `origin/main` on `lane/INT-04-fresh-0510`. Tightened `scripts/check-launcher-observability.sh` so the launcher log must show the latest started Codex session behind the latest stagger wait event. This catches logs that imply workers continued starting without the expected newer wait marker.
+Preserved the stale help-alias branch state on `lane/INT-04-archive-060010`, then recreated `lane/INT-04` from current `origin/main` as requested.
 
-Narrow denominator: launcher log observability only. No compiler/runtime behavior, worker launch behavior, or progress percentage changed.
+New slice: tightened `scripts/check-lanes-integration.sh` batch hygiene so duplicate targets are detected after resolving implicit `lane/` aliases. This prevents a batch such as `lane/missing-handoff missing-handoff` from double-counting the same lane candidate. Missing or ambiguous targets keep their existing per-target behavior instead of being pre-rejected by the batch wrapper.
+
+Narrow denominator: batch lane-review target de-duplication only. No compiler/runtime behavior, launcher behavior, WordPress behavior, or progress percentage changed.
 
 ## Files Changed
 
-- `scripts/check-launcher-observability.sh`
-- `scripts/test-launcher-observability.sh`
+- `scripts/check-lanes-integration.sh`
+- `scripts/test-check-lane-integration.sh`
 - `swarm/handoffs/INT-04.md`
 
 ## Tests Run
 
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 bash scripts/test-launcher-observability.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 bash scripts/check-launcher-observability.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 bash scripts/local-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 bash scripts/test-check-lane-integration.sh`
 - `git diff --check`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 bash scripts/local-gate.sh`
 
 ## Pass/Fail State
 
-- Pass: focused launcher fixture rejects cadence drift.
-- Pass: focused launcher fixture rejects stale session denominator.
-- Pass: focused launcher fixture now rejects a latest started session without a newer wait event.
-- Pass: live launcher observability check reports interactive-only workers, 480-second cadence, and no `codex -p` / `codex exec` workers.
-- Pass: local gate completed status checks, shell fixtures, full workspace `cargo test --locked` with 106 tests, doc tests, and `git diff --check` under `/home/ubuntu/phpc-targets/INT-04`.
+- Pass: focused lane integration fixture rejects aliased duplicate targets before starting any lane checks.
+- Pass: existing missing-ref batch behavior remains covered by the focused fixture.
+- Pass: local gate completed status checks, runtime ABI doc checks, launcher observability checks, full workspace `cargo test --locked` with 118 tests, doc tests, and `git diff --check` under `/home/ubuntu/phpc-targets/INT-04`.
 
 ## Blockers
 
@@ -35,8 +34,8 @@ Narrow denominator: launcher log observability only. No compiler/runtime behavio
 
 ## Latest Commit
 
-- This slice commit: `Check launcher wait after started session` on `lane/INT-04-fresh-0510`.
+- `Deduplicate lane batch aliases` on `lane/INT-04` after final amend.
 
 ## Next Suggested Slice
 
-- Add a progress publication fixture that validates `refresh-progress.sh --check` reports the live launcher auditor target consistently with `check-launcher-observability.sh`.
+- Add a focused status-gate fixture that rejects handoffs whose `Latest Commit` section names a stale archive branch instead of the checked integration lane, if that policy is desired.

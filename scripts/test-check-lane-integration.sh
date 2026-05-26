@@ -174,6 +174,23 @@ grep -F "classification: stale-equivalent" batch-safe.out >/dev/null
 grep -F "summary: passed=2 failed=0 total=2" batch-safe.out >/dev/null
 
 set +e
+scripts/check-lanes-integration.sh --main-ref main lane/missing-handoff missing-handoff > batch-alias-duplicate.out 2> batch-alias-duplicate.err
+batch_alias_duplicate_status=$?
+set -e
+if [[ "$batch_alias_duplicate_status" -ne 2 ]]; then
+  echo "check-lanes-integration.sh did not reject aliased duplicate targets with status 2" >&2
+  cat batch-alias-duplicate.out >&2
+  cat batch-alias-duplicate.err >&2
+  exit 1
+fi
+grep -F "duplicate target: missing-handoff resolves to lane/missing-handoff" batch-alias-duplicate.err >/dev/null
+if grep -F "== lane/missing-handoff ==" batch-alias-duplicate.out >/dev/null; then
+  echo "check-lanes-integration.sh started lane checks before rejecting aliased duplicate targets" >&2
+  cat batch-alias-duplicate.out >&2
+  exit 1
+fi
+
+set +e
 scripts/check-lanes-integration.sh --main-ref main lane/integrated lane/integrated > batch-duplicate.out 2> batch-duplicate.err
 batch_duplicate_status=$?
 set -e

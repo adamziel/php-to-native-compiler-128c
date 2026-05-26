@@ -51,13 +51,37 @@ if [[ "${#targets[@]}" -eq 0 ]]; then
   exit 2
 fi
 
-declare -A seen_targets=()
-for target in "${targets[@]}"; do
-  if [[ -n "${seen_targets[$target]:-}" ]]; then
-    echo "check-lanes-integration.sh: duplicate target: ${target}" >&2
-    exit 2
+resolve_target() {
+  local input="$1"
+  local direct_commit=""
+  local lane_commit=""
+
+  direct_commit="$(git rev-parse --verify --quiet "${input}^{commit}" || true)"
+  lane_commit="$(git rev-parse --verify --quiet "lane/${input}^{commit}" || true)"
+
+  if [[ -n "$direct_commit" && -n "$lane_commit" && "$direct_commit" != "$lane_commit" ]]; then
+    return 1
   fi
-  seen_targets[$target]=1
+  if [[ -n "$direct_commit" ]]; then
+    printf '%s\n' "$input"
+    return 0
+  fi
+  if [[ -n "$lane_commit" ]]; then
+    printf '%s\n' "lane/${input}"
+    return 0
+  fi
+  return 1
+}
+
+declare -A seen_resolved_targets=()
+for target in "${targets[@]}"; do
+  if target_ref="$(resolve_target "$target")"; then
+    if [[ -n "${seen_resolved_targets[$target_ref]:-}" ]]; then
+      echo "check-lanes-integration.sh: duplicate target: ${target} resolves to ${target_ref}" >&2
+      exit 2
+    fi
+    seen_resolved_targets[$target_ref]=1
+  fi
 done
 
 status=0
