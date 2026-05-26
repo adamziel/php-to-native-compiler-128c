@@ -5,6 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
 python3 - <<'PY'
+import os
 import pathlib
 import re
 import sys
@@ -12,8 +13,12 @@ import sys
 
 def read_inputs():
     root = pathlib.Path.cwd()
-    runtime_src = root / "crates/php_runtime/src/lib.rs"
-    abi_doc = root / "docs/NATIVE_RUNTIME_ABI.md"
+    runtime_src = pathlib.Path(
+        os.environ.get("PHP_RUNTIME_SRC_PATH", root / "crates/php_runtime/src/lib.rs")
+    )
+    abi_doc = pathlib.Path(
+        os.environ.get("RUNTIME_ABI_DOC_PATH", root / "docs/NATIVE_RUNTIME_ABI.md")
+    )
     return (
         runtime_src.read_text(encoding="utf-8"),
         abi_doc.read_text(encoding="utf-8"),
