@@ -1,5 +1,5 @@
 {
-  "status": "pinned_inventory",
+  "status": "pinned_inventory_with_library_runner",
   "php_src": {
     "path": "/home/ubuntu/phpc-external/php-src/php-src-PHP-8.3",
     "source": "https://github.com/php/php-src.git",
@@ -19,6 +19,8 @@
     "phpc_run": {"pass": 0, "fail": 0},
     "native": {"pass": 0, "fail": 0}
   },
-  "blockers": ["No .phpt runner is implemented yet; inventory is static only"],
+  "blockers": [
+    "No committed php-src .phpt subset run has been recorded yet; the integrated library runner is limited to FILE/FILEEOF with exact EXPECT/EXPECTF and limited SKIPIF classification"
+  ],
   "last_run": "2026-05-25T23:15:00Z"
 }

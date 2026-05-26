@@ -60,6 +60,14 @@ for key in ("path", "source", "branch", "commit", "version"):
     if not php_src.get(key):
         raise SystemExit(f"php-core manifest missing php_src.{key}")
 
+php_core_blockers = php_core.get("blockers", [])
+if not isinstance(php_core_blockers, list):
+    raise SystemExit("php-core manifest blockers must be a list")
+if any("No .phpt runner is implemented yet" in str(blocker) for blocker in php_core_blockers):
+    raise SystemExit(
+        "php-core manifest has obsolete .phpt runner wording; record php-src subset-run status instead"
+    )
+
 wordpress = load_json(wordpress_manifest_path)
 wp_source = wordpress.get("wordpress", {})
 for key in ("path", "source", "version", "commit_or_archive_hash"):

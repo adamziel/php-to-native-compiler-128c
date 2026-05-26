@@ -212,6 +212,23 @@ expect_fixture_failure \
 
 reset_fixtures
 
+PHP_CORE_FIXTURE="$php_core_fixture" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+path = Path(os.environ["PHP_CORE_FIXTURE"])
+manifest = json.loads(path.read_text(encoding="utf-8"))
+manifest["blockers"] = ["No .phpt runner is implemented yet; inventory is static only"]
+path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+PY
+
+expect_fixture_failure \
+  "php-core manifest has obsolete .phpt runner wording; record php-src subset-run status instead" \
+  "obsolete php-core runner blocker wording"
+
+reset_fixtures
+
 WORDPRESS_FIXTURE="$wordpress_fixture" python3 - <<'PY'
 import json
 import os
