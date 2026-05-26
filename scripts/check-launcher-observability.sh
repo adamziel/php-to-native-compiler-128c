@@ -77,6 +77,18 @@ if [ "$latest_wait_total" != "$expected_sessions" ]; then
   echo "launcher session denominator drift: expected $expected_sessions, found ${latest_wait_total:-missing}" >&2
   exit 1
 fi
+latest_started="$(
+  { grep -E 'launch: started Codex session [0-9]+/[0-9]+' "$launcher_log" 2>/dev/null || true; } |
+    tail -n 1
+)"
+if [ -n "$latest_started" ]; then
+  latest_started_number="$(printf '%s\n' "$latest_started" | sed -n 's/.*Codex session \([0-9][0-9]*\)\/[0-9][0-9]*.*/\1/p')"
+  latest_wait_number="$(printf '%s\n' "$latest_wait" | sed -n 's/.*Codex session \([0-9][0-9]*\)\/[0-9][0-9]*.*/\1/p')"
+  if [ -n "$latest_started_number" ] && [ -n "$latest_wait_number" ] && [ "$latest_started_number" -ge "$latest_wait_number" ]; then
+    echo "launcher latest started session is not behind latest wait event: started $latest_started_number, waiting for $latest_wait_number" >&2
+    exit 1
+  fi
+fi
 
 batch_workers="$(
   ps -eo args= |
