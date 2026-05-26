@@ -54,3 +54,32 @@ if ! grep -F "stale WordPress bootstrap wording" "$tmpdir/err" >/dev/null; then
   cat "$tmpdir/err" >&2
   exit 1
 fi
+
+cp progress.md "$tmpdir/progress.md"
+cp docs/progress.html "$tmpdir/progress.html"
+
+python3 - "$tmpdir/progress.html" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+html = path.read_text(encoding="utf-8")
+html = html.replace(
+    "<tr><td>Report base HEAD</td><td><code>",
+    "<tr><td>Report base HEAD</td><td><code>stale-",
+    1,
+)
+path.write_text(html, encoding="utf-8")
+PY
+
+if PHPC_PROGRESS_MD="$tmpdir/progress.md" PHPC_PROGRESS_HTML="$tmpdir/progress.html" \
+  scripts/verify-status-consistency.sh >"$tmpdir/out" 2>"$tmpdir/err"; then
+  echo "verify-status-consistency.sh accepted mismatched published report HEAD fields" >&2
+  exit 1
+fi
+
+if ! grep -F "published status mismatch for Report base HEAD" "$tmpdir/err" >/dev/null; then
+  echo "verify-status-consistency.sh failed without the expected published status diagnostic" >&2
+  cat "$tmpdir/err" >&2
+  exit 1
+fi

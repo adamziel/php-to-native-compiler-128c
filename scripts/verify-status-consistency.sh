@@ -65,6 +65,27 @@ def wordpress_status_lines(text_name, text):
         if "WordPress" in line or "bootstrap" in line
     ]
 
+
+def markdown_current_state(text):
+    fields = {}
+    for line in text.splitlines():
+        if not line.startswith("- "):
+            continue
+        label, sep, value = line[2:].partition(":")
+        if not sep:
+            continue
+        fields[label.strip()] = value.strip().strip("`")
+    return fields
+
+
+def html_table_fields(text):
+    cells = html_cells(text)
+    fields = {}
+    for index in range(0, len(cells) - 1, 2):
+        fields[cells[index]] = cells[index + 1]
+    return fields
+
+
 php_src = pathlib.Path(php_manifest["php_src"]["path"])
 manifest_total = int(php_manifest["denominator"]["total_phpt"])
 if not php_src.is_dir():
@@ -79,6 +100,26 @@ else:
 runnable = int(php_manifest["denominator"]["runnable"])
 if runnable != 0 and "runner not implemented" in progress:
     errors.append("progress.md still says the .phpt runner is missing, but runnable > 0")
+
+progress_state = markdown_current_state(progress)
+html_state = html_table_fields(progress_html)
+published_status_pairs = (
+    ("Branch", "Branch"),
+    ("Report base HEAD", "Report base HEAD"),
+    ("Dirty entries", "Main dirty entries"),
+)
+for markdown_label, html_label in published_status_pairs:
+    markdown_value = progress_state.get(markdown_label)
+    html_value = html_state.get(html_label)
+    if markdown_value is None:
+        errors.append(f"progress.md missing published status field `{markdown_label}`")
+    if html_value is None:
+        errors.append(f"docs/progress.html missing published status field `{html_label}`")
+    if markdown_value is not None and html_value is not None and markdown_value != html_value:
+        errors.append(
+            f"published status mismatch for {markdown_label}: "
+            f"progress.md={markdown_value}, docs/progress.html={html_value}"
+        )
 
 for text_name, text in (
     ("progress.md", progress),
