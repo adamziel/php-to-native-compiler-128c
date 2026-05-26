@@ -2,36 +2,36 @@
 
 ## Summary
 
-- Milestone: Integration.
-- Added a focused CLI hygiene gate for unsupported `phpc compile` flag combinations.
-- `phpc compile <input.php> --emit-ir --emit-exe` is now covered as an explicit failure with no stdout and the existing truthful unsupported-flags diagnostic.
+- Milestone: Integration / CLI hygiene.
+- Ported only the current-main-safe part of `lane/INT-08`: focused tests for missing CLI input handling.
+- `phpc run` and `phpc compile` with no input file are now covered as explicit failures with no stdout and the existing `missing input PHP file` diagnostic.
+- The stale lane branch also contained obsolete native-executable expectations and generated status edits; those were not merged.
 
 ## Files Changed
 
 - `crates/phpc/tests/bootstrap_cli.rs`
-- `swarm/test-matrix.md`
 - `swarm/handoffs/INT-08.md`
 
 ## Tests Run
 
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-08 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`
-- `scripts/local-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-cli-missing-input CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-worker-env-4 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-worker-env.sh`
 - `git diff --check`
 
 ## Pass/Fail State
 
-- PASS: focused CLI gate, 5 tests passed on current main after porting this slice.
-- PASS: local gate and diff check.
+- PASS: focused CLI integration suite, 13 tests passed.
+- PASS: worker-env regression tests still passed after the concurrent INT-03 integration.
+- PASS: diff whitespace check.
 
 ## Blockers
 
-- No blocker for this integration-safety slice.
-- Existing M3 blocker remains: linked native executable emission is not implemented.
+- None for this narrow test slice.
 
 ## Latest Commit
 
-- `d8e861f Update INT-08 handoff`
+- Pending main commit after verification.
 
 ## Next Suggested Slice
 
-- Add a focused CLI gate for unsupported compile flag combinations or missing input behavior if not already covered by another lane.
+- Add a focused CLI gate for unknown command/help exit behavior if not already covered by another lane.

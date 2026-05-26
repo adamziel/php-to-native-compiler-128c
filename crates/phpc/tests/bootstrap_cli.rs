@@ -31,6 +31,16 @@ fn cli_run_rejects_trailing_arguments() {
 }
 
 #[test]
+fn cli_run_requires_input_file() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let output = Command::new(exe).arg("run").output().expect("run phpc");
+
+    assert!(!output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+    assert!(String::from_utf8_lossy(&output.stderr).contains("missing input PHP file"));
+}
+
+#[test]
 fn cli_compile_rejects_conflicting_emit_flags() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let output = Command::new(exe)
@@ -42,6 +52,16 @@ fn cli_compile_rejects_conflicting_emit_flags() {
     assert_eq!(String::from_utf8_lossy(&output.stdout), "");
     assert!(String::from_utf8_lossy(&output.stderr)
         .contains("unsupported compile flags: --emit-ir --emit-exe"));
+}
+
+#[test]
+fn cli_compile_requires_input_file() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let output = Command::new(exe).arg("compile").output().expect("run phpc");
+
+    assert!(!output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+    assert!(String::from_utf8_lossy(&output.stderr).contains("missing input PHP file"));
 }
 
 #[test]
