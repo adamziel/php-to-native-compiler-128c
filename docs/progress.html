@@ -24,15 +24,15 @@
 <body>
   <header>
     <h1>PHP-to-Native Compiler Swarm Progress</h1>
-    <div>From-scratch bootstrap for <code>adamziel/php-to-native-compiler-128c</code>. Last updated 2026-05-26 02:20 UTC.</div>
+    <div>From-scratch bootstrap for <code>adamziel/php-to-native-compiler-128c</code>. Last updated 2026-05-26 02:23 UTC.</div>
   </header>
   <main>
     <section class="grid">
       <div class="metric"><span>Supervised agents target</span><strong>100 workers + auditor</strong></div>
       <div class="metric"><span>Launch cadence</span><strong>480s</strong></div>
       <div class="metric"><span>Staggered launcher</span><strong>running</strong></div>
-      <div class="metric"><span>tmux windows</span><strong>7</strong></div>
-      <div class="metric"><span>Interactive Codex panes</span><strong>5</strong></div>
+      <div class="metric"><span>tmux windows</span><strong>8</strong></div>
+      <div class="metric"><span>Interactive Codex panes</span><strong>6</strong></div>
       <div class="metric"><span>Active worker commands</span><strong>0</strong></div>
       <div class="metric"><span>Active slot cap</span><strong>interactive</strong></div>
       <div class="metric"><span>Retry states</span><strong>101</strong></div>
@@ -49,7 +49,7 @@
         <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>compile, link, run, compare</td><td>First linked executable path for supported echo literals integrated</td></tr>
         <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>interpreter-supported constructs</td><td>String and integer echo literals; explicit variable diagnostic</td></tr>
         <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>PHP-8.3 branch, 19,346 .phpt files</td><td>Static inventory pinned; minimal parser and exact-EXPECT phpc runner integrated</td></tr>
-        <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress 7.0 entrypoints</td><td>Source pinned; 5 entrypoints present; runner queued</td></tr>
+        <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress 7.0 entrypoints</td><td>Source pinned; 5 entrypoints present; bootstrap check blocked in wp-settings.php</td></tr>
       </tbody>
     </table>
     <h2>Swarm Health</h2>
@@ -57,14 +57,14 @@
       <thead><tr><th>Signal</th><th>Value</th></tr></thead>
       <tbody>
         <tr><td>Branch</td><td><code>main</code></td></tr>
-        <tr><td>Report base HEAD</td><td><code>bf29859</code></td></tr>
-        <tr><td>Main dirty entries</td><td><code>0</code></td></tr>
+        <tr><td>Report base HEAD</td><td><code>4adcaba</code></td></tr>
+        <tr><td>Main dirty entries</td><td><code>2</code></td></tr>
         <tr><td>Dirty lane worktrees preserved for review</td><td><code>52</code></td></tr>
         <tr><td>Active agent slot cap</td><td><code>interactive</code></td></tr>
         <tr><td>Active slot locks</td><td><code>0</code></td></tr>
         <tr><td>Worker state files</td><td><code>101</code></td></tr>
         <tr><td>Expected backend retry/rate-limit states</td><td><code>101</code></td></tr>
-        <tr><td>Latest launcher event</td><td><code>2026-05-26T02:15:28Z launch: waiting 480s before starting Codex session 6/101.</code></td></tr>
+        <tr><td>Latest launcher event</td><td><code>2026-05-26T02:23:28Z launch: waiting 480s before starting Codex session 7/101.</code></td></tr>
       </tbody>
     </table>
     <h2>Immediate Actions</h2>
@@ -74,7 +74,7 @@
         <tr><td>Keep 100 workers + auditor topology alive</td><td>Supervisor</td><td>Running in <code>phpc-swarm</code></td></tr>
         <tr><td>Publish progress to GitHub Pages</td><td>Pages reporter</td><td><code>running</code></td></tr>
         <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Done: 19,346 .phpt files; runner queued</td></tr>
-        <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Done: WordPress 7.0; bootstrap runner queued</td></tr>
+        <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Done: WordPress 7.0; bootstrap check blocked in wp-settings.php</td></tr>
       </tbody>
     </table>
   </main>
