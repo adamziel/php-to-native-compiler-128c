@@ -75,7 +75,10 @@ fi
 head_short="$(git_in_repo rev-parse --short HEAD)"
 head_full="$(git_in_repo rev-parse HEAD)"
 base_short="$(git_in_repo rev-parse --short "$base")"
-merge_base="$(git_in_repo merge-base HEAD "$base")"
+if ! merge_base="$(git_in_repo merge-base HEAD "$base")"; then
+  echo "error: no merge base between HEAD and $base" >&2
+  exit 1
+fi
 merge_base_short="$(git_in_repo rev-parse --short "$merge_base")"
 ahead="$(git_in_repo rev-list --count "${merge_base}..HEAD")"
 behind="$(git_in_repo rev-list --count "${merge_base}..${base}")"

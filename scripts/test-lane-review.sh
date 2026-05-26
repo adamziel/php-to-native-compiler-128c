@@ -96,3 +96,19 @@ do
     exit 1
   fi
 done
+
+git -C "$fixture_repo" switch -q --orphan unrelated-base
+git -C "$fixture_repo" rm -q -r --ignore-unmatch .
+printf 'unrelated\n' >"$fixture_repo/unrelated.txt"
+git -C "$fixture_repo" add unrelated.txt
+git -C "$fixture_repo" commit -q -m unrelated-base
+git -C "$fixture_repo" branch unrelated-base-ref
+git -C "$fixture_repo" switch -q lane-under-review
+
+if scripts/lane-review.sh --repo "$fixture_repo" --base unrelated-base-ref >"$tmpdir/unrelated.out" 2>"$tmpdir/unrelated.err"; then
+  echo "lane-review.sh accepted an unrelated base history" >&2
+  cat "$tmpdir/unrelated.out" >&2
+  cat "$tmpdir/unrelated.err" >&2
+  exit 1
+fi
+grep -F "error: no merge base between HEAD and unrelated-base-ref" "$tmpdir/unrelated.err" >/dev/null
