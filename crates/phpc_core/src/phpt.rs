@@ -31,6 +31,18 @@ pub enum PhptExpectationKind {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PhptFileKind {
+    File,
+    FileEof,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PhptFile<'a> {
+    pub kind: PhptFileKind,
+    pub body: &'a str,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PhptExpectation<'a> {
     pub kind: PhptExpectationKind,
     pub body: &'a str,
@@ -40,6 +52,7 @@ pub struct PhptExpectation<'a> {
 pub struct PhptHarnessInput {
     pub name: Option<String>,
     pub file: String,
+    pub file_kind: PhptFileKind,
     pub expectation_kind: PhptExpectationKind,
     pub expectation_body: String,
     pub metadata: PhptMetadata,
@@ -76,6 +89,23 @@ impl PhptTest {
 
     pub fn file(&self) -> Option<&str> {
         self.section("FILE")
+    }
+
+    pub fn fileeof(&self) -> Option<&str> {
+        self.section("FILEEOF")
+    }
+
+    pub fn source_file(&self) -> Option<PhptFile<'_>> {
+        if let Some(body) = self.file() {
+            return Some(PhptFile {
+                kind: PhptFileKind::File,
+                body,
+            });
+        }
+        self.fileeof().map(|body| PhptFile {
+            kind: PhptFileKind::FileEof,
+            body,
+        })
     }
 
     pub fn expect(&self) -> Option<&str> {
@@ -123,9 +153,9 @@ impl PhptTest {
     }
 
     pub fn harness_input(&self) -> Result<PhptHarnessInput, String> {
-        let file = self
-            .file()
-            .ok_or_else(|| "cannot build .phpt harness input without FILE section".to_string())?;
+        let file = self.source_file().ok_or_else(|| {
+            "cannot build .phpt harness input without FILE or FILEEOF section".to_string()
+        })?;
         let expectation = self.expectation().ok_or_else(|| {
             "cannot build .phpt harness input without EXPECT, EXPECTF, or EXPECTREGEX section"
                 .to_string()
@@ -133,7 +163,8 @@ impl PhptTest {
 
         Ok(PhptHarnessInput {
             name: self.test_name().map(str::to_string),
-            file: file.to_string(),
+            file: file.body.to_string(),
+            file_kind: file.kind,
             expectation_kind: expectation.kind,
             expectation_body: expectation.body.to_string(),
             metadata: self.metadata(),
@@ -244,6 +275,7 @@ pub fn parse_phpt(source: &str) -> Result<PhptTest, String> {
     if sections.is_empty() {
         return Err("expected at least one .phpt section".to_string());
     }
+    validate_source_file_sections(&sections)?;
     validate_expectation_sections(&sections)?;
 
     Ok(PhptTest { sections })
@@ -296,6 +328,13 @@ fn validate_expectation_sections(sections: &BTreeMap<String, String>) -> Result<
     Ok(())
 }
 
+fn validate_source_file_sections(sections: &BTreeMap<String, String>) -> Result<(), String> {
+    if sections.contains_key("FILE") && sections.contains_key("FILEEOF") {
+        return Err("multiple .phpt source file sections".to_string());
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -309,6 +348,13 @@ mod tests {
 
         assert_eq!(phpt.test_name(), Some("minimal echo"));
         assert_eq!(phpt.file(), Some("<?php echo \"ok\";\n"));
+        assert_eq!(
+            phpt.source_file(),
+            Some(PhptFile {
+                kind: PhptFileKind::File,
+                body: "<?php echo \"ok\";\n"
+            })
+        );
         assert_eq!(phpt.expect(), Some("ok\n"));
         assert_eq!(
             phpt.expectation(),
@@ -318,6 +364,23 @@ mod tests {
             })
         );
         assert_eq!(phpt.skipif(), None);
+    }
+
+    #[test]
+    fn parses_fileeof_source_section() {
+        let phpt =
+            parse_phpt("--TEST--\nfileeof\n--FILEEOF--\n<?php echo \"ok\";\n--EXPECT--\nok\n")
+                .unwrap();
+
+        assert_eq!(phpt.file(), None);
+        assert_eq!(phpt.fileeof(), Some("<?php echo \"ok\";\n"));
+        assert_eq!(
+            phpt.source_file(),
+            Some(PhptFile {
+                kind: PhptFileKind::FileEof,
+                body: "<?php echo \"ok\";\n"
+            })
+        );
     }
 
     #[test]
@@ -411,6 +474,7 @@ mod tests {
 
         assert_eq!(input.name, Some("harness input".to_string()));
         assert_eq!(input.file, "<?php echo \"ok\";\n");
+        assert_eq!(input.file_kind, PhptFileKind::File);
         assert_eq!(input.expectation_kind, PhptExpectationKind::Exact);
         assert_eq!(input.expectation_body, "ok\n");
         assert_eq!(
@@ -425,6 +489,20 @@ mod tests {
                 reason: "known gap".to_string()
             })
         );
+    }
+
+    #[test]
+    fn builds_harness_input_with_fileeof_source() {
+        let phpt = parse_phpt(
+            "--TEST--\nharness fileeof\n--FILEEOF--\n<?php echo \"ok\";\n--EXPECT--\nok\n",
+        )
+        .unwrap();
+
+        let input = phpt.harness_input().unwrap();
+
+        assert_eq!(input.file, "<?php echo \"ok\";\n");
+        assert_eq!(input.file_kind, PhptFileKind::FileEof);
+        assert_eq!(input.expectation_body, "ok\n");
     }
 
     #[test]
@@ -451,6 +529,15 @@ mod tests {
     }
 
     #[test]
+    fn rejects_harness_input_without_source_file() {
+        let phpt = parse_phpt("--TEST--\nmissing file\n--EXPECT--\nok\n").unwrap();
+
+        let err = phpt.harness_input().unwrap_err();
+
+        assert!(err.contains("FILE or FILEEOF"));
+    }
+
+    #[test]
     fn rejects_multiple_expectation_sections() {
         let err = parse_phpt(
             "--TEST--\nambiguous\n--FILE--\n<?php echo \"ok\";\n--EXPECT--\nok\n--EXPECTF--\n%s\n",
@@ -458,6 +545,16 @@ mod tests {
         .unwrap_err();
 
         assert!(err.contains("multiple"));
+    }
+
+    #[test]
+    fn rejects_multiple_source_file_sections() {
+        let err = parse_phpt(
+            "--TEST--\nambiguous source\n--FILE--\n<?php echo \"file\";\n--FILEEOF--\n<?php echo \"fileeof\";--EXPECT--\nfile\n",
+        )
+        .unwrap_err();
+
+        assert!(err.contains("source file"));
     }
 
     #[test]
