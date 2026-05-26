@@ -86,6 +86,26 @@ rate_limited="$(
 active_cap="interactive"
 supervised_target="${SWARM_WORKER_COUNT:-50} workers + auditor"
 launch_cadence="${SWARM_LAUNCH_STAGGER_SECONDS:-unknown}"
+manifest_vars="$(
+  python3 - <<'PY'
+import json
+import pathlib
+
+root = pathlib.Path.cwd()
+php_manifest = json.loads((root / "swarm/php-core-manifest.json").read_text(encoding="utf-8"))
+wp_manifest = json.loads((root / "swarm/wordpress-manifest.json").read_text(encoding="utf-8"))
+
+php_phpt_total = int(php_manifest["denominator"]["total_phpt"])
+wp_version = wp_manifest["wordpress"]["version"]
+wp_entrypoints = len(wp_manifest["entrypoints"])
+
+print(f"php_phpt_total={php_phpt_total}")
+print(f"php_phpt_total_display='{php_phpt_total:,}'")
+print(f"wp_version={wp_version!r}")
+print(f"wp_entrypoints={wp_entrypoints}")
+PY
+)"
+eval "$manifest_vars"
 if [ "$mode" = "--check" ]; then
   updated_display="CHECK MODE"
   updated_iso="CHECK-MODE"
@@ -136,8 +156,8 @@ tmp="$(mktemp)"
   echo "| M2 runtime value ABI | value kinds and ownership semantics | 3% | Runtime-owned null and binary-string handles integrated |"
   echo "| M3 linked native execution | compile, link, run, compare | 0% | Queued |"
   echo "| M4 native lowering | interpreter-supported constructs lowered or rejected | 2% | String and integer echo literals; explicit variable diagnostic |"
-  echo "| M5 PHP core .phpt harness | pinned php-src denominator | 2% | PHP-8.3 inventory pinned and minimal .phpt parser integrated |"
-  echo "| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; five entrypoints present; runner queued |"
+  echo "| M5 PHP core .phpt harness | PHP-8.3 branch, ${php_phpt_total_display} \`.phpt\` files | 2% | PHP-8.3 inventory pinned and minimal .phpt parser integrated |"
+  echo "| M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress ${wp_version} pinned; ${wp_entrypoints} entrypoints present; runner queued |"
   echo "| M7 object/SAPI/DB generality | required semantic families | 0% | Queued |"
   echo "| M8 performance after correctness | truthful native benchmarks | 0% | Deferred |"
   echo
@@ -206,8 +226,8 @@ tmp="$(mktemp)"
       <div class="metric"><span>Active slot cap</span><strong>${active_cap}</strong></div>
       <div class="metric"><span>Retry states</span><strong>${rate_limited}</strong></div>
       <div class="metric"><span>Pages reporter</span><strong>${pages_reporter}</strong></div>
-      <div class="metric"><span>PHP core denominator</span><strong>19,346 .phpt</strong></div>
-      <div class="metric"><span>WordPress denominator</span><strong>7.0 pinned</strong></div>
+      <div class="metric"><span>PHP core denominator</span><strong>${php_phpt_total_display} .phpt</strong></div>
+      <div class="metric"><span>WordPress denominator</span><strong>${wp_version} pinned</strong></div>
     </section>
     <h2>Milestones</h2>
     <table>
@@ -217,8 +237,8 @@ tmp="$(mktemp)"
         <tr><td>M2 runtime ABI</td><td><div class="bar"><span style="width:3%"></span></div>3%</td><td>PHP value kinds and ownership semantics</td><td>Runtime-owned null and binary-string handles integrated</td></tr>
         <tr><td>M3 linked native execution</td><td><div class="bar"><span style="width:0%"></span></div>0%</td><td>compile, link, run, compare</td><td>Not started</td></tr>
         <tr><td>M4 native lowering</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>interpreter-supported constructs</td><td>String and integer echo literals; explicit variable diagnostic</td></tr>
-        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>PHP-8.3 branch, 19,346 .phpt files</td><td>Static inventory pinned; minimal parser integrated</td></tr>
-        <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress 7.0 entrypoints</td><td>Source pinned; entrypoints present; runner queued</td></tr>
+        <tr><td>M5 PHP core harness</td><td><div class="bar"><span style="width:2%"></span></div>2%</td><td>PHP-8.3 branch, ${php_phpt_total_display} .phpt files</td><td>Static inventory pinned; minimal parser integrated</td></tr>
+        <tr><td>M6 WordPress harness</td><td><div class="bar"><span style="width:1%"></span></div>1%</td><td>WordPress ${wp_version} entrypoints</td><td>Source pinned; ${wp_entrypoints} entrypoints present; runner queued</td></tr>
       </tbody>
     </table>
     <h2>Swarm Health</h2>
@@ -242,8 +262,8 @@ tmp="$(mktemp)"
       <tbody>
         <tr><td>Keep ${supervised_target} topology alive</td><td>Supervisor</td><td>Running in <code>phpc-swarm</code></td></tr>
         <tr><td>Publish progress to GitHub Pages</td><td>Pages reporter</td><td><code>${pages_reporter}</code></td></tr>
-        <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Done: 19,346 .phpt files; runner queued</td></tr>
-        <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Done: WordPress 7.0; bootstrap runner queued</td></tr>
+        <tr><td>Map php-src denominator</td><td>PHPT lanes</td><td>Done: ${php_phpt_total_display} .phpt files; runner queued</td></tr>
+        <tr><td>Pin WordPress source</td><td>WP lanes</td><td>Done: WordPress ${wp_version}; bootstrap runner queued</td></tr>
       </tbody>
     </table>
   </main>
