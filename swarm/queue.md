@@ -9,7 +9,7 @@ States: `ready`, `assigned`, `blocked`, `review`, `integration`, `verified`, `re
 | Q-003 | verified | Tooling | INT-06 | Verify bootstrap toolchain and `cargo test` | Verified on current `main`: toolchain versions recorded and `cargo test` passed with 40 tests using `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-toolchain-status` |
 | Q-004 | ready | M4 | LOW-01 | Replace toy parser with token stream foundation | Tests for PHP open tag, echo, literals, errors |
 | Q-005 | ready | M2 | ABI-01 | Define runtime value handle ownership model | Runtime tests for null/free/invalid handles |
-| Q-006 | ready | M3 | LINK-01 | Design and implement first linked native executable path | Produces executable for echo literal fixture |
+| Q-006 | verified | M3 | LINK-02 | Design and implement first linked native executable path | Verified on current `main`: `phpc compile <input.php> --emit-exe <output>` produces and runs a native executable for the bootstrap echo fixture |
 | Q-007 | ready | M5 | PHPT-01 | Pin php-src checkout and inventory `.phpt` denominator | `swarm/php-core-manifest.json` has source and counts |
 | Q-008 | ready | M5 | PHPT-02 | Implement minimal `.phpt` section parser | Tests for TEST/FILE/EXPECT/SKIPIF |
 | Q-009 | ready | M6 | WP-01 | Pin WordPress source outside repo | `swarm/wordpress-manifest.json` has source/version/path |

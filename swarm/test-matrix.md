@@ -2,11 +2,12 @@
 
 | Layer | Command | Current Status | Notes |
 | --- | --- | --- | --- |
-| Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-toolchain-status CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 40 tests passed on 2026-05-26: 12 runtime, 5 CLI, 23 core |
+| Rust workspace | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/main-link02-port CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test` | passing | 42 tests passed on 2026-05-26: 12 runtime, 6 CLI, 24 core |
 | Bootstrap toolchain | `cargo --version`; `rustc --version`; `php --version`; `clang --version` | passing | cargo 1.75.0; rustc 1.75.0; PHP 8.3.6 CLI; Ubuntu clang 18.1.3 |
 | CLI run | `cargo run -p phpc -- run fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |
 | CLI compile IR | `cargo run -p phpc -- compile fixtures/bootstrap/hello.php --emit-ir` | passing | Emits placeholder IR |
-| CLI native output gates | `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/supervisor-int04 cargo test -p phpc --test bootstrap_cli` | passing | Verifies `--emit-asm` and `--emit-exe` fail explicitly until M3 implements real native output |
+| CLI linked native executable | `cargo test -p phpc --test bootstrap_cli cli_emits_linked_native_executable_for_bootstrap_echo` | passing | Builds `libphp_runtime.a`, emits a native executable for `fixtures/bootstrap/hello.php`, runs it, and compares output with `phpc run` and system PHP when available |
+| CLI native output gates | `cargo test -p phpc --test bootstrap_cli cli_rejects_native_assembly_emission_until_m3_exists` | passing | Verifies `--emit-asm` still fails explicitly until assembly emission exists |
 | CLI run argument hygiene | `cargo test -p phpc --test bootstrap_cli cli_run_rejects_trailing_arguments` | passing | `phpc run <input.php>` rejects trailing arguments instead of silently ignoring bad test invocations |
 | CLI compile flag hygiene | `cargo test -p phpc --test bootstrap_cli cli_compile_rejects_conflicting_emit_flags` | passing | Conflicting compile emit flags fail explicitly with no stdout |
 | PHP oracle | `php fixtures/bootstrap/hello.php` | passing | Printed `hello from phpc` |

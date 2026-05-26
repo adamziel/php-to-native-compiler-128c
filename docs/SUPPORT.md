@@ -11,6 +11,7 @@ String literal support distinguishes PHP single-quoted and double-quoted escape 
 ## Current Native Compiler Surface
 
 - `phpc compile --emit-ir` emits bootstrap LLVM-like comments for string and integer echo literals.
+- `phpc compile <input.php> --emit-exe <output>` links a native executable for string and integer echo literals through `php_runtime::phpc_echo`.
 
 ## Current Harness Surface
 

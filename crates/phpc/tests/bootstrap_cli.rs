@@ -1,10 +1,13 @@
 use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+const BOOTSTRAP_HELLO: &str = "../../fixtures/bootstrap/hello.php";
 
 #[test]
 fn cli_runs_bootstrap_echo() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let output = Command::new(exe)
-        .args(["run", "../../fixtures/bootstrap/hello.php"])
+        .args(["run", BOOTSTRAP_HELLO])
         .output()
         .expect("run phpc");
     assert!(output.status.success());
@@ -40,21 +43,64 @@ fn cli_compile_rejects_conflicting_emit_flags() {
 }
 
 #[test]
-fn cli_rejects_linked_executable_emission_until_m3_exists() {
+fn cli_compile_emit_exe_requires_output_path() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let output = Command::new(exe)
-        .args([
-            "compile",
-            "../../fixtures/bootstrap/hello.php",
-            "--emit-exe",
-        ])
+        .args(["compile", BOOTSTRAP_HELLO, "--emit-exe"])
         .output()
         .expect("run phpc compile --emit-exe");
 
     assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr)
-        .contains("linked native executable emission is not implemented yet"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("missing output path for --emit-exe"));
     assert!(output.stdout.is_empty());
+}
+
+#[test]
+fn cli_emits_linked_native_executable_for_bootstrap_echo() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let runtime_lib = build_runtime_archive();
+    let dir = unique_temp_dir("phpc-linked-echo");
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let output_path = dir.join("hello-native");
+
+    let interpreted = Command::new(exe)
+        .args(["run", BOOTSTRAP_HELLO])
+        .output()
+        .expect("run phpc interpreter");
+    assert!(interpreted.status.success());
+
+    if let Some(system_php) = system_php_output(BOOTSTRAP_HELLO) {
+        assert!(
+            system_php.status.success(),
+            "system PHP failed\nstdout:\n{}\nstderr:\n{}",
+            String::from_utf8_lossy(&system_php.stdout),
+            String::from_utf8_lossy(&system_php.stderr)
+        );
+        assert_eq!(system_php.stdout, interpreted.stdout);
+        assert_eq!(system_php.stderr, interpreted.stderr);
+    }
+
+    let compile = Command::new(exe)
+        .env("PHPC_RUNTIME_LIB", &runtime_lib)
+        .args(["compile", BOOTSTRAP_HELLO, "--emit-exe"])
+        .arg(&output_path)
+        .output()
+        .expect("compile native executable");
+    assert!(
+        compile.status.success(),
+        "compile failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&compile.stdout),
+        String::from_utf8_lossy(&compile.stderr)
+    );
+
+    let native = Command::new(&output_path)
+        .output()
+        .expect("run native executable");
+    assert!(native.status.success());
+    assert_eq!(native.stdout, interpreted.stdout);
+    assert_eq!(native.stderr, interpreted.stderr);
+
+    let _ = std::fs::remove_dir_all(&dir);
 }
 
 #[test]
@@ -63,7 +109,7 @@ fn cli_rejects_native_assembly_emission_until_m3_exists() {
     let output = Command::new(exe)
         .args([
             "compile",
-            "../../fixtures/bootstrap/hello.php",
+            BOOTSTRAP_HELLO,
             "--emit-asm",
         ])
         .output()
@@ -73,4 +119,54 @@ fn cli_rejects_native_assembly_emission_until_m3_exists() {
     assert!(String::from_utf8_lossy(&output.stderr)
         .contains("native assembly emission is not implemented yet"));
     assert!(output.stdout.is_empty());
+}
+
+fn system_php_output(path: &str) -> Option<std::process::Output> {
+    Command::new("php").arg(path).output().ok()
+}
+
+fn build_runtime_archive() -> std::path::PathBuf {
+    let workspace_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(std::path::Path::parent)
+        .expect("workspace root");
+    let mut command = Command::new("cargo");
+    command
+        .current_dir(workspace_root)
+        .args(["build", "-p", "php_runtime", "--lib"]);
+    if let Some(target_dir) = std::env::var_os("CARGO_TARGET_DIR") {
+        command.env("CARGO_TARGET_DIR", target_dir);
+    }
+    let output = command.output().expect("build php_runtime staticlib");
+    assert!(
+        output.status.success(),
+        "runtime build failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let runtime_lib = target_debug_dir().join("libphp_runtime.a");
+    assert!(
+        runtime_lib.is_file(),
+        "runtime archive was not produced at {}",
+        runtime_lib.display()
+    );
+    runtime_lib
+}
+
+fn target_debug_dir() -> std::path::PathBuf {
+    let mut path = std::env::current_exe().expect("current test executable path");
+    assert!(path.pop(), "remove test binary name");
+    if path.file_name().is_some_and(|name| name == "deps") {
+        assert!(path.pop(), "remove deps directory");
+    }
+    path
+}
+
+fn unique_temp_dir(prefix: &str) -> std::path::PathBuf {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system time after epoch")
+        .as_nanos();
+    std::env::temp_dir().join(format!("{prefix}-{}-{nanos}", std::process::id()))
 }

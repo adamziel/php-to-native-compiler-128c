@@ -71,7 +71,7 @@ from pathlib import Path
 path = Path("swarm/integration.md")
 text = path.read_text(encoding="utf-8")
 text = text.replace(
-    "| P1 | LINK lanes after rebase or coherent handoff | M3 linked/native path | No current unreviewed committed candidate | Prefer a LINK-02-style resubmission because native executable support is still 0%; accept only a narrow compile/link/run slice with tests. |",
+    "| P1 | LINK follow-up lanes | M3 linked/native path | First LINK-02-style executable path integrated for literal echo fixtures | Extend native run/differential helpers carefully; accept only slices that run executables and compare stdout, stderr, and exit status without broad support claims. |",
     "| P1 | `LINK-01`, `LINK-02` | M3 linked/native path | Stale reviewed candidates | Review first because native executable support is still 0%; accept only a narrow compile/link/run slice with tests. |",
 )
 path.write_text(text, encoding="utf-8")
