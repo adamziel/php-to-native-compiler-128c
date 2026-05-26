@@ -39,6 +39,18 @@ if tmux has-session -t =phpc-pages-reporter 2>/dev/null; then
 else
   pages_reporter="not running"
 fi
+if tmux has-session -t =phpc-swarm-launcher 2>/dev/null; then
+  swarm_launcher="running"
+else
+  swarm_launcher="not running"
+fi
+latest_launcher_event="$(
+  { grep -E 'launch:' /tmp/phpc-swarm-launcher.log 2>/dev/null || true; } |
+    tail -n 1
+)"
+if [ -z "$latest_launcher_event" ]; then
+  latest_launcher_event="none"
+fi
 active_codex="$(swarm_codex_exec_count)"
 slot_locks="0"
 if [ -d /tmp/phpc-swarm-codex-slots ]; then
@@ -85,6 +97,8 @@ tmp="$(mktemp)"
   echo "- tmux windows in \`phpc-swarm\`: \`${windows}\`"
   echo "- Supervised agents target: \`${supervised_target}\`"
   echo "- Interactive launch cadence: \`${launch_cadence}s\`"
+  echo "- Staggered swarm launcher: \`${swarm_launcher}\`"
+  echo "- Latest launcher event: \`${latest_launcher_event}\`"
   echo "- Interactive Codex panes: \`${worker_loops}\`"
   echo "- Active \`codex exec\` processes: \`${active_codex}\`"
   echo "- Active Codex slot cap: \`${active_cap}\`"
@@ -165,6 +179,7 @@ tmp="$(mktemp)"
     <section class="grid">
       <div class="metric"><span>Supervised agents target</span><strong>${supervised_target}</strong></div>
       <div class="metric"><span>Launch cadence</span><strong>${launch_cadence}s</strong></div>
+      <div class="metric"><span>Staggered launcher</span><strong>${swarm_launcher}</strong></div>
       <div class="metric"><span>tmux windows</span><strong>${windows}</strong></div>
       <div class="metric"><span>Interactive Codex panes</span><strong>${worker_loops}</strong></div>
       <div class="metric"><span>Active codex exec</span><strong>${active_codex}</strong></div>
@@ -198,6 +213,7 @@ tmp="$(mktemp)"
         <tr><td>Active slot locks</td><td><code>${slot_locks}</code></td></tr>
         <tr><td>Worker state files</td><td><code>${state_files}</code></td></tr>
         <tr><td>Expected backend retry/rate-limit states</td><td><code>${rate_limited}</code></td></tr>
+        <tr><td>Latest launcher event</td><td><code>${latest_launcher_event}</code></td></tr>
       </tbody>
     </table>
     <h2>Immediate Actions</h2>
