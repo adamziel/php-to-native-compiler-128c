@@ -4,66 +4,119 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-php_core_backup="$(mktemp)"
-wordpress_backup="$(mktemp)"
+tmpdir="$(mktemp -d)"
 integration_backup="$(mktemp)"
-trap 'cp "$php_core_backup" swarm/php-core-manifest.json; cp "$wordpress_backup" swarm/wordpress-manifest.json; cp "$integration_backup" swarm/integration.md; rm -f "$php_core_backup" "$wordpress_backup" "$integration_backup"' EXIT
+trap 'cp "$integration_backup" swarm/integration.md; rm -rf "$tmpdir"; rm -f "$integration_backup"' EXIT
 
-cp swarm/php-core-manifest.json "$php_core_backup"
-cp swarm/wordpress-manifest.json "$wordpress_backup"
+php_core_fixture="$tmpdir/php-core-manifest.json"
+wordpress_fixture="$tmpdir/wordpress-manifest.json"
+out_file="$tmpdir/status-gate.out"
+err_file="$tmpdir/status-gate.err"
+
 cp swarm/integration.md "$integration_backup"
 
-scripts/status-gate.sh
+reset_fixtures() {
+  cp swarm/php-core-manifest.json "$php_core_fixture"
+  cp swarm/wordpress-manifest.json "$wordpress_fixture"
+}
 
-python3 - <<'PY'
+restore_integration() {
+  cp "$integration_backup" swarm/integration.md
+}
+
+run_fixture_gate() {
+  PHP_CORE_MANIFEST_PATH="$php_core_fixture" \
+    WORDPRESS_MANIFEST_PATH="$wordpress_fixture" \
+    scripts/status-gate.sh
+}
+
+expect_fixture_failure() {
+  local expected="$1"
+  local label="$2"
+
+  if run_fixture_gate >"$out_file" 2>"$err_file"; then
+    echo "status-gate.sh accepted $label" >&2
+    exit 1
+  fi
+
+  if ! grep -F "$expected" "$err_file" >/dev/null; then
+    echo "status-gate.sh failed without the expected diagnostic for $label" >&2
+    cat "$err_file" >&2
+    exit 1
+  fi
+}
+
+expect_status_failure() {
+  local expected="$1"
+  local label="$2"
+
+  if scripts/status-gate.sh >"$out_file" 2>"$err_file"; then
+    echo "status-gate.sh accepted $label" >&2
+    exit 1
+  fi
+
+  if ! grep -F "$expected" "$err_file" >/dev/null; then
+    echo "status-gate.sh failed without the expected diagnostic for $label" >&2
+    cat "$err_file" >&2
+    exit 1
+  fi
+}
+
+reset_fixtures
+scripts/status-gate.sh
+run_fixture_gate
+
+PHP_CORE_FIXTURE="$php_core_fixture" python3 - <<'PY'
 import json
+import os
 from pathlib import Path
 
-path = Path("swarm/php-core-manifest.json")
+path = Path(os.environ["PHP_CORE_FIXTURE"])
 manifest = json.loads(path.read_text(encoding="utf-8"))
 manifest["denominator"]["mapped"] = manifest["denominator"]["total_phpt"] - 1
 path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 PY
 
-if scripts/status-gate.sh >/tmp/phpc-status-gate-test.out 2>/tmp/phpc-status-gate-test.err; then
-  echo "status-gate.sh accepted a mismatched php-core denominator" >&2
-  exit 1
-fi
+expect_fixture_failure \
+  "denominator.mapped must match denominator.total_phpt" \
+  "a mismatched php-core denominator"
 
-if ! grep -F "denominator.mapped must match denominator.total_phpt" /tmp/phpc-status-gate-test.err >/dev/null; then
-  echo "status-gate.sh failed without the expected denominator diagnostic" >&2
-  cat /tmp/phpc-status-gate-test.err >&2
-  exit 1
-fi
+reset_fixtures
 
-cp "$php_core_backup" swarm/php-core-manifest.json
-cp "$wordpress_backup" swarm/wordpress-manifest.json
-cp "$integration_backup" swarm/integration.md
-
-python3 - <<'PY'
+PHP_CORE_FIXTURE="$php_core_fixture" python3 - <<'PY'
 import json
+import os
 from pathlib import Path
 
-path = Path("swarm/php-core-manifest.json")
+path = Path(os.environ["PHP_CORE_FIXTURE"])
 manifest = json.loads(path.read_text(encoding="utf-8"))
 manifest["results"]["native"]["pass"] = manifest["denominator"]["runnable"] + 1
 path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 PY
 
-if scripts/status-gate.sh >/tmp/phpc-status-gate-test.out 2>/tmp/phpc-status-gate-test.err; then
-  echo "status-gate.sh accepted php-core results above the runnable denominator" >&2
-  exit 1
-fi
+expect_fixture_failure \
+  "results.native pass/fail total must not exceed denominator.runnable" \
+  "php-core results above the runnable denominator"
 
-if ! grep -F "results.native pass/fail total must not exceed denominator.runnable" /tmp/phpc-status-gate-test.err >/dev/null; then
-  echo "status-gate.sh failed without the expected runnable-results diagnostic" >&2
-  cat /tmp/phpc-status-gate-test.err >&2
-  exit 1
-fi
+reset_fixtures
 
-cp "$php_core_backup" swarm/php-core-manifest.json
-cp "$wordpress_backup" swarm/wordpress-manifest.json
-cp "$integration_backup" swarm/integration.md
+WORDPRESS_FIXTURE="$wordpress_fixture" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+path = Path(os.environ["WORDPRESS_FIXTURE"])
+manifest = json.loads(path.read_text(encoding="utf-8"))
+manifest["results"]["inventory"]["entrypoints_present"] = len(manifest["entrypoints"]) - 1
+path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+PY
+
+expect_fixture_failure \
+  "wordpress inventory entrypoints_present must match entrypoints length" \
+  "a mismatched WordPress entrypoint inventory"
+
+reset_fixtures
+restore_integration
 
 python3 - <<'PY'
 from pathlib import Path
@@ -77,20 +130,11 @@ text = text.replace(
 path.write_text(text, encoding="utf-8")
 PY
 
-if scripts/status-gate.sh >/tmp/phpc-status-gate-test.out 2>/tmp/phpc-status-gate-test.err; then
-  echo "status-gate.sh accepted terminal integration lanes in the priority table" >&2
-  exit 1
-fi
+expect_status_failure \
+  "integration priority table lists lanes with terminal decisions: LINK-01, LINK-02" \
+  "terminal integration lanes in the priority table"
 
-if ! grep -F "integration priority table lists lanes with terminal decisions: LINK-01, LINK-02" /tmp/phpc-status-gate-test.err >/dev/null; then
-  echo "status-gate.sh failed without the expected stale integration diagnostic" >&2
-  cat /tmp/phpc-status-gate-test.err >&2
-  exit 1
-fi
-
-cp "$php_core_backup" swarm/php-core-manifest.json
-cp "$wordpress_backup" swarm/wordpress-manifest.json
-cp "$integration_backup" swarm/integration.md
+restore_integration
 
 python3 - <<'PY'
 from pathlib import Path
@@ -104,20 +148,11 @@ text = text.replace(
 path.write_text(text, encoding="utf-8")
 PY
 
-if scripts/status-gate.sh >/tmp/phpc-status-gate-test.out 2>/tmp/phpc-status-gate-test.err; then
-  echo "status-gate.sh accepted an already reviewed committed candidate" >&2
-  exit 1
-fi
+expect_status_failure \
+  "integration committed-candidate table lists already reviewed lanes: PHPT-03" \
+  "an already reviewed committed candidate"
 
-if ! grep -F "integration committed-candidate table lists already reviewed lanes: PHPT-03" /tmp/phpc-status-gate-test.err >/dev/null; then
-  echo "status-gate.sh failed without the expected reviewed-candidate diagnostic" >&2
-  cat /tmp/phpc-status-gate-test.err >&2
-  exit 1
-fi
-
-cp "$php_core_backup" swarm/php-core-manifest.json
-cp "$wordpress_backup" swarm/wordpress-manifest.json
-cp "$integration_backup" swarm/integration.md
+restore_integration
 
 python3 - <<'PY'
 from pathlib import Path
@@ -131,18 +166,9 @@ text = text.replace(
 path.write_text(text, encoding="utf-8")
 PY
 
-if scripts/status-gate.sh >/tmp/phpc-status-gate-test.out 2>/tmp/phpc-status-gate-test.err; then
-  echo "status-gate.sh accepted obsolete pre-M3 emit-exe wording" >&2
-  exit 1
-fi
+expect_status_failure \
+  "integration log contains obsolete pre-M3 emit-exe wording" \
+  "obsolete pre-M3 emit-exe wording"
 
-if ! grep -F "integration log contains obsolete pre-M3 emit-exe wording" /tmp/phpc-status-gate-test.err >/dev/null; then
-  echo "status-gate.sh failed without the expected pre-M3 wording diagnostic" >&2
-  cat /tmp/phpc-status-gate-test.err >&2
-  exit 1
-fi
-
-cp "$php_core_backup" swarm/php-core-manifest.json
-cp "$wordpress_backup" swarm/wordpress-manifest.json
-cp "$integration_backup" swarm/integration.md
+restore_integration
 scripts/status-gate.sh

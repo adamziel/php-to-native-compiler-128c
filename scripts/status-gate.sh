@@ -8,6 +8,7 @@ scripts/refresh-progress.sh --check
 
 python3 - <<'PY'
 import json
+import os
 import re
 from pathlib import Path
 
@@ -17,7 +18,14 @@ def load_json(path):
         return json.load(handle)
 
 
-php_core = load_json("swarm/php-core-manifest.json")
+php_core_manifest_path = os.environ.get(
+    "PHP_CORE_MANIFEST_PATH", "swarm/php-core-manifest.json"
+)
+wordpress_manifest_path = os.environ.get(
+    "WORDPRESS_MANIFEST_PATH", "swarm/wordpress-manifest.json"
+)
+
+php_core = load_json(php_core_manifest_path)
 denominator = php_core.get("denominator", {})
 total_phpt = denominator.get("total_phpt")
 mapped = denominator.get("mapped")
@@ -51,7 +59,7 @@ for key in ("path", "source", "branch", "commit", "version"):
     if not php_src.get(key):
         raise SystemExit(f"php-core manifest missing php_src.{key}")
 
-wordpress = load_json("swarm/wordpress-manifest.json")
+wordpress = load_json(wordpress_manifest_path)
 wp_source = wordpress.get("wordpress", {})
 for key in ("path", "source", "version", "commit_or_archive_hash"):
     if not wp_source.get(key):

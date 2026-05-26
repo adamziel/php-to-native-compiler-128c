@@ -2,30 +2,28 @@
 
 ## Summary
 
-- Time: 2026-05-26T01:36:00Z.
-- Milestone: Integration / M2 runtime ABI safety.
-- Fresh slice: added a fixture strategy for runtime ABI docs verifier negative cases.
-- `scripts/verify-runtime-abi-docs.sh` now accepts optional `RUNTIME_ABI_DOC_PATH` and `PHP_RUNTIME_SRC_PATH` inputs while keeping default repository paths unchanged.
-- `scripts/test-runtime-abi-docs.sh` now mutates temporary ABI doc fixtures instead of editing/restoring `docs/NATIVE_RUNTIME_ABI.md` for each negative case.
-- Narrow denominator: verifier test isolation for existing runtime ABI docs checks only; no `phpc_value_clone` or new ABI helper behavior claimed.
+- Time: 2026-05-26T02:26:44Z.
+- Milestone: Integration / status accuracy and test-gate safety.
+- Fresh slice: made `scripts/status-gate.sh` accept fixture manifest paths so focused tests can mutate temporary manifest files instead of repository manifests.
+- `scripts/test-status-gate.sh` now verifies the real gate, verifies temporary fixture wiring, keeps manifest negative cases isolated in a temporary directory, preserves the current integration-log negative cases, and adds a WordPress inventory drift negative case.
+- Narrow denominator: status-gate manifest input isolation and existing manifest/integration invariant coverage only; no compiler/runtime behavior or WordPress compatibility progress claimed.
 
 ## Files Changed
 
-- `scripts/verify-runtime-abi-docs.sh`
-- `scripts/test-runtime-abi-docs.sh`
+- `scripts/status-gate.sh`
+- `scripts/test-status-gate.sh`
 - `swarm/handoffs/INT-05.md`
 
 ## Tests Run
 
-- `scripts/verify-runtime-abi-docs.sh` - pass
-- `scripts/test-runtime-abi-docs.sh` - pass
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 cargo test -p php_runtime` - pass, 8 tests
+- `scripts/status-gate.sh` - pass
+- `scripts/test-status-gate.sh` - pass
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-05 scripts/local-gate.sh` - pass
 - `git diff --check` - pass
 
 ## Pass/Fail State
 
-- Pass. The runtime ABI documentation gate reports 8 exported helpers, 6 constants, 8 classified tests, and ownership test annotations documented.
+- Pass. The local integration gate reports status consistency, runtime ABI documentation consistency, status-gate fixture tests, label checks, and `git diff --check` passing.
 
 ## Blockers
 
@@ -33,8 +31,8 @@
 
 ## Latest Commit
 
-- Current lane HEAD: `Isolate runtime ABI docs verifier fixtures`
+- Main port pending: status-gate manifest fixture isolation.
 
 ## Next Suggested Slice
 
-- Review a small ABI/SAPI helper candidate only if it is already generalized and has focused runtime tests; otherwise keep integration work on verifier/test hygiene.
+- Review whether the previously noted `WP-12` entrypoint byte-count/SHA inventory should be integrated into the current WordPress manifest and covered by `status-gate.sh`, keeping it as reproducible status evidence only.
