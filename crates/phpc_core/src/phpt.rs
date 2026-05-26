@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
+use std::path::Path;
 
-use crate::run_php;
+use crate::{run_php, run_php_with_base_dir};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PhptTest {
@@ -174,6 +175,14 @@ impl PhptTest {
 }
 
 pub fn run_phpt_with_phpc(test: &PhptTest) -> PhptRunReport {
+    run_phpt_with_phpc_base_dir(test, None)
+}
+
+pub fn run_phpt_with_phpc_in_dir(test: &PhptTest, base_dir: &Path) -> PhptRunReport {
+    run_phpt_with_phpc_base_dir(test, Some(base_dir))
+}
+
+fn run_phpt_with_phpc_base_dir(test: &PhptTest, base_dir: Option<&Path>) -> PhptRunReport {
     let metadata = test.metadata();
     if let Some(skip) = metadata.skip.as_ref() {
         match classify_skipif(&skip.script) {
@@ -237,7 +246,7 @@ pub fn run_phpt_with_phpc(test: &PhptTest) -> PhptRunReport {
     }
 
     let expected_stdout = normalize_phpt_output(expectation.body);
-    let actual_stdout = match run_php(file.body) {
+    let actual_stdout = match run_php_with_base_dir(file.body, base_dir) {
         Ok(output) => normalize_phpt_output(&output),
         Err(reason) => {
             return PhptRunReport {
@@ -953,6 +962,31 @@ mod tests {
     }
 
     #[test]
+    fn runs_file_body_with_relative_require_from_base_dir() {
+        let dir = unique_temp_dir("phpc-phpt-base-dir");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("inc.php"), "<?php echo 'include';").unwrap();
+        let phpt = parse_phpt(
+            "--TEST--\nrelative require\n--FILE--\n<?php echo 'before-'; require 'inc.php'; echo '-after';\n--EXPECT--\nbefore-include-after\n",
+        )
+        .unwrap();
+
+        let report = run_phpt_with_phpc_in_dir(&phpt, &dir);
+
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(
+            report,
+            PhptRunReport {
+                status: PhptRunStatus::Pass,
+                expected_stdout: Some("before-include-after".to_string()),
+                actual_stdout: Some("before-include-after".to_string()),
+                metadata: phpt.metadata(),
+            }
+        );
+    }
+
+    #[test]
     fn normalizes_line_endings_before_comparing_exact_expectation() {
         let phpt = parse_phpt(
             "--TEST--\ncrlf expectation\n--FILE--\n<?php echo \"hello\\n\";\n--EXPECT--\nhello\r\n",
@@ -1143,5 +1177,13 @@ mod tests {
             run_phpt_with_phpc(&phpt).status,
             PhptRunStatus::UnexpectedPass
         );
+    }
+
+    fn unique_temp_dir(prefix: &str) -> std::path::PathBuf {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time after epoch")
+            .as_nanos();
+        std::env::temp_dir().join(format!("{prefix}-{}-{nanos}", std::process::id()))
     }
 }

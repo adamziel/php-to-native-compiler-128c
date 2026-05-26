@@ -30,7 +30,7 @@ Last refreshed: 2026-05-26T08:53:18Z
 | M2 runtime value ABI | value kinds, ownership, and request state | 4% | Runtime-owned value handles plus request header storage integrated |
 | M3 linked native execution | compile, link, run, compare | 2% | Linked executable path covers string, integer, boolean, and null echo literals |
 | M4 native lowering | interpreter-supported constructs lowered or rejected | 4% | String, integer, boolean, and null echo literals; top-level string define/global no-output statements; explicit variable diagnostic |
-| M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files; 4 recorded runnable subset tests | 6% | PHP-8.3 inventory pinned; 4 subset runs recorded through phpc_run; latest Zend/tests/bug47596.phpt reports pass; minimal FILE/FILEEOF exact-EXPECT/EXPECTF runner plus limited SKIPIF classification integrated |
+| M5 PHP core .phpt harness | PHP-8.3 branch, 19,346 `.phpt` files; 4 recorded runnable subset tests | 6% | PHP-8.3 inventory pinned; 4 subset runs recorded through phpc_run; latest Zend/tests/bug47596.phpt reports pass; minimal FILE/FILEEOF exact-EXPECT/EXPECTF runner plus limited SKIPIF classification and base-path-aware literal include/require resolution integrated |
 | M6 WordPress harness | pinned entrypoints/scenarios | 1% | WordPress 7.0 pinned; 5 entrypoints present; bootstrap check blocked in wp-settings.php |
 | M7 object/SAPI/DB generality | required semantic families | 1% | Request header runtime state integrated; PHP header() wiring queued |
 | M8 performance after correctness | truthful native benchmarks | 0% | Deferred |

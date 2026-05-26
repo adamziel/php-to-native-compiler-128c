@@ -132,6 +132,41 @@ fn cli_runs_minimal_phpt_with_phpc_runner() {
 }
 
 #[test]
+fn cli_phpt_run_resolves_relative_require_from_phpt_directory() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let dir = unique_temp_dir("phpc-phpt-relative-require");
+    let _ = fs::remove_dir_all(&dir);
+    fs::create_dir_all(&dir).expect("create temp dir");
+    let phpt = dir.join("relative_require.phpt");
+    fs::write(dir.join("inc.php"), "<?php echo 'include';").expect("write include");
+    fs::write(
+        &phpt,
+        "--TEST--\nrelative require\n--FILE--\n<?php echo 'before-'; require 'inc.php'; echo '-after';\n--EXPECT--\nbefore-include-after\n",
+    )
+    .expect("write phpt");
+
+    let output = Command::new(exe)
+        .args(["phpt-run"])
+        .arg(&phpt)
+        .output()
+        .expect("run phpc phpt-run");
+
+    let _ = fs::remove_dir_all(&dir);
+
+    assert!(
+        output.status.success(),
+        "phpt-run failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("status=pass\n"));
+    assert!(stdout.contains("expected_stdout_len=20\n"));
+    assert!(stdout.contains("actual_stdout_len=20\n"));
+    assert_eq!(String::from_utf8_lossy(&output.stderr), "");
+}
+
+#[test]
 fn cli_run_rejects_trailing_arguments() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let output = Command::new(exe)

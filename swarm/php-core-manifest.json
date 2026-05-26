@@ -59,7 +59,7 @@
   ],
   "blockers": [
     "Only tests/basic/001.phpt, tests/output/ob_001.phpt, tests/basic/gh15905.phpt, and Zend/tests/bug47596.phpt have committed php-src subset runs; the remaining 19,342 tests are inventory-only",
-    "The integrated library runner remains limited to FILE/FILEEOF with exact EXPECT/EXPECTF and limited SKIPIF classification"
+    "The integrated library runner remains limited to FILE/FILEEOF with exact EXPECT/EXPECTF, limited SKIPIF classification, and literal-path include/require resolution for FILE bodies when a base directory is supplied"
   ],
   "last_run": "2026-05-26T08:39:28Z"
 }

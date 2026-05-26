@@ -27,7 +27,10 @@ pub fn run_php_file(path: &Path) -> Result<String, String> {
     run_php_with_base_dir(&source, path.parent())
 }
 
-fn run_php_with_base_dir(source: &str, base_dir: Option<&Path>) -> Result<String, String> {
+pub(crate) fn run_php_with_base_dir(
+    source: &str,
+    base_dir: Option<&Path>,
+) -> Result<String, String> {
     let program = parse_php(source)?;
     let mut constants = HashMap::new();
     let mut output = String::new();

@@ -3,16 +3,19 @@
 ## Summary
 
 - Milestone: M5.
-- Continued from the gh15905 pass now present on current `origin/main`; did not duplicate that accounting.
-- Added one new already-supported passing `.phpt`: `Zend/tests/bug47596.phpt`.
-- Recorded only executed evidence. The FILE body is a literal `echo "ok\n";` followed by line comments and a closing PHP tag, matching currently supported parser/runtime behavior.
-- Updated the php-src runnable denominator from 3 to 4 of 19,346. The remaining 19,342 tests stay inventory-only.
+- Preserved completed bug47596 evidence while rebasing onto current `origin/main`.
+- Implemented the next smallest harness capability: `.phpt` FILE bodies can now resolve literal-path `require`/`include` relative to a supplied base directory.
+- Wired `phpc phpt-run <input.phpt>` to use the `.phpt` file's parent directory as that base directory.
+- Did not increase the php-src runnable denominator for this base-path slice. It remains 4 of 19,346 until an include-relative php-src test is actually executed and recorded.
 
 ## Files Changed
 
-- `swarm/php-core-manifest.json`
+- `crates/phpc_core/src/lib.rs`
+- `crates/phpc_core/src/phpt.rs`
+- `crates/phpc/src/main.rs`
+- `crates/phpc/tests/bootstrap_cli.rs`
 - `docs/SUPPORT.md`
-- `swarm/blockers.md`
+- `swarm/php-core-manifest.json`
 - `swarm/test-matrix.md`
 - `progress.md`
 - `docs/progress.html`
@@ -20,29 +23,29 @@
 
 ## Tests Run
 
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/PHPT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo run -q -p phpc -- phpt-run /home/ubuntu/phpc-external/php-src/php-src-PHP-8.3/Zend/tests/bug47596.phpt`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/PHPT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo run -q -p phpc -- phpt-run /home/ubuntu/phpc-external/php-src/php-src-PHP-8.3/tests/basic/gh15905.phpt`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/PHPT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core phpt::tests::runs_file_body_with_relative_require_from_base_dir`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/PHPT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_phpt_run_resolves_relative_require_from_phpt_directory`
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/PHPT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc_core phpt::tests`
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/PHPT-02 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/status-gate.sh`
 - `git diff --check`
 
 ## Pass/Fail State
 
-- PASS: `Zend/tests/bug47596.phpt` through `phpc_run`, `status=pass`, expected stdout length 2, actual stdout length 2.
-- PASS: existing recorded `tests/basic/gh15905.phpt` through `phpc_run`, `status=pass`, expected stdout length 4, actual stdout length 4.
-- PASS: focused `.phpt` core tests.
+- PASS: focused library `.phpt` base-dir test.
+- PASS: focused CLI `.phpt` relative require test.
+- PASS: focused `.phpt` test module, 38 tests.
 - PASS: status gate.
 - PASS: `git diff --check`.
 
 ## Latest Commit
 
-- This committed slice: `Record bug47596 php-src PHPT pass`
+- This committed slice: `Add base path for phpt relative requires`
 
 ## Blockers
 
 - The runner still ignores `INI` sections, lacks native `.phpt` execution, and has limited `SKIPIF`/`EXPECTREGEX` support.
-- Include-based php-src tests should not be counted until `.phpt` execution has a real temp/input path and base directory.
+- Include-based php-src tests should not be counted until a real pinned test executes and passes with this base-path-aware runner.
 
 ## Next Suggested Slice
 
-- Continue mining tiny already-supported `FILE`/`FILEEOF` plus exact `EXPECT`/`EXPECTF` tests, or add a base-path-aware `.phpt` execution mode before counting include-relative tests.
+- Re-scan literal include/require php-src `.phpt` tests and record a new pass only if the test body reduces to currently supported PHP behavior.

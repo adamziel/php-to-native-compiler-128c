@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use phpc_core::phpt::{parse_phpt, run_phpt_with_phpc, PhptRunReport, PhptRunStatus};
+use phpc_core::phpt::{parse_phpt, run_phpt_with_phpc_in_dir, PhptRunReport, PhptRunStatus};
 use phpc_core::{compile_php, compile_php_executable, run_php_file, CompileMode};
 
 const WORDPRESS_BOOTSTRAP_ENTRYPOINTS: &[&str] = &[
@@ -70,7 +70,8 @@ fn real_main() -> Result<ExitCode, String> {
                 .map_err(|err| format!("failed to read {}: {err}", input.display()))?;
             let test = parse_phpt(&source)
                 .map_err(|err| format!("failed to parse {}: {err}", input.display()))?;
-            let report = run_phpt_with_phpc(&test);
+            let base_dir = input.parent().unwrap_or_else(|| Path::new("."));
+            let report = run_phpt_with_phpc_in_dir(&test, base_dir);
             print_phpt_run_report(&input, &report);
             Ok(ExitCode::SUCCESS)
         }
