@@ -8,6 +8,7 @@ Existing exported helpers:
 - `phpc_value_null() -> handle`
 - `phpc_binary_string_new(ptr, len) -> handle`
 - `phpc_value_kind(handle) -> kind`
+- `phpc_value_clone(handle) -> handle`
 - `phpc_binary_string_len(handle) -> len`
 - `phpc_binary_string_data(handle, out_len) -> ptr`
 - `phpc_value_free(handle) -> status`
@@ -33,6 +34,8 @@ Status codes:
 - Callers must release owned handles with `phpc_value_free`. Test: `null_handle_is_runtime_owned_until_free`.
 - `phpc_value_free` returns `0` for a live handle and `-1` for invalid, unknown, or already-freed handles. Test: `invalid_and_double_free_are_reported`.
 - `phpc_value_kind` returns `-1` for invalid handles, `0` for null, and `1` for binary strings. Tests: `invalid_and_double_free_are_reported`, `null_handle_is_runtime_owned_until_free`, `binary_string_handle_owns_a_byte_copy`.
+- `phpc_value_clone` returns a new owned handle for a live value and invalid handle `0` for invalid, unknown, or already-freed handles. Tests: `clone_rejects_invalid_handles`, `cloned_null_handle_has_independent_ownership`.
+- Cloned binary-string handles own independent runtime storage and remain valid after the source handle is freed. Test: `cloned_binary_string_owns_independent_bytes`.
 - Binary string construction copies bytes into runtime storage. Embedded NUL bytes are preserved. Test: `binary_string_handle_owns_a_byte_copy`.
 - `phpc_binary_string_new(NULL, nonzero_len)` fails and returns invalid handle `0`. Test: `binary_string_rejects_null_pointer_with_nonzero_len`.
 - `phpc_binary_string_data` returns a borrowed pointer valid until the handle is freed or runtime mutation invalidates the storage. Test: `binary_string_data_reports_invalid_handles`.
@@ -44,6 +47,9 @@ Status codes:
 - `binary_string_handle_owns_a_byte_copy`: binary-string ownership and byte preservation.
 - `binary_string_rejects_null_pointer_with_nonzero_len`: invalid binary-string constructor arguments.
 - `binary_string_data_reports_invalid_handles`: invalid binary-string data access.
+- `clone_rejects_invalid_handles`: invalid and freed handles cannot be cloned.
+- `cloned_null_handle_has_independent_ownership`: cloned null handles have separate ownership lifetimes.
+- `cloned_binary_string_owns_independent_bytes`: cloned binary strings remain valid after freeing the source handle.
 
 Required next ABI families:
 

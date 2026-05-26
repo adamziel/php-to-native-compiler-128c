@@ -45,6 +45,13 @@ impl RuntimeState {
         self.values.insert(handle, value);
         handle
     }
+
+    fn clone_value(&mut self, handle: PhpcValueHandle) -> PhpcValueHandle {
+        let Some(value) = self.values.get(&handle).cloned() else {
+            return INVALID_HANDLE;
+        };
+        self.insert(value)
+    }
 }
 
 fn runtime() -> &'static Mutex<RuntimeState> {
@@ -93,6 +100,11 @@ pub extern "C" fn phpc_value_kind(handle: PhpcValueHandle) -> i32 {
         Some(PhpValue::BinaryString(_)) => PHPC_VALUE_KIND_BINARY_STRING,
         None => PHPC_VALUE_KIND_INVALID,
     }
+}
+
+#[no_mangle]
+pub extern "C" fn phpc_value_clone(handle: PhpcValueHandle) -> PhpcValueHandle {
+    runtime().lock().unwrap().clone_value(handle)
 }
 
 #[no_mangle]
@@ -193,5 +205,51 @@ mod tests {
 
         assert!(ptr.is_null());
         assert_eq!(len, 0);
+    }
+
+    #[test]
+    fn clone_rejects_invalid_handles() {
+        assert_eq!(phpc_value_clone(INVALID_HANDLE), INVALID_HANDLE);
+
+        let handle = phpc_value_null();
+        assert_eq!(phpc_value_free(handle), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_clone(handle), INVALID_HANDLE);
+    }
+
+    #[test]
+    fn cloned_null_handle_has_independent_ownership() {
+        let original = phpc_value_null();
+        let clone = phpc_value_clone(original);
+
+        assert_ne!(clone, INVALID_HANDLE);
+        assert_ne!(clone, original);
+        assert_eq!(phpc_value_kind(clone), PHPC_VALUE_KIND_NULL);
+
+        assert_eq!(phpc_value_free(original), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_kind(original), PHPC_VALUE_KIND_INVALID);
+        assert_eq!(phpc_value_kind(clone), PHPC_VALUE_KIND_NULL);
+        assert_eq!(phpc_value_free(clone), PHPC_STATUS_OK);
+    }
+
+    #[test]
+    fn cloned_binary_string_owns_independent_bytes() {
+        let original = unsafe { phpc_binary_string_new(b"owned".as_ptr().cast::<c_char>(), 5) };
+        let clone = phpc_value_clone(original);
+
+        assert_ne!(clone, INVALID_HANDLE);
+        assert_ne!(clone, original);
+        assert_eq!(phpc_value_kind(clone), PHPC_VALUE_KIND_BINARY_STRING);
+
+        assert_eq!(phpc_value_free(original), PHPC_STATUS_OK);
+        assert_eq!(phpc_value_kind(original), PHPC_VALUE_KIND_INVALID);
+
+        let mut len = 0;
+        let ptr = unsafe { phpc_binary_string_data(clone, &mut len) };
+        assert!(!ptr.is_null());
+        assert_eq!(len, 5);
+        let bytes = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), len) };
+        assert_eq!(bytes, b"owned");
+
+        assert_eq!(phpc_value_free(clone), PHPC_STATUS_OK);
     }
 }
