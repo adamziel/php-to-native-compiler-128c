@@ -1,19 +1,19 @@
-summary: Reviewed committed LINK-02 candidate `ecd29ce Add linked native executable path` as an integration decision artifact only. The candidate passes its native compile/link/run test in the LINK-02 worktree and is preferable to LINK-01 because its core changes preserve current `phpt` exports and integer echo support. It is still rejected as-is because `git merge-tree` reports a conflict in `crates/phpc/tests/bootstrap_cli.rs` against the current linked-exe gate test; LINK-02 should rebase and replace the unsupported gate with the native executable test when M3 is accepted.
+summary: Reviewed committed LINK-08 candidate `767e9ea Clean stale native executable outputs` as an integration decision artifact only. LINK-08 passes its native link test suite and includes a useful stale-output cleanup regression, but is rejected as-is because it conflicts with current `crates/phpc_core/src/lib.rs` by converting `CompileMode::EmitExe` into C-source emission. That design conflicts with current main's explicit unsupported gate and the preferred LINK-02 approach where executable linking is a separate CLI path.
 
 files changed:
 - `swarm/integration.md`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-02-review CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_emits_linked_native_executable_for_bootstrap_echo` in `/home/ubuntu/phpc-worktrees/LINK-02`
-- `git merge-tree $(git merge-base HEAD lane/LINK-02) HEAD lane/LINK-02` in `/home/ubuntu/phpc-worktrees/INT-01`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/LINK-08-review CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test native_link` in `/home/ubuntu/phpc-worktrees/LINK-08`
+- `git merge-tree $(git merge-base HEAD lane/LINK-08) HEAD lane/LINK-08` in `/home/ubuntu/phpc-worktrees/INT-01`
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 scripts/local-gate.sh`
 - `git diff --check`
 
-pass/fail state: pass for verification; LINK-02 integration decision is reject-as-is pending focused rebase
+pass/fail state: pass for verification; LINK-08 integration decision is reject-as-is
 
-blockers: LINK-02 conflicts with current `crates/phpc/tests/bootstrap_cli.rs` linked-exe gate. No M3 progress should be counted until a rebased compile/link/run slice lands.
+blockers: LINK-08 conflicts with current `crates/phpc_core/src/lib.rs` and uses a less suitable `EmitExe`-as-C-source design. No M3 progress should be counted from this lane unless a cleaner rebased slice lands.
 
-latest commit: `d5fea30 Record LINK-02 integration decision`
+latest commit: `9bed68f Record LINK-08 integration decision`
 
-next suggested slice: Have LINK-02 rebase onto current main and resubmit as the preferred M3 bootstrap executable candidate, or review LINK-08 as the next alternate LINK candidate.
+next suggested slice: Prefer LINK-02 after rebase for the primary M3 path; salvage LINK-08 stale-output cleanup only after the accepted executable-linking shape is integrated.
