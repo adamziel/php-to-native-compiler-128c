@@ -41,6 +41,11 @@ case "$CARGO_TARGET_DIR" in
 esac
 
 if [[ -n "$expected_branch" ]]; then
+  if ! git -C "$worktree_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "worker env error: worktree root must be a git worktree for lane $lane_id: $worktree_root" >&2
+    exit 1
+  fi
+
   current_branch="$(git -C "$worktree_root" branch --show-current)"
   if [[ "$current_branch" != "$expected_branch" ]]; then
     echo "worker env error: current branch must be $expected_branch for lane $lane_id, got ${current_branch:-detached HEAD}" >&2
