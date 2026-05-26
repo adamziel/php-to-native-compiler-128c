@@ -44,7 +44,11 @@ fn parse_statements(mut body: &str) -> Result<Vec<Statement>, String> {
     let mut statements = Vec::new();
     loop {
         body = skip_trivia(body)?;
-        if body.is_empty() || body == "?>" {
+        if body.is_empty()
+            || body
+                .strip_prefix("?>")
+                .is_some_and(|rest| rest.trim().is_empty())
+        {
             break;
         }
         if let Some(rest) = body.strip_prefix("echo") {
@@ -503,6 +507,16 @@ mod tests {
                 }),
                 Statement::Global(vec!["first".to_string(), "second".to_string()]),
             ]
+        );
+    }
+
+    #[test]
+    fn parses_closing_tag_with_trailing_whitespace_after_statement() {
+        assert_eq!(
+            parse_php("<?php\necho \"hello\\n\";\n?>\n").unwrap(),
+            vec![Statement::Echo(Expression::StringLiteral(
+                "hello\n".to_string()
+            ))]
         );
     }
 
