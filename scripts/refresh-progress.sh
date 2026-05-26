@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+mode="${1:-refresh}"
+if [ "$mode" != "refresh" ] && [ "$mode" != "--check" ]; then
+  echo "usage: scripts/refresh-progress.sh [--check]" >&2
+  exit 2
+fi
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 source "$repo_root/scripts/swarm-interactive.sh"
 
+repo="adamziel/php-to-native-compiler-128c"
 head="$(git rev-parse --short HEAD 2>/dev/null || echo none)"
 branch="$(git branch --show-current 2>/dev/null || echo none)"
 dirty="$(git status --short 2>/dev/null | wc -l)"
@@ -79,8 +86,21 @@ rate_limited="$(
 active_cap="interactive"
 supervised_target="${SWARM_WORKER_COUNT:-50} workers + auditor"
 launch_cadence="${SWARM_LAUNCH_STAGGER_SECONDS:-unknown}"
-updated_display="$(date -u '+%Y-%m-%d %H:%M UTC')"
-updated_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+if [ "$mode" = "--check" ]; then
+  updated_display="CHECK MODE"
+  updated_iso="CHECK-MODE"
+else
+  updated_display="$(date -u '+%Y-%m-%d %H:%M UTC')"
+  updated_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+fi
+
+progress_out="progress.md"
+html_out="docs/progress.html"
+if [ "$mode" = "--check" ]; then
+  progress_out="$(mktemp)"
+  html_out="$(mktemp)"
+  trap 'rm -f "$progress_out" "$html_out"' EXIT
+fi
 
 tmp="$(mktemp)"
 {
@@ -90,7 +110,7 @@ tmp="$(mktemp)"
   echo
   echo "## Current State"
   echo
-  echo "- Repository: \`adamziel/php-to-native-compiler-128c\`"
+  echo "- Repository: \`${repo}\`"
   echo "- Branch: \`${branch}\`"
   echo "- Report base HEAD: \`${head}\`"
   echo "- Dirty entries: \`${dirty}\`"
@@ -142,7 +162,7 @@ tmp="$(mktemp)"
   echo "## Current Blockers"
   sed -n '1,120p' swarm/blockers.md | sed 's/^/> /'
 } > "$tmp"
-mv "$tmp" progress.md
+mv "$tmp" "$progress_out"
 
 tmp="$(mktemp)"
 {
@@ -173,7 +193,7 @@ tmp="$(mktemp)"
 <body>
   <header>
     <h1>PHP-to-Native Compiler Swarm Progress</h1>
-    <div>From-scratch bootstrap for <code>adamziel/php-to-native-compiler-128c</code>. Last updated ${updated_display}.</div>
+    <div>From-scratch bootstrap for <code>${repo}</code>. Last updated ${updated_display}.</div>
   </header>
   <main>
     <section class="grid">
@@ -231,4 +251,13 @@ tmp="$(mktemp)"
 </html>
 HTML
 } > "$tmp"
-mv "$tmp" docs/progress.html
+mv "$tmp" "$html_out"
+
+if [ "$mode" = "--check" ]; then
+  grep -F -- "- Repository: \`${repo}\`" "$progress_out" >/dev/null
+  grep -F -- "- Branch: \`${branch}\`" "$progress_out" >/dev/null
+  grep -F -- "- Supervised agents target: \`${supervised_target}\`" "$progress_out" >/dev/null
+  grep -F -- "- Staggered swarm launcher: \`${swarm_launcher}\`" "$progress_out" >/dev/null
+  grep -F -- "From-scratch bootstrap for <code>${repo}</code>" "$html_out" >/dev/null
+  grep -F -- "<tr><td>Latest launcher event</td><td><code>" "$html_out" >/dev/null
+fi
