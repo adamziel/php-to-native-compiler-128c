@@ -2,6 +2,7 @@ summary:
 - Started fresh from `origin/main` on `lane/INT-03-expectf` instead of building on stale `lane/INT-03` mini-runner commits.
 - Extended the existing `run_phpt_with_phpc` / `PhptRunStatus` model with `EXPECTF` matching while preserving exact `EXPECT` and `EXPECTREGEX` unsupported behavior.
 - Added focused tests for `EXPECTF` pass, fail, xfail, and unexpected-pass classification.
+- Follow-up tightened `EXPECTF` token semantics toward php-src `run-tests.php`: `%s`/`%a` are non-empty, `%S`/`%A` can be empty, `%w` can be empty, `%e` and `%0` are supported, and `%f` no longer accepts generic Rust `NaN`/`inf`.
 - Updated support, blocker, and test-matrix status without changing php-src runnable counts.
 
 files changed:
@@ -16,7 +17,7 @@ tests run:
 - `git diff --check`
 
 pass/fail state:
-- PASS: focused PHPT tests, 26 passed.
+- PASS: focused PHPT tests, 31 passed.
 - PASS: `git diff --check`.
 
 blockers:
@@ -27,7 +28,10 @@ blockers:
 - This remains a `phpc run` harness slice and does not prove linked native execution.
 
 latest commit if any:
-- Pending until this handoff and slice are committed.
+- `00a1ffa` Add PHPT EXPECTF matching.
+- `b101edd` Update INT-03 EXPECTF handoff.
+- `dddda87` Merge remote-tracking branch `origin/main` into `lane/INT-03-expectf` after `origin/main` advanced by one published-progress commit.
+- Supervisor main port pending: EXPECTF matcher plus php-src-aligned token semantics.
 
 next suggested slice:
 - Add `FILEEOF` execution to `run_phpt_with_phpc` using the existing `PhptFileKind` model, with focused tests proving exact `EXPECT`, `EXPECTF`, xfail, and existing `FILE` behavior remain unchanged.

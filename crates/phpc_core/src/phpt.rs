@@ -328,14 +328,18 @@ fn expectf_matches(pattern: &str, actual: &str) -> bool {
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ExpectfToken {
     Literal(String),
-    AnyStringNoNewline,
-    AnyString,
+    NonEmptyStringNoNewline,
+    StringNoNewline,
+    NonEmptyString,
+    String,
     Whitespace,
     Digits,
     Integer,
     Hex,
     Float,
     Char,
+    DirectorySeparator,
+    Nul,
 }
 
 fn expectf_tokens(pattern: &str) -> Vec<ExpectfToken> {
@@ -359,14 +363,18 @@ fn expectf_tokens(pattern: &str) -> Vec<ExpectfToken> {
                 literal.push('%');
                 continue;
             }
-            's' => ExpectfToken::AnyStringNoNewline,
-            'a' | 'A' => ExpectfToken::AnyString,
+            's' => ExpectfToken::NonEmptyStringNoNewline,
+            'S' => ExpectfToken::StringNoNewline,
+            'a' => ExpectfToken::NonEmptyString,
+            'A' => ExpectfToken::String,
             'w' => ExpectfToken::Whitespace,
             'd' => ExpectfToken::Digits,
             'i' => ExpectfToken::Integer,
             'x' => ExpectfToken::Hex,
             'f' => ExpectfToken::Float,
             'c' => ExpectfToken::Char,
+            'e' => ExpectfToken::DirectorySeparator,
+            '0' => ExpectfToken::Nul,
             other => {
                 literal.push('%');
                 literal.push(other);
@@ -408,14 +416,28 @@ fn match_expectf_tokens(
                     actual_index + literal.len(),
                 )
             }),
-        ExpectfToken::AnyStringNoNewline => match_variable_width(
+        ExpectfToken::NonEmptyStringNoNewline => match_variable_width(
+            tokens,
+            token_index,
+            actual,
+            actual_index,
+            |text| !text.is_empty() && !text.contains('\n'),
+        ),
+        ExpectfToken::StringNoNewline => match_variable_width(
             tokens,
             token_index,
             actual,
             actual_index,
             |text| !text.contains('\n'),
         ),
-        ExpectfToken::AnyString => {
+        ExpectfToken::NonEmptyString => match_variable_width(
+            tokens,
+            token_index,
+            actual,
+            actual_index,
+            |text| !text.is_empty(),
+        ),
+        ExpectfToken::String => {
             match_variable_width(tokens, token_index, actual, actual_index, |_| true)
         }
         ExpectfToken::Whitespace => match_variable_width(
@@ -460,7 +482,7 @@ fn match_expectf_tokens(
             token_index,
             actual,
             actual_index,
-            |text| !text.is_empty() && text.parse::<f64>().is_ok(),
+            is_php_run_tests_float,
         ),
         ExpectfToken::Char => actual[actual_index..].chars().next().is_some_and(|ch| {
             match_expectf_tokens(
@@ -470,7 +492,60 @@ fn match_expectf_tokens(
                 actual_index + ch.len_utf8(),
             )
         }),
+        ExpectfToken::DirectorySeparator => actual[actual_index..]
+            .strip_prefix(std::path::MAIN_SEPARATOR)
+            .is_some_and(|_| {
+                match_expectf_tokens(
+                    tokens,
+                    token_index + 1,
+                    actual,
+                    actual_index + std::path::MAIN_SEPARATOR.len_utf8(),
+                )
+            }),
+        ExpectfToken::Nul => actual[actual_index..].strip_prefix('\0').is_some_and(|_| {
+            match_expectf_tokens(tokens, token_index + 1, actual, actual_index + 1)
+        }),
     }
+}
+
+fn is_php_run_tests_float(text: &str) -> bool {
+    let mut rest = text
+        .strip_prefix('+')
+        .or_else(|| text.strip_prefix('-'))
+        .unwrap_or(text);
+
+    let leading_digits = leading_ascii_digit_count(rest);
+    rest = &rest[leading_digits..];
+
+    if let Some(after_dot) = rest.strip_prefix('.') {
+        let fraction_digits = leading_ascii_digit_count(after_dot);
+        if fraction_digits == 0 {
+            return false;
+        }
+        rest = &after_dot[fraction_digits..];
+    } else if leading_digits == 0 {
+        return false;
+    }
+
+    if let Some(after_marker) = rest.strip_prefix('E').or_else(|| rest.strip_prefix('e')) {
+        let exponent = after_marker
+            .strip_prefix('+')
+            .or_else(|| after_marker.strip_prefix('-'))
+            .unwrap_or(after_marker);
+        let exponent_digits = leading_ascii_digit_count(exponent);
+        if exponent_digits == 0 {
+            return false;
+        }
+        rest = &exponent[exponent_digits..];
+    }
+
+    rest.is_empty()
+}
+
+fn leading_ascii_digit_count(text: &str) -> usize {
+    text.char_indices()
+        .find_map(|(index, ch)| (!ch.is_ascii_digit()).then_some(index))
+        .unwrap_or(text.len())
 }
 
 fn match_variable_width(
@@ -490,11 +565,13 @@ fn match_variable_width(
 }
 
 fn char_boundary_indices_from(text: &str, start: usize) -> Vec<usize> {
-    let mut indices = text[start..]
+    let mut indices = vec![start];
+    indices.extend(
+        text[start..]
         .char_indices()
         .skip(1)
-        .map(|(index, _)| start + index)
-        .collect::<Vec<_>>();
+            .map(|(index, _)| start + index),
+    );
     indices.push(text.len());
     indices
 }
@@ -832,6 +909,45 @@ mod tests {
                 .unwrap();
 
         assert_eq!(run_phpt_with_phpc(&phpt).status, PhptRunStatus::Fail);
+    }
+
+    #[test]
+    fn expectf_uppercase_string_tokens_allow_empty_matches() {
+        assert!(expectf_matches("prefix%Ssuffix", "prefixsuffix"));
+        assert!(expectf_matches("prefix%Asuffix", "prefixsuffix"));
+    }
+
+    #[test]
+    fn expectf_whitespace_token_allows_empty_match() {
+        assert!(expectf_matches("left%wright", "leftright"));
+        assert!(expectf_matches("left%wright", "left \n\tright"));
+    }
+
+    #[test]
+    fn expectf_directory_separator_and_nul_tokens_match_literals() {
+        let pattern = format!("root%edir%0end");
+        let actual = format!("root{}dir\0end", std::path::MAIN_SEPARATOR);
+
+        assert!(expectf_matches(&pattern, &actual));
+    }
+
+    #[test]
+    fn expectf_lowercase_string_tokens_reject_empty_matches() {
+        assert!(!expectf_matches("prefix%ssuffix", "prefixsuffix"));
+        assert!(!expectf_matches("prefix%asuffix", "prefixsuffix"));
+    }
+
+    #[test]
+    fn expectf_float_token_uses_php_run_tests_shape() {
+        assert!(expectf_matches("%f", "1"));
+        assert!(expectf_matches("%f", "1.0"));
+        assert!(expectf_matches("%f", ".5"));
+        assert!(expectf_matches("%f", "-12.345"));
+        assert!(expectf_matches("%f", "6.02E+23"));
+        assert!(!expectf_matches("%f", "NaN"));
+        assert!(!expectf_matches("%f", "inf"));
+        assert!(!expectf_matches("%f", "1."));
+        assert!(!expectf_matches("%f", "."));
     }
 
     #[test]
