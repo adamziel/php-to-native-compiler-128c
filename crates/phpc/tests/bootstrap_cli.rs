@@ -131,6 +131,26 @@ fn cli_compile_emit_exe_requires_output_path() {
 }
 
 #[test]
+fn cli_compile_emit_exe_rejects_extra_arguments_after_output_path() {
+    let exe = env!("CARGO_BIN_EXE_phpc");
+    let output = Command::new(exe)
+        .args([
+            "compile",
+            BOOTSTRAP_HELLO,
+            "--emit-exe",
+            "/tmp/phpc-native-output",
+            "--emit-ir",
+        ])
+        .output()
+        .expect("run phpc compile --emit-exe with extra argument");
+
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr)
+        .contains("unsupported compile flags: --emit-exe /tmp/phpc-native-output --emit-ir"));
+    assert!(output.stdout.is_empty());
+}
+
+#[test]
 fn cli_emits_linked_native_executable_for_bootstrap_echo() {
     let exe = env!("CARGO_BIN_EXE_phpc");
     let runtime_lib = build_runtime_archive();

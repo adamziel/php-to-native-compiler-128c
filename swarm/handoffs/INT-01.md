@@ -2,30 +2,30 @@
 
 summary:
 - Milestone: Integration / coordination safety and small CLI test coverage.
-- Started cleanly from current `origin/main` on `lane/INT-01-fresh-0528`.
-- Added focused CLI coverage proving `phpc wordpress-bootstrap-check` without a root argument fails through the existing missing-input diagnostic path.
-- The test is intentionally test-only and does not change WordPress bootstrap behavior or broader CLI semantics.
-- No compiler/runtime semantics, PHP-core denominator, WordPress behavior, launcher behavior, or generated progress output changed.
+- Started from clean `lane/INT-01-fresh-0528`, which already contained the prior coherent CLI test slice.
+- Fixed branch hygiene for this worktree by preserving the stale inactive `lane/INT-01` ref as `lane/INT-01-legacy-0526` and renaming the active worktree branch to `lane/INT-01`.
+- Added focused CLI coverage proving `phpc compile <input> --emit-exe <output> <extra>` rejects the malformed argument list without producing stdout.
+- This slice is intentionally test-only and does not change compiler/runtime semantics, WordPress behavior, PHP-core denominator, launcher behavior, or generated progress output.
 
 files changed:
 - `crates/phpc/tests/bootstrap_cli.rs`
 - `swarm/handoffs/INT-01.md`
 
 tests run:
-- `git fetch origin`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_wordpress_bootstrap_check_requires_root_argument`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 cargo test -p phpc --test bootstrap_cli cli_compile_emit_exe_rejects_extra_arguments_after_output_path`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh` first failed before the branch rename with `current branch must be lane/INT-01 for lane INT-01, got lane/INT-01-fresh-0528`
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-01 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 
 pass/fail state:
-- PASS: focused CLI regression rejects a missing `wordpress-bootstrap-check` root with no stdout and the existing missing-input diagnostic.
-- PASS: local coordination gate, including status checks, runtime ABI docs, progress launcher-log fixture, launcher observability, lane integration checker tests, worker-env tests, full locked workspace tests, and diff hygiene.
-- PASS: full locked workspace tests reported 23 runtime, 17 CLI, and 76 core tests passing.
+- PASS: focused CLI regression rejects extra `compile --emit-exe` arguments with no stdout and the existing unsupported-flags diagnostic.
+- PASS after branch hygiene fix: local coordination gate, including worker-env lane check, status checks, runtime ABI docs, launcher observability, and full locked workspace tests.
+- PASS: full locked workspace tests reported 23 runtime, 18 CLI, and 76 core tests passing.
 
 blockers:
 - None for this integration-safety slice.
 
 latest commit:
-- This lane commit: `Cover WordPress bootstrap missing root`.
+- `HEAD` Cover emit-exe extra CLI args
 
 next suggested slice:
-- Keep INT-01 focused on gate hygiene and small CLI/test coverage gaps; candidate follow-up is a narrow test for `compile --emit-exe` rejecting an extra trailing output/flag argument if still uncovered.
+- Keep INT-01 focused on gate hygiene and small CLI/test coverage gaps; candidate follow-up is checking whether the stale `lane/INT-01-*` refs should be archived in a documented integration pass.
