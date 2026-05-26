@@ -8,9 +8,26 @@ lane_id="${PHPC_LANE_ID:-$(basename "$worktree_root")}"
 expected_target_dir="${target_root%/}/$lane_id"
 expected_branch="${PHPC_EXPECT_BRANCH:-}"
 require_clean_worktree="${PHPC_REQUIRE_CLEAN_WORKTREE:-0}"
+allow_worktree_lane_mismatch="${PHPC_ALLOW_WORKTREE_LANE_MISMATCH:-0}"
 worktree_lane="$(basename "$worktree_root")"
 
-if [[ "${PHPC_ALLOW_WORKTREE_LANE_MISMATCH:-0}" != "1" && "$worktree_lane" != "$lane_id" ]]; then
+case "$allow_worktree_lane_mismatch" in
+  0|1) ;;
+  *)
+    echo "worker env error: PHPC_ALLOW_WORKTREE_LANE_MISMATCH must be 0 or 1, got $allow_worktree_lane_mismatch" >&2
+    exit 1
+    ;;
+esac
+
+case "$require_clean_worktree" in
+  0|1) ;;
+  *)
+    echo "worker env error: PHPC_REQUIRE_CLEAN_WORKTREE must be 0 or 1, got $require_clean_worktree" >&2
+    exit 1
+    ;;
+esac
+
+if [[ "$allow_worktree_lane_mismatch" != "1" && "$worktree_lane" != "$lane_id" ]]; then
   echo "worker env error: PHPC_LANE_ID must match worktree basename $worktree_lane, got $lane_id" >&2
   exit 1
 fi

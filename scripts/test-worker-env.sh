@@ -37,6 +37,16 @@ expect_failure() {
 }
 
 expect_failure \
+  "PHPC_ALLOW_WORKTREE_LANE_MISMATCH must be 0 or 1, got yes" \
+  "a non-boolean worktree lane mismatch flag" \
+  env PHPC_ALLOW_WORKTREE_LANE_MISMATCH=yes CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 scripts/verify-worker-env.sh
+
+expect_failure \
+  "PHPC_REQUIRE_CLEAN_WORKTREE must be 0 or 1, got yes" \
+  "a non-boolean clean worktree flag" \
+  env PHPC_REQUIRE_CLEAN_WORKTREE=yes CARGO_TARGET_DIR=/tmp/phpc-targets/INT-05 scripts/verify-worker-env.sh
+
+expect_failure \
   "PHPC_LANE_ID must match worktree basename INT-05" \
   "a mismatched worktree lane id" \
   env PHPC_LANE_ID=INT-06 CARGO_TARGET_DIR=/tmp/phpc-targets/INT-06 scripts/verify-worker-env.sh
