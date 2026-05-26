@@ -1,28 +1,33 @@
 summary:
-- Improved coordination/test safety for the worker environment preflight tests.
-- `scripts/test-worker-env.sh` now places its synthetic worktree root and target root under the per-run `mktemp -d` directory instead of shared `/tmp/phpc-worktrees` and `/tmp/phpc-targets` paths.
-- The test still asserts lane-specific `CARGO_TARGET_DIR` diagnostics, worktree-local target rejection, branch checks, and clean-worktree checks, but no longer depends on or collides with global `/tmp` fixture state.
-- No compiler, runtime, parser, PHPT, or WordPress semantics changed.
+- Improved M5 PHP core status accuracy without changing compiler, runtime, parser, PHPT execution, or WordPress behavior.
+- Updated `swarm/php-core-manifest.json` so the pinned 19,346-test php-src denominator still reports zero committed php-src runnable tests, but no longer falsely says that no `.phpt` runner exists.
+- Added a `scripts/status-gate.sh` guard and focused regression test to reject the obsolete "No .phpt runner is implemented yet" blocker wording.
 
 files changed:
-- `scripts/test-worker-env.sh`
+- `swarm/php-core-manifest.json`
+- `scripts/status-gate.sh`
+- `scripts/test-status-gate.sh`
 - `swarm/handoffs/INT-03.md`
 
 tests run:
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-worker-env.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-status-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/status-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/verify-status-consistency.sh`
 - `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-03 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
 - `git diff --check`
 
 pass/fail state:
-- PASS: focused worker-env fixture test.
-- PASS: local gate, including status/docs checks and full workspace `cargo test --locked` with 118 Rust tests passing.
+- PASS: focused status-gate regression for stale PHP core runner wording.
+- PASS: status gate and status consistency checks against the pinned 19,346 `.phpt` denominator.
+- PASS: local gate, including worker env, status/docs checks, runtime ABI docs, launcher observability, and workspace tests: 23 `php_runtime`, 20 `phpc` CLI integration, and 76 `phpc_core` tests.
 - PASS: `git diff --check`.
 
 blockers:
-- None for this coordination slice.
+- No blocker for this coordination slice.
+- M5 remains blocked from increasing `denominator.runnable` until an actual committed php-src `.phpt` subset run records concrete pass/fail/skip/xfail results.
 
 latest commit if any:
-- Ported to `main` as `Isolate worker env test fixtures`.
+- `cd23f4a` Tighten php core manifest status gate
 
 next suggested slice:
-- Audit remaining shell fixtures for hard-coded shared `/tmp` paths that can collide under parallel worker or local-gate runs.
+- Run and record a tiny named php-src `.phpt` subset through the existing minimal runner, then update `swarm/php-core-manifest.json` runnable/result counts only for tests that actually executed.
