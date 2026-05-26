@@ -9,6 +9,14 @@ if [ -z "${CARGO_TARGET_DIR:-}" ]; then
   exit 2
 fi
 
+case "$CARGO_TARGET_DIR" in
+  /*) ;;
+  *)
+    echo "local-gate.sh requires an absolute CARGO_TARGET_DIR, got $CARGO_TARGET_DIR" >&2
+    exit 2
+    ;;
+esac
+
 if [ "${PHPC_REQUIRE_WORKER_ENV:-0}" = "1" ]; then
   scripts/verify-worker-env.sh
 fi

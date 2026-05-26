@@ -34,6 +34,26 @@ if [ -s "$record_file" ]; then
   exit 1
 fi
 
+if PATH="$tmpdir:$PATH" \
+  PHPC_FAKE_CARGO_RECORD="$record_file" \
+  CARGO_TARGET_DIR=target/local-gate-test \
+  scripts/local-gate.sh >"$tmpdir/relative-target.out" 2>"$tmpdir/relative-target.err"; then
+  echo "local-gate.sh accepted a relative CARGO_TARGET_DIR" >&2
+  exit 1
+fi
+
+if ! grep -F "requires an absolute CARGO_TARGET_DIR" "$tmpdir/relative-target.err" >/dev/null; then
+  echo "local-gate.sh failed without the expected absolute CARGO_TARGET_DIR diagnostic" >&2
+  cat "$tmpdir/relative-target.err" >&2
+  exit 1
+fi
+
+if [ -s "$record_file" ]; then
+  echo "local-gate.sh invoked cargo before validating absolute CARGO_TARGET_DIR" >&2
+  cat "$record_file" >&2
+  exit 1
+fi
+
 PATH="$tmpdir:$PATH" \
 PHPC_FAKE_CARGO_RECORD="$record_file" \
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/home/ubuntu/phpc-targets/local-gate-test}" \

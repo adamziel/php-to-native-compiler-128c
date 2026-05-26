@@ -2,54 +2,38 @@
 
 ## Summary
 
-Milestone: Integration / supervisor safety.
+Milestone: Integration / local test-gate isolation.
 
-Started a fresh slice from `origin/main` on `lane/INT-04-launcher-observability` to avoid building on the prior INT-04 status-consistency fixture. Added a non-mutating launcher observability check for the staggered interactive launcher.
+Started a fresh slice from current `origin/main` on `lane/INT-04-fresh-0454`. Tightened `scripts/local-gate.sh` so it rejects relative `CARGO_TARGET_DIR` values before running any status checks, shell fixtures, or `cargo test`.
 
-Narrow denominator: supervisor status/worker observability only. No launcher behavior, compiler behavior, or worker launch behavior changed.
-
-`scripts/check-launcher-observability.sh` verifies:
-
-- worker commands are launched through the interactive `swarm_codex_command` path;
-- `scripts/launch-swarm.sh` / `scripts/swarm-interactive.sh` do not start workers with `codex -p` or `codex exec`;
-- the latest supervised restart marker records `SWARM_WORKER_COUNT=100`;
-- the latest supervised restart marker and stagger wait event record a 480-second cadence;
-- the live process table has zero active `codex -p` / `codex exec` worker processes;
-- `scripts/refresh-progress.sh --check` still renders the observability surface.
-
-Added a focused shell fixture that supplies a temporary launcher log and proves cadence drift fails with a precise diagnostic.
+Narrow denominator: local coordination gate hygiene only. No compiler/runtime behavior, launcher behavior, or progress percentage changed.
 
 ## Files Changed
 
-- `scripts/check-launcher-observability.sh`
-- `scripts/test-launcher-observability.sh`
 - `scripts/local-gate.sh`
-- `swarm/test-matrix.md`
+- `scripts/test-local-gate.sh`
 - `swarm/handoffs/INT-04.md`
 
 ## Tests Run
 
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/test-launcher-observability.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/check-launcher-observability.sh`
-- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 RUST_TEST_THREADS=1 scripts/local-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 bash scripts/test-local-gate.sh`
+- `CARGO_TARGET_DIR=/home/ubuntu/phpc-targets/INT-04 bash scripts/local-gate.sh`
 - `git diff --check`
 
 ## Pass/Fail State
 
-- Pass: focused launcher observability fixture rejects stale 60-second cadence.
-- Pass: live launcher observability check reports interactive-only, 100 workers, 480-second cadence, and zero `codex -p` / `codex exec` workers.
-- Pass: local coordination gate.
-- Pass: diff whitespace check.
+- Pass: focused local-gate fixture rejects unset `CARGO_TARGET_DIR` before invoking cargo.
+- Pass: focused local-gate fixture now rejects relative `CARGO_TARGET_DIR` before invoking cargo.
+- Pass: local gate completed status checks, launcher observability checks, worker-env fixture, full workspace `cargo test` with 106 tests, doc tests, and `git diff --check` under `/home/ubuntu/phpc-targets/INT-04`.
 
 ## Blockers
 
-- No blocker for this supervisor-safety slice.
-- The live check depends on `/tmp/phpc-swarm-launcher.log` containing a supervised restart marker; tests use `PHPC_SWARM_LAUNCHER_LOG` with a temporary fixture so the check remains non-mutating.
+- No blocker for this integration-safety slice.
 
 ## Latest Commit
 
-- Current HEAD for this slice: `Add launcher observability gate`.
+- This slice commit: `Require absolute target dir in local gate` on `lane/INT-04-fresh-0454`.
 
 ## Next Suggested Slice
 
-- Add a small status/reporting note that distinguishes target sessions from started sessions when the auditor is included, if the operator wants the `1/101` vs `1/100` launcher-log wording made more explicit without changing launcher behavior.
+- Add a focused local-gate fixture that rejects `CARGO_TARGET_DIR` inside the current worktree when `PHPC_REQUIRE_WORKER_ENV` is not enabled.
