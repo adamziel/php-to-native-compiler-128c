@@ -1,13 +1,13 @@
 # PHP-To-Native Compiler Swarm Progress
 
-Last refreshed: 2026-05-26T08:53:18Z
+Last refreshed: 2026-05-26T08:54:26Z
 
 ## Current State
 
 - Repository: `adamziel/php-to-native-compiler-128c`
 - Branch: `main`
-- Report base HEAD: `a47997a`
-- Dirty entries: `0`
+- Report base HEAD: `edc89e3`
+- Dirty entries: `4`
 - tmux windows in `phpc-swarm`: `53`
 - Supervised agents target: `50 workers + auditor`
 - Interactive launch cadence: `0s`
@@ -17,7 +17,7 @@ Last refreshed: 2026-05-26T08:53:18Z
 - Active worker command processes: `0`
 - Active agent slot cap: `interactive`
 - Active slot locks: `0`
-- Dirty lane worktrees preserved for review: `28`
+- Dirty lane worktrees preserved for review: `27`
 - Worker state files: `101`
 - Expected backend retry/rate-limit states: `101`
 - GitHub Pages reporter: `running`
@@ -47,6 +47,6 @@ Last refreshed: 2026-05-26T08:53:18Z
 > | ID | Area | Blocker | Impact | Next Action |
 > | --- | --- | --- | --- | --- |
 > | B-001 | Tooling | Rust/Cargo/PHP/LLVM were missing at bootstrap | Resolved for baseline verification | Installed and verified versions on 2026-05-25 |
-> | B-002 | M5 | php-src is pinned but only `tests/basic/001.phpt`, `tests/output/ob_001.phpt`, `tests/basic/gh15905.phpt`, and `Zend/tests/bug47596.phpt` have recorded passing subset runs under `phpc_run`; `.phpt` execution only supports minimal `FILE`/`FILEEOF`, limited `SKIPIF`, and exact `EXPECT`/`EXPECTF` cases | 19,342 PHP core tests remain inventory-only and native `.phpt` execution is still absent | Extend broad SKIPIF semantics, EXPECTREGEX, php-src result classification, and native `.phpt` runner coverage |
+> | B-002 | M5 | php-src is pinned but only `tests/basic/001.phpt`, `tests/output/ob_001.phpt`, `tests/basic/gh15905.phpt`, and `Zend/tests/bug47596.phpt` have recorded passing subset runs under `phpc_run`; `.phpt` execution only supports minimal `FILE`/`FILEEOF`, limited `SKIPIF`, exact `EXPECT`/`EXPECTF` cases, and base-path-aware literal include/require resolution | 19,342 PHP core tests remain inventory-only and native `.phpt` execution is still absent | Extend broad SKIPIF semantics, EXPECTREGEX, php-src result classification, and native `.phpt` runner coverage |
 > | B-003 | M6 | WordPress `wp-settings.php` bootstrap check reaches unsupported non-literal `require` expression after literal-path require/include support | Bootstrap cannot evaluate `ABSPATH . WPINC . '/version.php'`, so request setup and entrypoint execution remain blocked | Reduce constant expression/path evaluation into general fixtures |
 > | B-004 | M3 | Linked executable path exists only for literal echo fixtures | M3 has first execution plumbing but not broad native lowering | Extend runner/differential coverage beyond the bootstrap echo denominator |
